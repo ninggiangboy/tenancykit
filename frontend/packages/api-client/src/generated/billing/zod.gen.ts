@@ -3,6 +3,34 @@
 import * as z from 'zod';
 
 /**
+ * The customer properties to store.
+ */
+export const zUpdateCustomerRequest = z.object({
+    displayName: z.string().optional(),
+    email: z.string().optional()
+});
+
+/**
+ * A Tenant System user a customer is mapped to.
+ */
+export const zIdentityResponse = z.object({
+    tenantSystemId: z.string().optional(),
+    externalUserId: z.string().optional()
+});
+
+/**
+ * A billing customer.
+ */
+export const zCustomerResponse = z.object({
+    id: z.string().optional(),
+    displayName: z.string().optional(),
+    email: z.string().optional(),
+    status: z.string().optional(),
+    createdAt: z.iso.datetime().optional(),
+    identities: z.array(zIdentityResponse).optional()
+});
+
+/**
  * The webhook signing secret.
  */
 export const zWebhookSecretRequest = z.object({
@@ -42,94 +70,6 @@ export const zDirectRequest = z.object({
  */
 export const zReplaceRequest = z.object({
     urls: z.array(z.string()).optional()
-});
-
-/**
- * The customer properties to store.
- */
-export const zUpdateCustomerRequest = z.object({
-    displayName: z.string().optional(),
-    email: z.string().optional()
-});
-
-/**
- * A Tenant System user a customer is mapped to.
- */
-export const zIdentityResponse = z.object({
-    tenantSystemId: z.string().optional(),
-    externalUserId: z.string().optional()
-});
-
-/**
- * A billing customer.
- */
-export const zCustomerResponse = z.object({
-    id: z.string().optional(),
-    displayName: z.string().optional(),
-    email: z.string().optional(),
-    status: z.string().optional(),
-    createdAt: z.iso.datetime().optional(),
-    identities: z.array(zIdentityResponse).optional()
-});
-
-/**
- * The top-up to start.
- */
-export const zTopUpRequest = z.object({
-    walletId: z.string().optional(),
-    amount: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
-    currency: z.string().optional()
-});
-
-/**
- * An amount of money.
- */
-export const zMoneyDto = z.object({
-    amount: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
-    currency: z.string().optional()
-});
-
-/**
- * A top-up that was started.
- */
-export const zTopUpResponse = z.object({
-    id: z.string().optional(),
-    status: z.string().optional(),
-    amount: zMoneyDto.optional(),
-    checkoutUrl: z.string().optional()
-});
-
-/**
- * The token to exchange.
- */
-export const zExchangeRequest = z.object({
-    token: z.string().optional()
-});
-
-/**
- * A portal session.
- */
-export const zSessionResponse = z.object({
-    sessionId: z.string().optional(),
-    customerId: z.string().optional(),
-    permissions: z.array(z.string()).optional(),
-    expiresAt: z.iso.datetime().optional()
-});
-
-/**
- * The portal session the exchange opened.
- */
-export const zExchangeResponse = z.object({
-    session: zSessionResponse.optional(),
-    csrfToken: z.string().optional(),
-    returnUrl: z.string().optional()
-});
-
-/**
- * A Stripe-hosted page.
- */
-export const zHostedPageResponse = z.object({
-    url: z.string().optional()
 });
 
 /**
@@ -190,6 +130,14 @@ export const zOpenWalletRequest = z.object({
     currency: z.string().optional(),
     mode: z.string().optional(),
     creditLimit: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
+});
+
+/**
+ * An amount of money.
+ */
+export const zMoneyDto = z.object({
+    amount: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    currency: z.string().optional()
 });
 
 /**
@@ -344,64 +292,6 @@ export const zSubscriptionResponse = z.object({
 export const zSubscriptionDetailResponse = z.object({
     subscription: zSubscriptionResponse.optional(),
     history: z.array(zSubscriptionEventResponse).optional()
-});
-
-/**
- * What a reconciliation found.
- */
-export const zReconcileResponse = z.object({
-    checked: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
-    corrected: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
-    mismatches: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
-});
-
-/**
- * One attempt to process a Stripe event.
- */
-export const zEventAttemptResponse = z.object({
-    attempt: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
-    outcome: z.string().optional(),
-    detail: z.string().optional(),
-    attemptedAt: z.iso.datetime().optional()
-});
-
-/**
- * A Stripe event that was received.
- */
-export const zEventResponse = z.object({
-    id: z.string().optional(),
-    stripeEventId: z.string().optional(),
-    type: z.string().optional(),
-    status: z.string().optional(),
-    attempts: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
-    nextAttemptAt: z.iso.datetime().optional(),
-    lastError: z.string().optional(),
-    receivedAt: z.iso.datetime().optional(),
-    processedAt: z.iso.datetime().optional()
-});
-
-/**
- * A Stripe event with how its processing went.
- */
-export const zEventDetailResponse = z.object({
-    event: zEventResponse.optional(),
-    history: z.array(zEventAttemptResponse).optional()
-});
-
-/**
- * The tenant's details for Stripe Connect onboarding.
- */
-export const zConnectRequest = z.object({
-    displayName: z.string().optional(),
-    contactEmail: z.string().optional()
-});
-
-/**
- * The Stripe connection and the onboarding page.
- */
-export const zConnectionResponse = z.object({
-    configuration: zConfigurationResponse.optional(),
-    onboardingUrl: z.string().optional()
 });
 
 /**
@@ -586,85 +476,6 @@ export const zEstimateRequest = z.object({
 });
 
 /**
- * One price tier.
- */
-export const zTierDto = z.object({
-    upTo: z.string().optional(),
-    unitPrice: z.string().optional()
-});
-
-/**
- * A pricing strategy: how a quantity of usage becomes an amount. Prices are decimals in minor units, and rounding to whole minor units happens once, on the total.
- */
-export const zRuleDto = z.object({
-    model: z.string().optional(),
-    metric: z.string().optional(),
-    unit: z.string().optional(),
-    unitPrice: z.string().optional(),
-    increment: z.string().optional(),
-    mode: z.string().optional(),
-    tiers: z.array(zTierDto).optional(),
-    executionFee: z.string().optional(),
-    fixedPrice: z.string().optional(),
-    components: z.array(z.lazy((): any => zRuleDto)).optional()
-});
-
-/**
- * A version of a plan.
- */
-export const zVersionRequest = z.object({
-    rule: zRuleDto.optional(),
-    billingCycle: z.string().optional(),
-    minCharge: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
-    maxCharge: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
-    rounding: z.string().optional(),
-    validFrom: z.iso.datetime().optional(),
-    validUntil: z.iso.datetime().optional()
-});
-
-/**
- * The plan to create, with its first version.
- */
-export const zCreatePlanRequest = z.object({
-    code: z.string().optional(),
-    name: z.string().optional(),
-    currency: z.string().optional(),
-    model: z.string().optional(),
-    version: zVersionRequest.optional()
-});
-
-/**
- * One version of a pricing plan. Earlier versions, and every charge that used them, are unchanged.
- */
-export const zVersionResponse = z.object({
-    version: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
-    rule: zRuleDto.optional(),
-    billingCycle: z.string().optional(),
-    minCharge: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
-    maxCharge: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
-    rounding: z.string().optional(),
-    validFrom: z.iso.datetime().optional(),
-    validUntil: z.iso.datetime().optional(),
-    createdAt: z.iso.datetime().optional(),
-    createdBy: z.string().optional()
-});
-
-/**
- * A pricing plan and its versions.
- */
-export const zPlanResponse = z.object({
-    id: z.string().optional(),
-    code: z.string().optional(),
-    name: z.string().optional(),
-    model: z.string().optional(),
-    currency: z.string().optional(),
-    status: z.string().optional(),
-    createdAt: z.iso.datetime().optional(),
-    retiredAt: z.iso.datetime().optional(),
-    versions: z.array(zVersionResponse).optional()
-});
-
-/**
  * The refund to request.
  */
 export const zRefundRequest = z.object({
@@ -689,6 +500,15 @@ export const zRefundResponse = z.object({
 });
 
 /**
+ * The top-up to start.
+ */
+export const zTopUpRequest = z.object({
+    walletId: z.string().optional(),
+    amount: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    currency: z.string().optional()
+});
+
+/**
  * A payment of a top-up or an invoice.
  */
 export const zPaymentResponse = z.object({
@@ -704,50 +524,6 @@ export const zPaymentResponse = z.object({
     createdAt: z.iso.datetime().optional(),
     updatedAt: z.iso.datetime().optional(),
     completedAt: z.iso.datetime().optional()
-});
-
-/**
- * The entry that replaces a reversed one.
- */
-export const zReplacementRequest = z.object({
-    type: z.string().optional(),
-    amount: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
-    currency: z.string().optional(),
-    reference: z.string().optional()
-});
-
-/**
- * The correction to post.
- */
-export const zReverseRequest = z.object({
-    reason: z.string().optional(),
-    replacement: zReplacementRequest.optional()
-});
-
-/**
- * One entry of a wallet's append-only ledger.
- */
-export const zLedgerEntryResponse = z.object({
-    id: z.string().optional(),
-    sequence: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
-    type: z.string().optional(),
-    amount: zMoneyDto.optional(),
-    reference: z.string().optional(),
-    reservationId: z.string().optional(),
-    chargeId: z.string().optional(),
-    reversalOf: z.string().optional(),
-    actor: z.string().optional(),
-    reason: z.string().optional(),
-    createdAt: z.iso.datetime().optional()
-});
-
-/**
- * The entries a reversal posted.
- */
-export const zReversalResponse = z.object({
-    reversal: zLedgerEntryResponse.optional(),
-    replacement: zLedgerEntryResponse.optional(),
-    replayed: z.boolean().optional()
 });
 
 /**
@@ -813,13 +589,6 @@ export const zInvoiceDetailResponse = z.object({
     invoice: zInvoiceResponse.optional(),
     items: z.array(zItemResponse).optional(),
     payments: z.array(zInvoicePaymentResponse).optional()
-});
-
-/**
- * Why the invoice is voided.
- */
-export const zVoidRequest = z.object({
-    reason: z.string().optional()
 });
 
 /**
@@ -1000,6 +769,237 @@ export const zCreateResponse = z.object({
 });
 
 /**
+ * A top-up that was started.
+ */
+export const zTopUpResponse = z.object({
+    id: z.string().optional(),
+    status: z.string().optional(),
+    amount: zMoneyDto.optional(),
+    checkoutUrl: z.string().optional()
+});
+
+/**
+ * The token to exchange.
+ */
+export const zExchangeRequest = z.object({
+    token: z.string().optional()
+});
+
+/**
+ * A portal session.
+ */
+export const zSessionResponse = z.object({
+    sessionId: z.string().optional(),
+    customerId: z.string().optional(),
+    permissions: z.array(z.string()).optional(),
+    expiresAt: z.iso.datetime().optional()
+});
+
+/**
+ * The portal session the exchange opened.
+ */
+export const zExchangeResponse = z.object({
+    session: zSessionResponse.optional(),
+    csrfToken: z.string().optional(),
+    returnUrl: z.string().optional()
+});
+
+/**
+ * A Stripe-hosted page.
+ */
+export const zHostedPageResponse = z.object({
+    url: z.string().optional()
+});
+
+/**
+ * What a reconciliation found.
+ */
+export const zReconcileResponse = z.object({
+    checked: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    corrected: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    mismatches: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
+});
+
+/**
+ * One attempt to process a Stripe event.
+ */
+export const zEventAttemptResponse = z.object({
+    attempt: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    outcome: z.string().optional(),
+    detail: z.string().optional(),
+    attemptedAt: z.iso.datetime().optional()
+});
+
+/**
+ * A Stripe event that was received.
+ */
+export const zEventResponse = z.object({
+    id: z.string().optional(),
+    stripeEventId: z.string().optional(),
+    type: z.string().optional(),
+    status: z.string().optional(),
+    attempts: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    nextAttemptAt: z.iso.datetime().optional(),
+    lastError: z.string().optional(),
+    receivedAt: z.iso.datetime().optional(),
+    processedAt: z.iso.datetime().optional()
+});
+
+/**
+ * A Stripe event with how its processing went.
+ */
+export const zEventDetailResponse = z.object({
+    event: zEventResponse.optional(),
+    history: z.array(zEventAttemptResponse).optional()
+});
+
+/**
+ * The tenant's details for Stripe Connect onboarding.
+ */
+export const zConnectRequest = z.object({
+    displayName: z.string().optional(),
+    contactEmail: z.string().optional()
+});
+
+/**
+ * The Stripe connection and the onboarding page.
+ */
+export const zConnectionResponse = z.object({
+    configuration: zConfigurationResponse.optional(),
+    onboardingUrl: z.string().optional()
+});
+
+/**
+ * One price tier.
+ */
+export const zTierDto = z.object({
+    upTo: z.string().optional(),
+    unitPrice: z.string().optional()
+});
+
+/**
+ * A pricing strategy: how a quantity of usage becomes an amount. Prices are decimals in minor units, and rounding to whole minor units happens once, on the total.
+ */
+export const zRuleDto = z.object({
+    model: z.string().optional(),
+    metric: z.string().optional(),
+    unit: z.string().optional(),
+    unitPrice: z.string().optional(),
+    increment: z.string().optional(),
+    mode: z.string().optional(),
+    tiers: z.array(zTierDto).optional(),
+    executionFee: z.string().optional(),
+    fixedPrice: z.string().optional(),
+    components: z.array(z.lazy((): any => zRuleDto)).optional()
+});
+
+/**
+ * A version of a plan.
+ */
+export const zVersionRequest = z.object({
+    rule: zRuleDto.optional(),
+    billingCycle: z.string().optional(),
+    minCharge: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    maxCharge: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    rounding: z.string().optional(),
+    validFrom: z.iso.datetime().optional(),
+    validUntil: z.iso.datetime().optional()
+});
+
+/**
+ * The plan to create, with its first version.
+ */
+export const zCreatePlanRequest = z.object({
+    code: z.string().optional(),
+    name: z.string().optional(),
+    currency: z.string().optional(),
+    model: z.string().optional(),
+    version: zVersionRequest.optional()
+});
+
+/**
+ * One version of a pricing plan. Earlier versions, and every charge that used them, are unchanged.
+ */
+export const zVersionResponse = z.object({
+    version: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    rule: zRuleDto.optional(),
+    billingCycle: z.string().optional(),
+    minCharge: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    maxCharge: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    rounding: z.string().optional(),
+    validFrom: z.iso.datetime().optional(),
+    validUntil: z.iso.datetime().optional(),
+    createdAt: z.iso.datetime().optional(),
+    createdBy: z.string().optional()
+});
+
+/**
+ * A pricing plan and its versions.
+ */
+export const zPlanResponse = z.object({
+    id: z.string().optional(),
+    code: z.string().optional(),
+    name: z.string().optional(),
+    model: z.string().optional(),
+    currency: z.string().optional(),
+    status: z.string().optional(),
+    createdAt: z.iso.datetime().optional(),
+    retiredAt: z.iso.datetime().optional(),
+    versions: z.array(zVersionResponse).optional()
+});
+
+/**
+ * The entry that replaces a reversed one.
+ */
+export const zReplacementRequest = z.object({
+    type: z.string().optional(),
+    amount: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    currency: z.string().optional(),
+    reference: z.string().optional()
+});
+
+/**
+ * The correction to post.
+ */
+export const zReverseRequest = z.object({
+    reason: z.string().optional(),
+    replacement: zReplacementRequest.optional()
+});
+
+/**
+ * One entry of a wallet's append-only ledger.
+ */
+export const zLedgerEntryResponse = z.object({
+    id: z.string().optional(),
+    sequence: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    type: z.string().optional(),
+    amount: zMoneyDto.optional(),
+    reference: z.string().optional(),
+    reservationId: z.string().optional(),
+    chargeId: z.string().optional(),
+    reversalOf: z.string().optional(),
+    actor: z.string().optional(),
+    reason: z.string().optional(),
+    createdAt: z.iso.datetime().optional()
+});
+
+/**
+ * The entries a reversal posted.
+ */
+export const zReversalResponse = z.object({
+    reversal: zLedgerEntryResponse.optional(),
+    replacement: zLedgerEntryResponse.optional(),
+    replayed: z.boolean().optional()
+});
+
+/**
+ * Why the invoice is voided.
+ */
+export const zVoidRequest = z.object({
+    reason: z.string().optional()
+});
+
+/**
  * The fields to change. A field that is left out keeps its value.
  */
 export const zUpdateEndpointRequest = z.object({
@@ -1020,10 +1020,55 @@ export const zPageInfo = z.object({
 });
 
 /**
+ * A page of endpoint response rows, with the paging facts when the request asked for them.
+ */
+export const zPageEndpointResponse = z.object({
+    data: z.array(zEndpointResponse).optional(),
+    page: zPageInfo.nullish()
+});
+
+/**
+ * A page of delivery response rows, with the paging facts when the request asked for them.
+ */
+export const zPageDeliveryResponse = z.object({
+    data: z.array(zDeliveryResponse).optional(),
+    page: zPageInfo.nullish()
+});
+
+/**
+ * One attempt: a failed attempt to pay, or an attempt to deliver a webhook event.
+ */
+export const zAttemptResponse = z.object({
+    attemptNo: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    statusCode: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    error: z.string().optional(),
+    responseExcerpt: z.string().optional(),
+    latencyMs: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    attemptedAt: z.iso.datetime().optional()
+});
+
+/**
+ * A delivery with the body that was sent and every attempt.
+ */
+export const zDeliveryDetailResponse = z.object({
+    delivery: zDeliveryResponse.optional(),
+    body: z.string().optional(),
+    attempts: z.array(zAttemptResponse).optional()
+});
+
+/**
  * A page of wallet response rows, with the paging facts when the request asked for them.
  */
 export const zPageWalletResponse = z.object({
     data: z.array(zWalletResponse).optional(),
+    page: zPageInfo.nullish()
+});
+
+/**
+ * A page of redemption response rows, with the paging facts when the request asked for them.
+ */
+export const zPageRedemptionResponse = z.object({
+    data: z.array(zRedemptionResponse).optional(),
     page: zPageInfo.nullish()
 });
 
@@ -1036,16 +1081,6 @@ export const zPageLedgerEntryResponse = z.object({
 });
 
 /**
- * The usage of one metric over a period.
- */
-export const zUsageTotalResponse = z.object({
-    metric: z.string().optional(),
-    unit: z.string().optional(),
-    quantity: z.string().optional(),
-    events: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
-});
-
-/**
  * A page of usage event response rows, with the paging facts when the request asked for them.
  */
 export const zPageUsageEventResponse = z.object({
@@ -1054,10 +1089,28 @@ export const zPageUsageEventResponse = z.object({
 });
 
 /**
+ * The usage of one metric over a period.
+ */
+export const zTotalResponse = z.object({
+    metric: z.string().optional(),
+    unit: z.string().optional(),
+    quantity: z.string().optional(),
+    events: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
+});
+
+/**
  * A page of subscription response rows, with the paging facts when the request asked for them.
  */
 export const zPageSubscriptionResponse = z.object({
     data: z.array(zSubscriptionResponse).optional(),
+    page: zPageInfo.nullish()
+});
+
+/**
+ * A page of reservation response rows, with the paging facts when the request asked for them.
+ */
+export const zPageReservationResponse = z.object({
+    data: z.array(zReservationResponse).optional(),
     page: zPageInfo.nullish()
 });
 
@@ -1070,20 +1123,19 @@ export const zPageRefundResponse = z.object({
 });
 
 /**
+ * A page of plan response rows, with the paging facts when the request asked for them.
+ */
+export const zPagePlanResponse = z.object({
+    data: z.array(zPlanResponse).optional(),
+    page: zPageInfo.nullish()
+});
+
+/**
  * A page of payment response rows, with the paging facts when the request asked for them.
  */
 export const zPagePaymentResponse = z.object({
     data: z.array(zPaymentResponse).optional(),
     page: zPageInfo.nullish()
-});
-
-/**
- * One attempt: a failed attempt to pay, or an attempt to deliver a webhook event.
- */
-export const zAttemptResponse = z.object({
-    failureCode: z.string().optional(),
-    failureMessage: z.string().optional(),
-    occurredAt: z.iso.datetime().optional()
 });
 
 /**
@@ -1104,6 +1156,30 @@ export const zPageInvoiceResponse = z.object({
 });
 
 /**
+ * A page of customer response rows, with the paging facts when the request asked for them.
+ */
+export const zPageCustomerResponse = z.object({
+    data: z.array(zCustomerResponse).optional(),
+    page: zPageInfo.nullish()
+});
+
+/**
+ * A page of coupon response rows, with the paging facts when the request asked for them.
+ */
+export const zPageCouponResponse = z.object({
+    data: z.array(zCouponResponse).optional(),
+    page: zPageInfo.nullish()
+});
+
+/**
+ * A page of promotion code response rows, with the paging facts when the request asked for them.
+ */
+export const zPagePromotionCodeResponse = z.object({
+    data: z.array(zPromotionCodeResponse).optional(),
+    page: zPageInfo.nullish()
+});
+
+/**
  * A page of charge response rows, with the paging facts when the request asked for them.
  */
 export const zPageChargeResponse = z.object({
@@ -1112,42 +1188,9 @@ export const zPageChargeResponse = z.object({
 });
 
 /**
- * A page of endpoint response rows, with the paging facts when the request asked for them.
- */
-export const zPageEndpointResponse = z.object({
-    data: z.array(zEndpointResponse).optional(),
-    page: zPageInfo.nullish()
-});
-
-/**
- * A page of delivery response rows, with the paging facts when the request asked for them.
- */
-export const zPageDeliveryResponse = z.object({
-    data: z.array(zDeliveryResponse).optional(),
-    page: zPageInfo.nullish()
-});
-
-/**
- * A delivery with the body that was sent and every attempt.
- */
-export const zDeliveryDetailResponse = z.object({
-    delivery: zDeliveryResponse.optional(),
-    body: z.string().optional(),
-    attempts: z.array(zAttemptResponse).optional()
-});
-
-/**
- * A page of redemption response rows, with the paging facts when the request asked for them.
- */
-export const zPageRedemptionResponse = z.object({
-    data: z.array(zRedemptionResponse).optional(),
-    page: zPageInfo.nullish()
-});
-
-/**
  * The usage of one metric over a period.
  */
-export const zTotalResponse = z.object({
+export const zUsageTotalResponse = z.object({
     metric: z.string().optional(),
     unit: z.string().optional(),
     quantity: z.string().optional(),
@@ -1185,46 +1228,6 @@ export const zPageEventResponse = z.object({
 });
 
 /**
- * A page of reservation response rows, with the paging facts when the request asked for them.
- */
-export const zPageReservationResponse = z.object({
-    data: z.array(zReservationResponse).optional(),
-    page: zPageInfo.nullish()
-});
-
-/**
- * A page of plan response rows, with the paging facts when the request asked for them.
- */
-export const zPagePlanResponse = z.object({
-    data: z.array(zPlanResponse).optional(),
-    page: zPageInfo.nullish()
-});
-
-/**
- * A page of customer response rows, with the paging facts when the request asked for them.
- */
-export const zPageCustomerResponse = z.object({
-    data: z.array(zCustomerResponse).optional(),
-    page: zPageInfo.nullish()
-});
-
-/**
- * A page of coupon response rows, with the paging facts when the request asked for them.
- */
-export const zPageCouponResponse = z.object({
-    data: z.array(zCouponResponse).optional(),
-    page: zPageInfo.nullish()
-});
-
-/**
- * A page of promotion code response rows, with the paging facts when the request asked for them.
- */
-export const zPagePromotionCodeResponse = z.object({
-    data: z.array(zPromotionCodeResponse).optional(),
-    page: zPageInfo.nullish()
-});
-
-/**
  * The body of every error: an RFC 9457 problem.
  */
 export const zProblemDetail = z.object({
@@ -1234,6 +1237,34 @@ export const zProblemDetail = z.object({
     detail: z.string().optional(),
     instance: z.string().optional()
 });
+
+export const zGetAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A billing customer.
+ */
+export const zGetAsTenantSystemResponse = zCustomerResponse;
+
+/**
+ * The customer properties to store.
+ */
+export const zUpdateAsTenantSystemBody = zUpdateCustomerRequest;
+
+export const zUpdateAsTenantSystemHeaders = z.object({
+    'If-Match': z.string().optional(),
+    'X-Request-Id': z.string().optional()
+});
+
+export const zUpdateAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A billing customer.
+ */
+export const zUpdateAsTenantSystemResponse = zCustomerResponse;
 
 /**
  * The webhook signing secret.
@@ -1309,6 +1340,1358 @@ export const zUpdatePath = z.object({
  * A billing customer.
  */
 export const zUpdateResponse = zCustomerResponse;
+
+export const zListEndpointsAsTenantSystemQuery = z.object({
+    'filter[created_at][eq]': z.iso.datetime().optional(),
+    'filter[created_at][gt]': z.iso.datetime().optional(),
+    'filter[created_at][gte]': z.iso.datetime().optional(),
+    'filter[created_at][in]': z.string().optional(),
+    'filter[created_at][lt]': z.iso.datetime().optional(),
+    'filter[created_at][lte]': z.iso.datetime().optional(),
+    'filter[created_at][neq]': z.iso.datetime().optional(),
+    'filter[created_at][nin]': z.string().optional(),
+    'filter[description][eq]': z.string().max(255).optional(),
+    'filter[description][in]': z.string().optional(),
+    'filter[description][is_null]': z.boolean().optional(),
+    'filter[description][neq]': z.string().max(255).optional(),
+    'filter[description][nin]': z.string().optional(),
+    'filter[description][starts_with]': z.string().max(255).optional(),
+    'filter[id][eq]': z.uuid().optional(),
+    'filter[id][in]': z.string().optional(),
+    'filter[id][neq]': z.uuid().optional(),
+    'filter[id][nin]': z.string().optional(),
+    'filter[key_id][eq]': z.string().max(255).optional(),
+    'filter[key_id][in]': z.string().optional(),
+    'filter[key_id][neq]': z.string().max(255).optional(),
+    'filter[key_id][nin]': z.string().optional(),
+    'filter[key_id][starts_with]': z.string().max(255).optional(),
+    'filter[secret_rotated_at][eq]': z.iso.datetime().optional(),
+    'filter[secret_rotated_at][gt]': z.iso.datetime().optional(),
+    'filter[secret_rotated_at][gte]': z.iso.datetime().optional(),
+    'filter[secret_rotated_at][in]': z.string().optional(),
+    'filter[secret_rotated_at][is_null]': z.boolean().optional(),
+    'filter[secret_rotated_at][lt]': z.iso.datetime().optional(),
+    'filter[secret_rotated_at][lte]': z.iso.datetime().optional(),
+    'filter[secret_rotated_at][neq]': z.iso.datetime().optional(),
+    'filter[secret_rotated_at][nin]': z.string().optional(),
+    'filter[status][eq]': z.enum(['ACTIVE', 'DISABLED']).optional(),
+    'filter[status][in]': z.string().optional(),
+    'filter[status][neq]': z.enum(['ACTIVE', 'DISABLED']).optional(),
+    'filter[status][nin]': z.string().optional(),
+    'filter[updated_at][eq]': z.iso.datetime().optional(),
+    'filter[updated_at][gt]': z.iso.datetime().optional(),
+    'filter[updated_at][gte]': z.iso.datetime().optional(),
+    'filter[updated_at][in]': z.string().optional(),
+    'filter[updated_at][lt]': z.iso.datetime().optional(),
+    'filter[updated_at][lte]': z.iso.datetime().optional(),
+    'filter[updated_at][neq]': z.iso.datetime().optional(),
+    'filter[updated_at][nin]': z.string().optional(),
+    'filter[url][eq]': z.string().max(255).optional(),
+    'filter[url][in]': z.string().optional(),
+    'filter[url][neq]': z.string().max(255).optional(),
+    'filter[url][nin]': z.string().optional(),
+    'filter[url][starts_with]': z.string().max(255).optional(),
+    sort: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).lte(10000).optional().default(0),
+    cursor: z.string().optional(),
+    page_info: z.enum(['full', 'cursor']).optional()
+});
+
+/**
+ * A page of endpoint response rows, with the paging facts when the request asked for them.
+ */
+export const zListEndpointsAsTenantSystemResponse = zPageEndpointResponse;
+
+/**
+ * The endpoint to register.
+ */
+export const zCreateEndpointAsTenantSystemBody = zCreateEndpointRequest;
+
+export const zCreateEndpointAsTenantSystemHeaders = z.object({
+    'X-Request-Id': z.string().optional()
+});
+
+/**
+ * An endpoint with its signing secret, shown once.
+ */
+export const zCreateEndpointAsTenantSystemResponse = zEndpointWithSecretResponse;
+
+export const zRotateSecretAsTenantSystemHeaders = z.object({
+    'X-Request-Id': z.string().optional()
+});
+
+export const zRotateSecretAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * An endpoint with its signing secret, shown once.
+ */
+export const zRotateSecretAsTenantSystemResponse = zEndpointWithSecretResponse;
+
+export const zResendAsTenantSystemHeaders = z.object({
+    'X-Request-Id': z.string().optional()
+});
+
+export const zResendAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * One delivery of an event to an endpoint.
+ */
+export const zResendAsTenantSystemResponse = zDeliveryResponse;
+
+export const zWalletsAsTenantSystemQuery = z.object({
+    'filter[balance][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[balance][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[balance][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[balance][in]': z.string().optional(),
+    'filter[balance][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[balance][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[balance][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[balance][nin]': z.string().optional(),
+    'filter[created_at][eq]': z.iso.datetime().optional(),
+    'filter[created_at][gt]': z.iso.datetime().optional(),
+    'filter[created_at][gte]': z.iso.datetime().optional(),
+    'filter[created_at][in]': z.string().optional(),
+    'filter[created_at][lt]': z.iso.datetime().optional(),
+    'filter[created_at][lte]': z.iso.datetime().optional(),
+    'filter[created_at][neq]': z.iso.datetime().optional(),
+    'filter[created_at][nin]': z.string().optional(),
+    'filter[credit_limit][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[credit_limit][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[credit_limit][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[credit_limit][in]': z.string().optional(),
+    'filter[credit_limit][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[credit_limit][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[credit_limit][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[credit_limit][nin]': z.string().optional(),
+    'filter[currency][eq]': z.string().max(255).optional(),
+    'filter[currency][in]': z.string().optional(),
+    'filter[currency][neq]': z.string().max(255).optional(),
+    'filter[currency][nin]': z.string().optional(),
+    'filter[currency][starts_with]': z.string().max(255).optional(),
+    'filter[customer_id][eq]': z.uuid().optional(),
+    'filter[customer_id][in]': z.string().optional(),
+    'filter[customer_id][neq]': z.uuid().optional(),
+    'filter[customer_id][nin]': z.string().optional(),
+    'filter[held][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[held][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[held][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[held][in]': z.string().optional(),
+    'filter[held][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[held][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[held][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[held][nin]': z.string().optional(),
+    'filter[id][eq]': z.uuid().optional(),
+    'filter[id][in]': z.string().optional(),
+    'filter[id][neq]': z.uuid().optional(),
+    'filter[id][nin]': z.string().optional(),
+    'filter[last_sequence][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[last_sequence][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[last_sequence][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[last_sequence][in]': z.string().optional(),
+    'filter[last_sequence][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[last_sequence][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[last_sequence][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[last_sequence][nin]': z.string().optional(),
+    'filter[mode][eq]': z.enum(['POSTPAID', 'PREPAID']).optional(),
+    'filter[mode][in]': z.string().optional(),
+    'filter[mode][neq]': z.enum(['POSTPAID', 'PREPAID']).optional(),
+    'filter[mode][nin]': z.string().optional(),
+    sort: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).lte(10000).optional().default(0),
+    cursor: z.string().optional(),
+    page_info: z.enum(['full', 'cursor']).optional()
+});
+
+/**
+ * A page of wallet response rows, with the paging facts when the request asked for them.
+ */
+export const zWalletsAsTenantSystemResponse = zPageWalletResponse;
+
+/**
+ * The wallet to open.
+ */
+export const zOpenWalletAsTenantSystemBody = zOpenWalletRequest;
+
+export const zOpenWalletAsTenantSystemHeaders = z.object({
+    'X-Request-Id': z.string().optional()
+});
+
+/**
+ * A customer's wallet in one currency.
+ */
+export const zOpenWalletAsTenantSystemResponse = zWalletResponse;
+
+export const zRedemptionsOfWalletAsTenantSystemPath = z.object({
+    walletId: z.string()
+});
+
+export const zRedemptionsOfWalletAsTenantSystemQuery = z.object({
+    'filter[applications_used][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[applications_used][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[applications_used][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[applications_used][in]': z.string().optional(),
+    'filter[applications_used][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[applications_used][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[applications_used][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[applications_used][nin]': z.string().optional(),
+    'filter[code_id][eq]': z.uuid().optional(),
+    'filter[code_id][in]': z.string().optional(),
+    'filter[code_id][is_null]': z.boolean().optional(),
+    'filter[code_id][neq]': z.uuid().optional(),
+    'filter[code_id][nin]': z.string().optional(),
+    'filter[coupon_id][eq]': z.uuid().optional(),
+    'filter[coupon_id][in]': z.string().optional(),
+    'filter[coupon_id][neq]': z.uuid().optional(),
+    'filter[coupon_id][nin]': z.string().optional(),
+    'filter[currency][eq]': z.string().max(255).optional(),
+    'filter[currency][in]': z.string().optional(),
+    'filter[currency][neq]': z.string().max(255).optional(),
+    'filter[currency][nin]': z.string().optional(),
+    'filter[currency][starts_with]': z.string().max(255).optional(),
+    'filter[customer_id][eq]': z.uuid().optional(),
+    'filter[customer_id][in]': z.string().optional(),
+    'filter[customer_id][neq]': z.uuid().optional(),
+    'filter[customer_id][nin]': z.string().optional(),
+    'filter[discount_total][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[discount_total][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[discount_total][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[discount_total][in]': z.string().optional(),
+    'filter[discount_total][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[discount_total][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[discount_total][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[discount_total][nin]': z.string().optional(),
+    'filter[end_reason][eq]': z.string().max(255).optional(),
+    'filter[end_reason][in]': z.string().optional(),
+    'filter[end_reason][is_null]': z.boolean().optional(),
+    'filter[end_reason][neq]': z.string().max(255).optional(),
+    'filter[end_reason][nin]': z.string().optional(),
+    'filter[end_reason][starts_with]': z.string().max(255).optional(),
+    'filter[ended_at][eq]': z.iso.datetime().optional(),
+    'filter[ended_at][gt]': z.iso.datetime().optional(),
+    'filter[ended_at][gte]': z.iso.datetime().optional(),
+    'filter[ended_at][in]': z.string().optional(),
+    'filter[ended_at][is_null]': z.boolean().optional(),
+    'filter[ended_at][lt]': z.iso.datetime().optional(),
+    'filter[ended_at][lte]': z.iso.datetime().optional(),
+    'filter[ended_at][neq]': z.iso.datetime().optional(),
+    'filter[ended_at][nin]': z.string().optional(),
+    'filter[ends_at][eq]': z.iso.datetime().optional(),
+    'filter[ends_at][gt]': z.iso.datetime().optional(),
+    'filter[ends_at][gte]': z.iso.datetime().optional(),
+    'filter[ends_at][in]': z.string().optional(),
+    'filter[ends_at][is_null]': z.boolean().optional(),
+    'filter[ends_at][lt]': z.iso.datetime().optional(),
+    'filter[ends_at][lte]': z.iso.datetime().optional(),
+    'filter[ends_at][neq]': z.iso.datetime().optional(),
+    'filter[ends_at][nin]': z.string().optional(),
+    'filter[id][eq]': z.uuid().optional(),
+    'filter[id][in]': z.string().optional(),
+    'filter[id][neq]': z.uuid().optional(),
+    'filter[id][nin]': z.string().optional(),
+    'filter[max_applications][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_applications][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_applications][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_applications][in]': z.string().optional(),
+    'filter[max_applications][is_null]': z.boolean().optional(),
+    'filter[max_applications][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_applications][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_applications][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_applications][nin]': z.string().optional(),
+    'filter[max_total_discount][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_total_discount][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_total_discount][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_total_discount][in]': z.string().optional(),
+    'filter[max_total_discount][is_null]': z.boolean().optional(),
+    'filter[max_total_discount][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_total_discount][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_total_discount][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_total_discount][nin]': z.string().optional(),
+    'filter[redeemed_at][eq]': z.iso.datetime().optional(),
+    'filter[redeemed_at][gt]': z.iso.datetime().optional(),
+    'filter[redeemed_at][gte]': z.iso.datetime().optional(),
+    'filter[redeemed_at][in]': z.string().optional(),
+    'filter[redeemed_at][lt]': z.iso.datetime().optional(),
+    'filter[redeemed_at][lte]': z.iso.datetime().optional(),
+    'filter[redeemed_at][neq]': z.iso.datetime().optional(),
+    'filter[redeemed_at][nin]': z.string().optional(),
+    'filter[status][eq]': z.enum([
+        'ACTIVE',
+        'ENDED',
+        'REVOKED'
+    ]).optional(),
+    'filter[status][in]': z.string().optional(),
+    'filter[status][neq]': z.enum([
+        'ACTIVE',
+        'ENDED',
+        'REVOKED'
+    ]).optional(),
+    'filter[status][nin]': z.string().optional(),
+    'filter[wallet_id][eq]': z.uuid().optional(),
+    'filter[wallet_id][in]': z.string().optional(),
+    'filter[wallet_id][neq]': z.uuid().optional(),
+    'filter[wallet_id][nin]': z.string().optional(),
+    sort: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).lte(10000).optional().default(0),
+    cursor: z.string().optional(),
+    page_info: z.enum(['full', 'cursor']).optional()
+});
+
+/**
+ * A page of redemption response rows, with the paging facts when the request asked for them.
+ */
+export const zRedemptionsOfWalletAsTenantSystemResponse = zPageRedemptionResponse;
+
+/**
+ * The coupon to redeem. Give a `code`, or a `couponId` to attach it directly.
+ */
+export const zRedeemByCodeAsTenantSystemBody = zRedeemRequest;
+
+export const zRedeemByCodeAsTenantSystemHeaders = z.object({
+    'Idempotency-Key': z.string(),
+    'X-Request-Id': z.string().optional()
+});
+
+export const zRedeemByCodeAsTenantSystemPath = z.object({
+    walletId: z.string()
+});
+
+/**
+ * An earlier identical request already created it; that resource is returned
+ */
+export const zRedeemByCodeAsTenantSystemResponse = zRedemptionResponse;
+
+/**
+ * The coupon to redeem. Give a `code`, or a `couponId` to attach it directly.
+ */
+export const zAttachAsTenantSystemBody = zRedeemRequest;
+
+export const zAttachAsTenantSystemHeaders = z.object({
+    'Idempotency-Key': z.string(),
+    'X-Request-Id': z.string().optional()
+});
+
+export const zAttachAsTenantSystemPath = z.object({
+    walletId: z.string()
+});
+
+/**
+ * An earlier identical request already created it; that resource is returned
+ */
+export const zAttachAsTenantSystemResponse = zRedemptionResponse;
+
+export const zHistoryAsTenantSystemQuery = z.object({
+    'filter[customer_id][eq]': z.uuid().optional(),
+    'filter[customer_id][in]': z.string().optional(),
+    'filter[customer_id][neq]': z.uuid().optional(),
+    'filter[customer_id][nin]': z.string().optional(),
+    'filter[id][eq]': z.uuid().optional(),
+    'filter[id][in]': z.string().optional(),
+    'filter[id][neq]': z.uuid().optional(),
+    'filter[id][nin]': z.string().optional(),
+    'filter[metric][contains]': z.string().max(255).optional(),
+    'filter[metric][eq]': z.string().max(255).optional(),
+    'filter[metric][in]': z.string().optional(),
+    'filter[metric][neq]': z.string().max(255).optional(),
+    'filter[metric][nin]': z.string().optional(),
+    'filter[metric][starts_with]': z.string().max(255).optional(),
+    'filter[occurred_at][eq]': z.iso.datetime().optional(),
+    'filter[occurred_at][gt]': z.iso.datetime().optional(),
+    'filter[occurred_at][gte]': z.iso.datetime().optional(),
+    'filter[occurred_at][in]': z.string().optional(),
+    'filter[occurred_at][lt]': z.iso.datetime().optional(),
+    'filter[occurred_at][lte]': z.iso.datetime().optional(),
+    'filter[occurred_at][neq]': z.iso.datetime().optional(),
+    'filter[occurred_at][nin]': z.string().optional(),
+    'filter[quantity][eq]': z.number().optional(),
+    'filter[quantity][gt]': z.number().optional(),
+    'filter[quantity][gte]': z.number().optional(),
+    'filter[quantity][in]': z.string().optional(),
+    'filter[quantity][lt]': z.number().optional(),
+    'filter[quantity][lte]': z.number().optional(),
+    'filter[quantity][neq]': z.number().optional(),
+    'filter[quantity][nin]': z.string().optional(),
+    'filter[recorded_at][eq]': z.iso.datetime().optional(),
+    'filter[recorded_at][gt]': z.iso.datetime().optional(),
+    'filter[recorded_at][gte]': z.iso.datetime().optional(),
+    'filter[recorded_at][in]': z.string().optional(),
+    'filter[recorded_at][lt]': z.iso.datetime().optional(),
+    'filter[recorded_at][lte]': z.iso.datetime().optional(),
+    'filter[recorded_at][neq]': z.iso.datetime().optional(),
+    'filter[recorded_at][nin]': z.string().optional(),
+    'filter[resource_ref][eq]': z.string().max(255).optional(),
+    'filter[resource_ref][in]': z.string().optional(),
+    'filter[resource_ref][is_null]': z.boolean().optional(),
+    'filter[resource_ref][neq]': z.string().max(255).optional(),
+    'filter[resource_ref][nin]': z.string().optional(),
+    'filter[resource_ref][starts_with]': z.string().max(255).optional(),
+    'filter[source_event_id][eq]': z.string().max(255).optional(),
+    'filter[source_event_id][in]': z.string().optional(),
+    'filter[source_event_id][is_null]': z.boolean().optional(),
+    'filter[source_event_id][neq]': z.string().max(255).optional(),
+    'filter[source_event_id][nin]': z.string().optional(),
+    'filter[source_event_id][starts_with]': z.string().max(255).optional(),
+    'filter[tenant_system_id][eq]': z.uuid().optional(),
+    'filter[tenant_system_id][in]': z.string().optional(),
+    'filter[tenant_system_id][is_null]': z.boolean().optional(),
+    'filter[tenant_system_id][neq]': z.uuid().optional(),
+    'filter[tenant_system_id][nin]': z.string().optional(),
+    'filter[unit][eq]': z.string().max(255).optional(),
+    'filter[unit][in]': z.string().optional(),
+    'filter[unit][neq]': z.string().max(255).optional(),
+    'filter[unit][nin]': z.string().optional(),
+    'filter[unit][starts_with]': z.string().max(255).optional(),
+    sort: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).lte(10000).optional().default(0),
+    cursor: z.string().optional(),
+    page_info: z.enum(['full', 'cursor']).optional()
+});
+
+/**
+ * A page of usage event response rows, with the paging facts when the request asked for them.
+ */
+export const zHistoryAsTenantSystemResponse = zPageUsageEventResponse;
+
+/**
+ * One usage event to record.
+ */
+export const zRecordOneAsTenantSystemBody = zUsageEventRequest;
+
+/**
+ * The same event was already recorded; the recorded event is returned
+ */
+export const zRecordOneAsTenantSystemResponse = zRecordedResponse;
+
+/**
+ * The usage events to record, at most 500, all or none.
+ */
+export const zRecordBatchAsTenantSystemBody = zBatchRequest;
+
+/**
+ * The result per event, in request order.
+ */
+export const zRecordBatchAsTenantSystemResponse = zBatchResponse;
+
+export const zSubscriptionsAsTenantSystemQuery = z.object({
+    'filter[anchor][eq]': z.iso.datetime().optional(),
+    'filter[anchor][gt]': z.iso.datetime().optional(),
+    'filter[anchor][gte]': z.iso.datetime().optional(),
+    'filter[anchor][in]': z.string().optional(),
+    'filter[anchor][lt]': z.iso.datetime().optional(),
+    'filter[anchor][lte]': z.iso.datetime().optional(),
+    'filter[anchor][neq]': z.iso.datetime().optional(),
+    'filter[anchor][nin]': z.string().optional(),
+    'filter[cancel_at_period_end][eq]': z.boolean().optional(),
+    'filter[cancel_at_period_end][neq]': z.boolean().optional(),
+    'filter[canceled_at][eq]': z.iso.datetime().optional(),
+    'filter[canceled_at][gt]': z.iso.datetime().optional(),
+    'filter[canceled_at][gte]': z.iso.datetime().optional(),
+    'filter[canceled_at][in]': z.string().optional(),
+    'filter[canceled_at][is_null]': z.boolean().optional(),
+    'filter[canceled_at][lt]': z.iso.datetime().optional(),
+    'filter[canceled_at][lte]': z.iso.datetime().optional(),
+    'filter[canceled_at][neq]': z.iso.datetime().optional(),
+    'filter[canceled_at][nin]': z.string().optional(),
+    'filter[created_at][eq]': z.iso.datetime().optional(),
+    'filter[created_at][gt]': z.iso.datetime().optional(),
+    'filter[created_at][gte]': z.iso.datetime().optional(),
+    'filter[created_at][in]': z.string().optional(),
+    'filter[created_at][lt]': z.iso.datetime().optional(),
+    'filter[created_at][lte]': z.iso.datetime().optional(),
+    'filter[created_at][neq]': z.iso.datetime().optional(),
+    'filter[created_at][nin]': z.string().optional(),
+    'filter[customer_id][eq]': z.uuid().optional(),
+    'filter[customer_id][in]': z.string().optional(),
+    'filter[customer_id][neq]': z.uuid().optional(),
+    'filter[customer_id][nin]': z.string().optional(),
+    'filter[cycle][eq]': z.enum([
+        'DAILY',
+        'MONTHLY',
+        'QUARTERLY',
+        'WEEKLY',
+        'YEARLY'
+    ]).optional(),
+    'filter[cycle][in]': z.string().optional(),
+    'filter[cycle][neq]': z.enum([
+        'DAILY',
+        'MONTHLY',
+        'QUARTERLY',
+        'WEEKLY',
+        'YEARLY'
+    ]).optional(),
+    'filter[cycle][nin]': z.string().optional(),
+    'filter[id][eq]': z.uuid().optional(),
+    'filter[id][in]': z.string().optional(),
+    'filter[id][neq]': z.uuid().optional(),
+    'filter[id][nin]': z.string().optional(),
+    'filter[next_renewal_at][eq]': z.iso.datetime().optional(),
+    'filter[next_renewal_at][gt]': z.iso.datetime().optional(),
+    'filter[next_renewal_at][gte]': z.iso.datetime().optional(),
+    'filter[next_renewal_at][in]': z.string().optional(),
+    'filter[next_renewal_at][is_null]': z.boolean().optional(),
+    'filter[next_renewal_at][lt]': z.iso.datetime().optional(),
+    'filter[next_renewal_at][lte]': z.iso.datetime().optional(),
+    'filter[next_renewal_at][neq]': z.iso.datetime().optional(),
+    'filter[next_renewal_at][nin]': z.string().optional(),
+    'filter[periods_charged][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[periods_charged][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[periods_charged][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[periods_charged][in]': z.string().optional(),
+    'filter[periods_charged][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[periods_charged][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[periods_charged][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[periods_charged][nin]': z.string().optional(),
+    'filter[plan_code][eq]': z.string().max(255).optional(),
+    'filter[plan_code][in]': z.string().optional(),
+    'filter[plan_code][neq]': z.string().max(255).optional(),
+    'filter[plan_code][nin]': z.string().optional(),
+    'filter[plan_code][starts_with]': z.string().max(255).optional(),
+    'filter[plan_id][eq]': z.uuid().optional(),
+    'filter[plan_id][in]': z.string().optional(),
+    'filter[plan_id][neq]': z.uuid().optional(),
+    'filter[plan_id][nin]': z.string().optional(),
+    'filter[renewal_attempts][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[renewal_attempts][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[renewal_attempts][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[renewal_attempts][in]': z.string().optional(),
+    'filter[renewal_attempts][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[renewal_attempts][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[renewal_attempts][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[renewal_attempts][nin]': z.string().optional(),
+    'filter[status][eq]': z.enum([
+        'ACTIVE',
+        'CANCELED',
+        'PAST_DUE'
+    ]).optional(),
+    'filter[status][in]': z.string().optional(),
+    'filter[status][neq]': z.enum([
+        'ACTIVE',
+        'CANCELED',
+        'PAST_DUE'
+    ]).optional(),
+    'filter[status][nin]': z.string().optional(),
+    'filter[updated_at][eq]': z.iso.datetime().optional(),
+    'filter[updated_at][gt]': z.iso.datetime().optional(),
+    'filter[updated_at][gte]': z.iso.datetime().optional(),
+    'filter[updated_at][in]': z.string().optional(),
+    'filter[updated_at][lt]': z.iso.datetime().optional(),
+    'filter[updated_at][lte]': z.iso.datetime().optional(),
+    'filter[updated_at][neq]': z.iso.datetime().optional(),
+    'filter[updated_at][nin]': z.string().optional(),
+    'filter[wallet_id][eq]': z.uuid().optional(),
+    'filter[wallet_id][in]': z.string().optional(),
+    'filter[wallet_id][neq]': z.uuid().optional(),
+    'filter[wallet_id][nin]': z.string().optional(),
+    sort: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).lte(10000).optional().default(0),
+    cursor: z.string().optional(),
+    page_info: z.enum(['full', 'cursor']).optional()
+});
+
+/**
+ * A page of subscription response rows, with the paging facts when the request asked for them.
+ */
+export const zSubscriptionsAsTenantSystemResponse = zPageSubscriptionResponse;
+
+/**
+ * The subscription to start.
+ */
+export const zSubscribeAsTenantSystemBody = zSubscribeRequest;
+
+export const zSubscribeAsTenantSystemHeaders = z.object({
+    'Idempotency-Key': z.string(),
+    'X-Request-Id': z.string().optional()
+});
+
+/**
+ * An earlier identical request already created it; that resource is returned
+ */
+export const zSubscribeAsTenantSystemResponse = zSubscriptionDetailResponse;
+
+export const zCancelAsTenantSystemHeaders = z.object({
+    'X-Request-Id': z.string().optional()
+});
+
+export const zCancelAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A subscription with its history.
+ */
+export const zCancelAsTenantSystemResponse = zSubscriptionDetailResponse;
+
+export const zReservationsAsTenantSystemQuery = z.object({
+    'filter[amount][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][in]': z.string().optional(),
+    'filter[amount][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][nin]': z.string().optional(),
+    'filter[captured_amount][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[captured_amount][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[captured_amount][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[captured_amount][in]': z.string().optional(),
+    'filter[captured_amount][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[captured_amount][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[captured_amount][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[captured_amount][nin]': z.string().optional(),
+    'filter[closed_at][eq]': z.iso.datetime().optional(),
+    'filter[closed_at][gt]': z.iso.datetime().optional(),
+    'filter[closed_at][gte]': z.iso.datetime().optional(),
+    'filter[closed_at][in]': z.string().optional(),
+    'filter[closed_at][is_null]': z.boolean().optional(),
+    'filter[closed_at][lt]': z.iso.datetime().optional(),
+    'filter[closed_at][lte]': z.iso.datetime().optional(),
+    'filter[closed_at][neq]': z.iso.datetime().optional(),
+    'filter[closed_at][nin]': z.string().optional(),
+    'filter[created_at][eq]': z.iso.datetime().optional(),
+    'filter[created_at][gt]': z.iso.datetime().optional(),
+    'filter[created_at][gte]': z.iso.datetime().optional(),
+    'filter[created_at][in]': z.string().optional(),
+    'filter[created_at][lt]': z.iso.datetime().optional(),
+    'filter[created_at][lte]': z.iso.datetime().optional(),
+    'filter[created_at][neq]': z.iso.datetime().optional(),
+    'filter[created_at][nin]': z.string().optional(),
+    'filter[expires_at][eq]': z.iso.datetime().optional(),
+    'filter[expires_at][gt]': z.iso.datetime().optional(),
+    'filter[expires_at][gte]': z.iso.datetime().optional(),
+    'filter[expires_at][in]': z.string().optional(),
+    'filter[expires_at][lt]': z.iso.datetime().optional(),
+    'filter[expires_at][lte]': z.iso.datetime().optional(),
+    'filter[expires_at][neq]': z.iso.datetime().optional(),
+    'filter[expires_at][nin]': z.string().optional(),
+    'filter[id][eq]': z.uuid().optional(),
+    'filter[id][in]': z.string().optional(),
+    'filter[id][neq]': z.uuid().optional(),
+    'filter[id][nin]': z.string().optional(),
+    'filter[reference][eq]': z.string().max(255).optional(),
+    'filter[reference][in]': z.string().optional(),
+    'filter[reference][is_null]': z.boolean().optional(),
+    'filter[reference][neq]': z.string().max(255).optional(),
+    'filter[reference][nin]': z.string().optional(),
+    'filter[reference][starts_with]': z.string().max(255).optional(),
+    'filter[status][eq]': z.enum([
+        'ACTIVE',
+        'CAPTURED',
+        'EXPIRED',
+        'RELEASED'
+    ]).optional(),
+    'filter[status][in]': z.string().optional(),
+    'filter[status][neq]': z.enum([
+        'ACTIVE',
+        'CAPTURED',
+        'EXPIRED',
+        'RELEASED'
+    ]).optional(),
+    'filter[status][nin]': z.string().optional(),
+    'filter[wallet.customer_id][eq]': z.uuid().optional(),
+    'filter[wallet.customer_id][in]': z.string().optional(),
+    'filter[wallet.customer_id][neq]': z.uuid().optional(),
+    'filter[wallet.customer_id][nin]': z.string().optional(),
+    'filter[wallet_id][eq]': z.uuid().optional(),
+    'filter[wallet_id][in]': z.string().optional(),
+    'filter[wallet_id][neq]': z.uuid().optional(),
+    'filter[wallet_id][nin]': z.string().optional(),
+    sort: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).lte(10000).optional().default(0),
+    cursor: z.string().optional(),
+    page_info: z.enum(['full', 'cursor']).optional()
+});
+
+/**
+ * A page of reservation response rows, with the paging facts when the request asked for them.
+ */
+export const zReservationsAsTenantSystemResponse = zPageReservationResponse;
+
+/**
+ * The hold to place on a wallet.
+ */
+export const zReserveAsTenantSystemBody = zReserveRequest;
+
+export const zReserveAsTenantSystemHeaders = z.object({
+    'Idempotency-Key': z.string()
+});
+
+/**
+ * An earlier identical request already created it; that resource is returned
+ */
+export const zReserveAsTenantSystemResponse = zReservationResponse;
+
+export const zReleaseAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A hold on part of a wallet's balance.
+ */
+export const zReleaseAsTenantSystemResponse = zReservationResponse;
+
+/**
+ * The actual cost to charge against a reservation.
+ */
+export const zCaptureAsTenantSystemBody = zCaptureRequest;
+
+export const zCaptureAsTenantSystemHeaders = z.object({
+    'Idempotency-Key': z.string()
+});
+
+export const zCaptureAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * An earlier identical request already created it; that resource is returned
+ */
+export const zCaptureAsTenantSystemResponse = zChargeResponse;
+
+export const zDeactivateCodeAsTenantSystemHeaders = z.object({
+    'X-Request-Id': z.string().optional()
+});
+
+export const zDeactivateCodeAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A promotion code.
+ */
+export const zDeactivateCodeAsTenantSystemResponse = zPromotionCodeResponse;
+
+/**
+ * The usage period to price and charge.
+ */
+export const zChargeUsageAsTenantSystemBody = zChargeUsageRequest;
+
+/**
+ * The usage was already charged and that rating is returned, or there was nothing to charge
+ */
+export const zChargeUsageAsTenantSystemResponse = zRatingResponse;
+
+/**
+ * The hold to place on a wallet.
+ */
+export const zReserveEstimateAsTenantSystemBody = zReserveRequest;
+
+export const zReserveEstimateAsTenantSystemHeaders = z.object({
+    'Idempotency-Key': z.string()
+});
+
+/**
+ * An earlier identical request already created it; that resource is returned
+ */
+export const zReserveEstimateAsTenantSystemResponse = zReserveResponse;
+
+/**
+ * The expected usage to price.
+ */
+export const zEstimateAsTenantSystemBody = zEstimateRequest;
+
+/**
+ * The estimated cost.
+ */
+export const zEstimateAsTenantSystemResponse = zEstimateResponse;
+
+/**
+ * The refund to request.
+ */
+export const zRequestRefundAsTenantSystemBody = zRefundRequest;
+
+export const zRequestRefundAsTenantSystemHeaders = z.object({
+    'Idempotency-Key': z.string(),
+    'X-Request-Id': z.string().optional()
+});
+
+export const zRequestRefundAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * An earlier identical request already created it; that resource is returned
+ */
+export const zRequestRefundAsTenantSystemResponse = zRefundResponse;
+
+/**
+ * The top-up to start.
+ */
+export const zCreateTopUpAsTenantSystemBody = zTopUpRequest;
+
+export const zCreateTopUpAsTenantSystemHeaders = z.object({
+    'Idempotency-Key': z.string(),
+    'X-Request-Id': z.string().optional()
+});
+
+/**
+ * An earlier identical request already created it; that resource is returned
+ */
+export const zCreateTopUpAsTenantSystemResponse = zPaymentResponse;
+
+export const zInvoicesAsTenantSystemQuery = z.object({
+    'filter[created_at][eq]': z.iso.datetime().optional(),
+    'filter[created_at][gt]': z.iso.datetime().optional(),
+    'filter[created_at][gte]': z.iso.datetime().optional(),
+    'filter[created_at][in]': z.string().optional(),
+    'filter[created_at][lt]': z.iso.datetime().optional(),
+    'filter[created_at][lte]': z.iso.datetime().optional(),
+    'filter[created_at][neq]': z.iso.datetime().optional(),
+    'filter[created_at][nin]': z.string().optional(),
+    'filter[currency][eq]': z.string().max(255).optional(),
+    'filter[currency][in]': z.string().optional(),
+    'filter[currency][neq]': z.string().max(255).optional(),
+    'filter[currency][nin]': z.string().optional(),
+    'filter[customer_id][eq]': z.uuid().optional(),
+    'filter[customer_id][in]': z.string().optional(),
+    'filter[customer_id][neq]': z.uuid().optional(),
+    'filter[customer_id][nin]': z.string().optional(),
+    'filter[id][eq]': z.uuid().optional(),
+    'filter[id][in]': z.string().optional(),
+    'filter[id][neq]': z.uuid().optional(),
+    'filter[id][nin]': z.string().optional(),
+    'filter[issued_at][eq]': z.iso.datetime().optional(),
+    'filter[issued_at][gt]': z.iso.datetime().optional(),
+    'filter[issued_at][gte]': z.iso.datetime().optional(),
+    'filter[issued_at][in]': z.string().optional(),
+    'filter[issued_at][is_null]': z.boolean().optional(),
+    'filter[issued_at][lt]': z.iso.datetime().optional(),
+    'filter[issued_at][lte]': z.iso.datetime().optional(),
+    'filter[issued_at][neq]': z.iso.datetime().optional(),
+    'filter[issued_at][nin]': z.string().optional(),
+    'filter[number][eq]': z.string().max(255).optional(),
+    'filter[number][in]': z.string().optional(),
+    'filter[number][is_null]': z.boolean().optional(),
+    'filter[number][neq]': z.string().max(255).optional(),
+    'filter[number][nin]': z.string().optional(),
+    'filter[number][starts_with]': z.string().max(255).optional(),
+    'filter[origin][eq]': z.enum(['CHARGE', 'POSTPAID_CYCLE']).optional(),
+    'filter[origin][in]': z.string().optional(),
+    'filter[origin][neq]': z.enum(['CHARGE', 'POSTPAID_CYCLE']).optional(),
+    'filter[origin][nin]': z.string().optional(),
+    'filter[paid_at][eq]': z.iso.datetime().optional(),
+    'filter[paid_at][gt]': z.iso.datetime().optional(),
+    'filter[paid_at][gte]': z.iso.datetime().optional(),
+    'filter[paid_at][in]': z.string().optional(),
+    'filter[paid_at][is_null]': z.boolean().optional(),
+    'filter[paid_at][lt]': z.iso.datetime().optional(),
+    'filter[paid_at][lte]': z.iso.datetime().optional(),
+    'filter[paid_at][neq]': z.iso.datetime().optional(),
+    'filter[paid_at][nin]': z.string().optional(),
+    'filter[period_end][eq]': z.iso.datetime().optional(),
+    'filter[period_end][gt]': z.iso.datetime().optional(),
+    'filter[period_end][gte]': z.iso.datetime().optional(),
+    'filter[period_end][in]': z.string().optional(),
+    'filter[period_end][is_null]': z.boolean().optional(),
+    'filter[period_end][lt]': z.iso.datetime().optional(),
+    'filter[period_end][lte]': z.iso.datetime().optional(),
+    'filter[period_end][neq]': z.iso.datetime().optional(),
+    'filter[period_end][nin]': z.string().optional(),
+    'filter[period_start][eq]': z.iso.datetime().optional(),
+    'filter[period_start][gt]': z.iso.datetime().optional(),
+    'filter[period_start][gte]': z.iso.datetime().optional(),
+    'filter[period_start][in]': z.string().optional(),
+    'filter[period_start][is_null]': z.boolean().optional(),
+    'filter[period_start][lt]': z.iso.datetime().optional(),
+    'filter[period_start][lte]': z.iso.datetime().optional(),
+    'filter[period_start][neq]': z.iso.datetime().optional(),
+    'filter[period_start][nin]': z.string().optional(),
+    'filter[settlement][eq]': z.enum(['PAYMENT', 'WALLET']).optional(),
+    'filter[settlement][in]': z.string().optional(),
+    'filter[settlement][is_null]': z.boolean().optional(),
+    'filter[settlement][neq]': z.enum(['PAYMENT', 'WALLET']).optional(),
+    'filter[settlement][nin]': z.string().optional(),
+    'filter[status][eq]': z.enum([
+        'DRAFT',
+        'OPEN',
+        'PAID',
+        'UNCOLLECTIBLE',
+        'VOID'
+    ]).optional(),
+    'filter[status][in]': z.string().optional(),
+    'filter[status][neq]': z.enum([
+        'DRAFT',
+        'OPEN',
+        'PAID',
+        'UNCOLLECTIBLE',
+        'VOID'
+    ]).optional(),
+    'filter[status][nin]': z.string().optional(),
+    'filter[total][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[total][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[total][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[total][in]': z.string().optional(),
+    'filter[total][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[total][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[total][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[total][nin]': z.string().optional(),
+    'filter[voided_at][eq]': z.iso.datetime().optional(),
+    'filter[voided_at][gt]': z.iso.datetime().optional(),
+    'filter[voided_at][gte]': z.iso.datetime().optional(),
+    'filter[voided_at][in]': z.string().optional(),
+    'filter[voided_at][is_null]': z.boolean().optional(),
+    'filter[voided_at][lt]': z.iso.datetime().optional(),
+    'filter[voided_at][lte]': z.iso.datetime().optional(),
+    'filter[voided_at][neq]': z.iso.datetime().optional(),
+    'filter[voided_at][nin]': z.string().optional(),
+    'filter[wallet_id][eq]': z.uuid().optional(),
+    'filter[wallet_id][in]': z.string().optional(),
+    'filter[wallet_id][neq]': z.uuid().optional(),
+    'filter[wallet_id][nin]': z.string().optional(),
+    sort: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).lte(10000).optional().default(0),
+    cursor: z.string().optional(),
+    page_info: z.enum(['full', 'cursor']).optional()
+});
+
+/**
+ * A page of invoice response rows, with the paging facts when the request asked for them.
+ */
+export const zInvoicesAsTenantSystemResponse = zPageInvoiceResponse;
+
+/**
+ * The charge to invoice.
+ */
+export const zInvoiceChargeAsTenantSystemBody = zInvoiceChargeRequest;
+
+export const zInvoiceChargeAsTenantSystemHeaders = z.object({
+    'X-Request-Id': z.string().optional()
+});
+
+/**
+ * The charge already had an invoice; that invoice is returned
+ */
+export const zInvoiceChargeAsTenantSystemResponse = zInvoiceDetailResponse;
+
+export const zPayAsTenantSystemHeaders = z.object({
+    'Idempotency-Key': z.string(),
+    'X-Request-Id': z.string().optional()
+});
+
+export const zPayAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * An earlier identical request already created it; that resource is returned
+ */
+export const zPayAsTenantSystemResponse = zPayInvoiceResponse;
+
+export const zListAsTenantSystemQuery = z.object({
+    'filter[created_at][eq]': z.iso.datetime().optional(),
+    'filter[created_at][gt]': z.iso.datetime().optional(),
+    'filter[created_at][gte]': z.iso.datetime().optional(),
+    'filter[created_at][in]': z.string().optional(),
+    'filter[created_at][lt]': z.iso.datetime().optional(),
+    'filter[created_at][lte]': z.iso.datetime().optional(),
+    'filter[created_at][neq]': z.iso.datetime().optional(),
+    'filter[created_at][nin]': z.string().optional(),
+    'filter[display_name][eq]': z.string().max(255).optional(),
+    'filter[display_name][in]': z.string().optional(),
+    'filter[display_name][neq]': z.string().max(255).optional(),
+    'filter[display_name][nin]': z.string().optional(),
+    'filter[display_name][starts_with]': z.string().max(255).optional(),
+    'filter[email][eq]': z.string().max(255).optional(),
+    'filter[email][in]': z.string().optional(),
+    'filter[email][is_null]': z.boolean().optional(),
+    'filter[email][neq]': z.string().max(255).optional(),
+    'filter[email][nin]': z.string().optional(),
+    'filter[email][starts_with]': z.string().max(255).optional(),
+    'filter[id][eq]': z.uuid().optional(),
+    'filter[id][in]': z.string().optional(),
+    'filter[id][neq]': z.uuid().optional(),
+    'filter[id][nin]': z.string().optional(),
+    'filter[status][eq]': z.enum(['ACTIVE', 'DEACTIVATED']).optional(),
+    'filter[status][in]': z.string().optional(),
+    'filter[status][neq]': z.enum(['ACTIVE', 'DEACTIVATED']).optional(),
+    'filter[status][nin]': z.string().optional(),
+    sort: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).lte(10000).optional().default(0),
+    cursor: z.string().optional(),
+    page_info: z.enum(['full', 'cursor']).optional()
+});
+
+/**
+ * A page of customer response rows, with the paging facts when the request asked for them.
+ */
+export const zListAsTenantSystemResponse = zPageCustomerResponse;
+
+/**
+ * The customer to create.
+ */
+export const zCreateAsTenantSystemBody = zCreateCustomerRequest;
+
+export const zCreateAsTenantSystemHeaders = z.object({
+    'Idempotency-Key': z.string(),
+    'X-Request-Id': z.string().optional()
+});
+
+/**
+ * An earlier identical request already created it; that resource is returned
+ */
+export const zCreateAsTenantSystemResponse = zCustomerResponse;
+
+export const zDeactivateAsTenantSystemHeaders = z.object({
+    'If-Match': z.string().optional(),
+    'X-Request-Id': z.string().optional()
+});
+
+export const zDeactivateAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A billing customer.
+ */
+export const zDeactivateAsTenantSystemResponse = zCustomerResponse;
+
+export const zCouponsAsTenantSystemQuery = z.object({
+    'filter[benefit_type][eq]': z.string().max(255).optional(),
+    'filter[benefit_type][in]': z.string().optional(),
+    'filter[benefit_type][neq]': z.string().max(255).optional(),
+    'filter[benefit_type][nin]': z.string().optional(),
+    'filter[benefit_type][starts_with]': z.string().max(255).optional(),
+    'filter[budget][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[budget][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[budget][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[budget][in]': z.string().optional(),
+    'filter[budget][is_null]': z.boolean().optional(),
+    'filter[budget][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[budget][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[budget][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[budget][nin]': z.string().optional(),
+    'filter[budget_used][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[budget_used][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[budget_used][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[budget_used][in]': z.string().optional(),
+    'filter[budget_used][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[budget_used][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[budget_used][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[budget_used][nin]': z.string().optional(),
+    'filter[created_at][eq]': z.iso.datetime().optional(),
+    'filter[created_at][gt]': z.iso.datetime().optional(),
+    'filter[created_at][gte]': z.iso.datetime().optional(),
+    'filter[created_at][in]': z.string().optional(),
+    'filter[created_at][lt]': z.iso.datetime().optional(),
+    'filter[created_at][lte]': z.iso.datetime().optional(),
+    'filter[created_at][neq]': z.iso.datetime().optional(),
+    'filter[created_at][nin]': z.string().optional(),
+    'filter[created_by][eq]': z.string().max(255).optional(),
+    'filter[created_by][in]': z.string().optional(),
+    'filter[created_by][neq]': z.string().max(255).optional(),
+    'filter[created_by][nin]': z.string().optional(),
+    'filter[created_by][starts_with]': z.string().max(255).optional(),
+    'filter[currency][eq]': z.string().max(255).optional(),
+    'filter[currency][in]': z.string().optional(),
+    'filter[currency][neq]': z.string().max(255).optional(),
+    'filter[currency][nin]': z.string().optional(),
+    'filter[currency][starts_with]': z.string().max(255).optional(),
+    'filter[deactivated_at][eq]': z.iso.datetime().optional(),
+    'filter[deactivated_at][gt]': z.iso.datetime().optional(),
+    'filter[deactivated_at][gte]': z.iso.datetime().optional(),
+    'filter[deactivated_at][in]': z.string().optional(),
+    'filter[deactivated_at][is_null]': z.boolean().optional(),
+    'filter[deactivated_at][lt]': z.iso.datetime().optional(),
+    'filter[deactivated_at][lte]': z.iso.datetime().optional(),
+    'filter[deactivated_at][neq]': z.iso.datetime().optional(),
+    'filter[deactivated_at][nin]': z.string().optional(),
+    'filter[id][eq]': z.uuid().optional(),
+    'filter[id][in]': z.string().optional(),
+    'filter[id][neq]': z.uuid().optional(),
+    'filter[id][nin]': z.string().optional(),
+    'filter[name][eq]': z.string().max(255).optional(),
+    'filter[name][in]': z.string().optional(),
+    'filter[name][neq]': z.string().max(255).optional(),
+    'filter[name][nin]': z.string().optional(),
+    'filter[name][starts_with]': z.string().max(255).optional(),
+    'filter[redeem_by][eq]': z.iso.datetime().optional(),
+    'filter[redeem_by][gt]': z.iso.datetime().optional(),
+    'filter[redeem_by][gte]': z.iso.datetime().optional(),
+    'filter[redeem_by][in]': z.string().optional(),
+    'filter[redeem_by][is_null]': z.boolean().optional(),
+    'filter[redeem_by][lt]': z.iso.datetime().optional(),
+    'filter[redeem_by][lte]': z.iso.datetime().optional(),
+    'filter[redeem_by][neq]': z.iso.datetime().optional(),
+    'filter[redeem_by][nin]': z.string().optional(),
+    'filter[redemptions_count][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[redemptions_count][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[redemptions_count][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[redemptions_count][in]': z.string().optional(),
+    'filter[redemptions_count][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[redemptions_count][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[redemptions_count][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[redemptions_count][nin]': z.string().optional(),
+    'filter[stackable][eq]': z.boolean().optional(),
+    'filter[stackable][neq]': z.boolean().optional(),
+    'filter[status][eq]': z.enum(['ACTIVE', 'INACTIVE']).optional(),
+    'filter[status][in]': z.string().optional(),
+    'filter[status][neq]': z.enum(['ACTIVE', 'INACTIVE']).optional(),
+    'filter[status][nin]': z.string().optional(),
+    sort: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).lte(10000).optional().default(0),
+    cursor: z.string().optional(),
+    page_info: z.enum(['full', 'cursor']).optional()
+});
+
+/**
+ * A page of coupon response rows, with the paging facts when the request asked for them.
+ */
+export const zCouponsAsTenantSystemResponse = zPageCouponResponse;
+
+/**
+ * The coupon to create. Its terms are immutable.
+ */
+export const zCreateCouponAsTenantSystemBody = zCreateCouponRequest;
+
+export const zCreateCouponAsTenantSystemHeaders = z.object({
+    'X-Request-Id': z.string().optional()
+});
+
+/**
+ * The coupon and its first promotion code.
+ */
+export const zCreateCouponAsTenantSystemResponse = zCreateCouponResponse;
+
+/**
+ * How to deactivate the coupon.
+ */
+export const zDeactivateCouponAsTenantSystemBody = zDeactivateCouponRequest;
+
+export const zDeactivateCouponAsTenantSystemHeaders = z.object({
+    'X-Request-Id': z.string().optional()
+});
+
+export const zDeactivateCouponAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A coupon.
+ */
+export const zDeactivateCouponAsTenantSystemResponse = zCouponResponse;
+
+export const zCodesAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+export const zCodesAsTenantSystemQuery = z.object({
+    'filter[active][eq]': z.boolean().optional(),
+    'filter[active][neq]': z.boolean().optional(),
+    'filter[code][eq]': z.string().max(255).optional(),
+    'filter[code][in]': z.string().optional(),
+    'filter[code][neq]': z.string().max(255).optional(),
+    'filter[code][nin]': z.string().optional(),
+    'filter[code][starts_with]': z.string().max(255).optional(),
+    'filter[coupon_id][eq]': z.uuid().optional(),
+    'filter[coupon_id][in]': z.string().optional(),
+    'filter[coupon_id][neq]': z.uuid().optional(),
+    'filter[coupon_id][nin]': z.string().optional(),
+    'filter[created_at][eq]': z.iso.datetime().optional(),
+    'filter[created_at][gt]': z.iso.datetime().optional(),
+    'filter[created_at][gte]': z.iso.datetime().optional(),
+    'filter[created_at][in]': z.string().optional(),
+    'filter[created_at][lt]': z.iso.datetime().optional(),
+    'filter[created_at][lte]': z.iso.datetime().optional(),
+    'filter[created_at][neq]': z.iso.datetime().optional(),
+    'filter[created_at][nin]': z.string().optional(),
+    'filter[id][eq]': z.uuid().optional(),
+    'filter[id][in]': z.string().optional(),
+    'filter[id][neq]': z.uuid().optional(),
+    'filter[id][nin]': z.string().optional(),
+    'filter[max_redemptions][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_redemptions][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_redemptions][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_redemptions][in]': z.string().optional(),
+    'filter[max_redemptions][is_null]': z.boolean().optional(),
+    'filter[max_redemptions][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_redemptions][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_redemptions][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[max_redemptions][nin]': z.string().optional(),
+    'filter[redeem_by][eq]': z.iso.datetime().optional(),
+    'filter[redeem_by][gt]': z.iso.datetime().optional(),
+    'filter[redeem_by][gte]': z.iso.datetime().optional(),
+    'filter[redeem_by][in]': z.string().optional(),
+    'filter[redeem_by][is_null]': z.boolean().optional(),
+    'filter[redeem_by][lt]': z.iso.datetime().optional(),
+    'filter[redeem_by][lte]': z.iso.datetime().optional(),
+    'filter[redeem_by][neq]': z.iso.datetime().optional(),
+    'filter[redeem_by][nin]': z.string().optional(),
+    'filter[redeemed_count][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[redeemed_count][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[redeemed_count][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[redeemed_count][in]': z.string().optional(),
+    'filter[redeemed_count][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[redeemed_count][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[redeemed_count][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[redeemed_count][nin]': z.string().optional(),
+    sort: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).lte(10000).optional().default(0),
+    cursor: z.string().optional(),
+    page_info: z.enum(['full', 'cursor']).optional()
+});
+
+/**
+ * A page of promotion code response rows, with the paging facts when the request asked for them.
+ */
+export const zCodesAsTenantSystemResponse = zPagePromotionCodeResponse;
+
+/**
+ * The promotion code to add.
+ */
+export const zAddCodeAsTenantSystemBody = zAddCodeRequest;
+
+export const zAddCodeAsTenantSystemHeaders = z.object({
+    'X-Request-Id': z.string().optional()
+});
+
+export const zAddCodeAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A promotion code.
+ */
+export const zAddCodeAsTenantSystemResponse = zPromotionCodeResponse;
+
+export const zRevokeAsTenantSystemHeaders = z.object({
+    'X-Request-Id': z.string().optional()
+});
+
+export const zRevokeAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A coupon redeemed onto a wallet.
+ */
+export const zRevokeAsTenantSystemResponse = zRedemptionResponse;
+
+export const zChargesAsTenantSystemQuery = z.object({
+    'filter[amount][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][in]': z.string().optional(),
+    'filter[amount][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][nin]': z.string().optional(),
+    'filter[created_at][eq]': z.iso.datetime().optional(),
+    'filter[created_at][gt]': z.iso.datetime().optional(),
+    'filter[created_at][gte]': z.iso.datetime().optional(),
+    'filter[created_at][in]': z.string().optional(),
+    'filter[created_at][lt]': z.iso.datetime().optional(),
+    'filter[created_at][lte]': z.iso.datetime().optional(),
+    'filter[created_at][neq]': z.iso.datetime().optional(),
+    'filter[created_at][nin]': z.string().optional(),
+    'filter[currency][eq]': z.string().max(255).optional(),
+    'filter[currency][in]': z.string().optional(),
+    'filter[currency][neq]': z.string().max(255).optional(),
+    'filter[currency][nin]': z.string().optional(),
+    'filter[currency][starts_with]': z.string().max(255).optional(),
+    'filter[id][eq]': z.uuid().optional(),
+    'filter[id][in]': z.string().optional(),
+    'filter[id][neq]': z.uuid().optional(),
+    'filter[id][nin]': z.string().optional(),
+    'filter[reference][eq]': z.string().max(255).optional(),
+    'filter[reference][in]': z.string().optional(),
+    'filter[reference][is_null]': z.boolean().optional(),
+    'filter[reference][neq]': z.string().max(255).optional(),
+    'filter[reference][nin]': z.string().optional(),
+    'filter[reference][starts_with]': z.string().max(255).optional(),
+    'filter[reservation_id][eq]': z.uuid().optional(),
+    'filter[reservation_id][in]': z.string().optional(),
+    'filter[reservation_id][is_null]': z.boolean().optional(),
+    'filter[reservation_id][neq]': z.uuid().optional(),
+    'filter[reservation_id][nin]': z.string().optional(),
+    'filter[source][eq]': z.enum([
+        'RESERVATION',
+        'STANDALONE',
+        'USAGE'
+    ]).optional(),
+    'filter[source][in]': z.string().optional(),
+    'filter[source][neq]': z.enum([
+        'RESERVATION',
+        'STANDALONE',
+        'USAGE'
+    ]).optional(),
+    'filter[source][nin]': z.string().optional(),
+    'filter[status][eq]': z.enum(['FAILED', 'SUCCEEDED']).optional(),
+    'filter[status][in]': z.string().optional(),
+    'filter[status][neq]': z.enum(['FAILED', 'SUCCEEDED']).optional(),
+    'filter[status][nin]': z.string().optional(),
+    'filter[usage_ref][eq]': z.string().max(255).optional(),
+    'filter[usage_ref][in]': z.string().optional(),
+    'filter[usage_ref][is_null]': z.boolean().optional(),
+    'filter[usage_ref][neq]': z.string().max(255).optional(),
+    'filter[usage_ref][nin]': z.string().optional(),
+    'filter[usage_ref][starts_with]': z.string().max(255).optional(),
+    'filter[wallet.customer_id][eq]': z.uuid().optional(),
+    'filter[wallet.customer_id][in]': z.string().optional(),
+    'filter[wallet.customer_id][neq]': z.uuid().optional(),
+    'filter[wallet.customer_id][nin]': z.string().optional(),
+    'filter[wallet_id][eq]': z.uuid().optional(),
+    'filter[wallet_id][in]': z.string().optional(),
+    'filter[wallet_id][neq]': z.uuid().optional(),
+    'filter[wallet_id][nin]': z.string().optional(),
+    sort: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).lte(10000).optional().default(0),
+    cursor: z.string().optional(),
+    page_info: z.enum(['full', 'cursor']).optional()
+});
+
+/**
+ * A page of charge response rows, with the paging facts when the request asked for them.
+ */
+export const zChargesAsTenantSystemResponse = zPageChargeResponse;
+
+/**
+ * The cost to charge to a wallet.
+ */
+export const zChargeAsTenantSystemBody = zChargeRequest;
+
+export const zChargeAsTenantSystemHeaders = z.object({
+    'Idempotency-Key': z.string()
+});
+
+/**
+ * An earlier identical request already created it; that resource is returned
+ */
+export const zChargeAsTenantSystemResponse = zChargeResponse;
+
+/**
+ * The billing session to create.
+ */
+export const zCreateAsTenantSystem1Body = zCreateRequest;
+
+export const zCreateAsTenantSystem1Headers = z.object({
+    'X-Request-Id': z.string().optional()
+});
+
+/**
+ * The billing session that was created.
+ */
+export const zCreateAsTenantSystem1Response = zCreateResponse;
+
+export const zRevokeAsTenantSystem1Headers = z.object({
+    'X-Request-Id': z.string().optional()
+});
+
+export const zRevokeAsTenantSystem1Path = z.object({
+    id: z.string()
+});
 
 export const zDirectHeaders = z.object({
     'Stripe-Signature': z.string().optional()
@@ -2943,6 +4326,34 @@ export const zRevoke1Path = z.object({
  */
 export const zRevoke1Response = z.void();
 
+export const zGetEndpointAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A webhook endpoint. The signing secret is not part of it.
+ */
+export const zGetEndpointAsTenantSystemResponse = zEndpointResponse;
+
+/**
+ * The fields to change. A field that is left out keeps its value.
+ */
+export const zUpdateEndpointAsTenantSystemBody = zUpdateEndpointRequest;
+
+export const zUpdateEndpointAsTenantSystemHeaders = z.object({
+    'If-Match': z.string().optional(),
+    'X-Request-Id': z.string().optional()
+});
+
+export const zUpdateEndpointAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A webhook endpoint. The signing secret is not part of it.
+ */
+export const zUpdateEndpointAsTenantSystemResponse = zEndpointResponse;
+
 export const zGetEndpointPath = z.object({
     id: z.string()
 });
@@ -2975,6 +4386,564 @@ export const zUpdateEndpointResponse = zEndpointResponse;
  * OK
  */
 export const zJwksResponse = z.record(z.string(), z.unknown());
+
+export const zListDeliveriesAsTenantSystemQuery = z.object({
+    'filter[attempts][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[attempts][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[attempts][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[attempts][in]': z.string().optional(),
+    'filter[attempts][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[attempts][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[attempts][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[attempts][nin]': z.string().optional(),
+    'filter[completed_at][eq]': z.iso.datetime().optional(),
+    'filter[completed_at][gt]': z.iso.datetime().optional(),
+    'filter[completed_at][gte]': z.iso.datetime().optional(),
+    'filter[completed_at][in]': z.string().optional(),
+    'filter[completed_at][is_null]': z.boolean().optional(),
+    'filter[completed_at][lt]': z.iso.datetime().optional(),
+    'filter[completed_at][lte]': z.iso.datetime().optional(),
+    'filter[completed_at][neq]': z.iso.datetime().optional(),
+    'filter[completed_at][nin]': z.string().optional(),
+    'filter[created_at][eq]': z.iso.datetime().optional(),
+    'filter[created_at][gt]': z.iso.datetime().optional(),
+    'filter[created_at][gte]': z.iso.datetime().optional(),
+    'filter[created_at][in]': z.string().optional(),
+    'filter[created_at][lt]': z.iso.datetime().optional(),
+    'filter[created_at][lte]': z.iso.datetime().optional(),
+    'filter[created_at][neq]': z.iso.datetime().optional(),
+    'filter[created_at][nin]': z.string().optional(),
+    'filter[endpoint_id][eq]': z.uuid().optional(),
+    'filter[endpoint_id][in]': z.string().optional(),
+    'filter[endpoint_id][neq]': z.uuid().optional(),
+    'filter[endpoint_id][nin]': z.string().optional(),
+    'filter[event_id][eq]': z.uuid().optional(),
+    'filter[event_id][in]': z.string().optional(),
+    'filter[event_id][neq]': z.uuid().optional(),
+    'filter[event_id][nin]': z.string().optional(),
+    'filter[event_type][eq]': z.string().max(255).optional(),
+    'filter[event_type][in]': z.string().optional(),
+    'filter[event_type][neq]': z.string().max(255).optional(),
+    'filter[event_type][nin]': z.string().optional(),
+    'filter[event_type][starts_with]': z.string().max(255).optional(),
+    'filter[id][eq]': z.uuid().optional(),
+    'filter[id][in]': z.string().optional(),
+    'filter[id][neq]': z.uuid().optional(),
+    'filter[id][nin]': z.string().optional(),
+    'filter[last_error][eq]': z.string().max(255).optional(),
+    'filter[last_error][in]': z.string().optional(),
+    'filter[last_error][is_null]': z.boolean().optional(),
+    'filter[last_error][neq]': z.string().max(255).optional(),
+    'filter[last_error][nin]': z.string().optional(),
+    'filter[last_error][starts_with]': z.string().max(255).optional(),
+    'filter[last_status_code][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[last_status_code][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[last_status_code][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[last_status_code][in]': z.string().optional(),
+    'filter[last_status_code][is_null]': z.boolean().optional(),
+    'filter[last_status_code][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[last_status_code][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[last_status_code][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[last_status_code][nin]': z.string().optional(),
+    'filter[next_attempt_at][eq]': z.iso.datetime().optional(),
+    'filter[next_attempt_at][gt]': z.iso.datetime().optional(),
+    'filter[next_attempt_at][gte]': z.iso.datetime().optional(),
+    'filter[next_attempt_at][in]': z.string().optional(),
+    'filter[next_attempt_at][lt]': z.iso.datetime().optional(),
+    'filter[next_attempt_at][lte]': z.iso.datetime().optional(),
+    'filter[next_attempt_at][neq]': z.iso.datetime().optional(),
+    'filter[next_attempt_at][nin]': z.string().optional(),
+    'filter[resend_of][eq]': z.uuid().optional(),
+    'filter[resend_of][in]': z.string().optional(),
+    'filter[resend_of][is_null]': z.boolean().optional(),
+    'filter[resend_of][neq]': z.uuid().optional(),
+    'filter[resend_of][nin]': z.string().optional(),
+    'filter[status][eq]': z.enum([
+        'DEAD',
+        'IN_PROGRESS',
+        'PENDING',
+        'SUCCEEDED'
+    ]).optional(),
+    'filter[status][in]': z.string().optional(),
+    'filter[status][neq]': z.enum([
+        'DEAD',
+        'IN_PROGRESS',
+        'PENDING',
+        'SUCCEEDED'
+    ]).optional(),
+    'filter[status][nin]': z.string().optional(),
+    sort: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).lte(10000).optional().default(0),
+    cursor: z.string().optional(),
+    page_info: z.enum(['full', 'cursor']).optional()
+});
+
+/**
+ * A page of delivery response rows, with the paging facts when the request asked for them.
+ */
+export const zListDeliveriesAsTenantSystemResponse = zPageDeliveryResponse;
+
+export const zGetDeliveryAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A delivery with the body that was sent and every attempt.
+ */
+export const zGetDeliveryAsTenantSystemResponse = zDeliveryDetailResponse;
+
+export const zWalletAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A customer's wallet in one currency.
+ */
+export const zWalletAsTenantSystemResponse = zWalletResponse;
+
+export const zLedgerAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+export const zLedgerAsTenantSystemQuery = z.object({
+    'filter[actor][eq]': z.string().max(255).optional(),
+    'filter[actor][in]': z.string().optional(),
+    'filter[actor][neq]': z.string().max(255).optional(),
+    'filter[actor][nin]': z.string().optional(),
+    'filter[actor][starts_with]': z.string().max(255).optional(),
+    'filter[amount][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][in]': z.string().optional(),
+    'filter[amount][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][nin]': z.string().optional(),
+    'filter[charge_id][eq]': z.uuid().optional(),
+    'filter[charge_id][in]': z.string().optional(),
+    'filter[charge_id][is_null]': z.boolean().optional(),
+    'filter[charge_id][neq]': z.uuid().optional(),
+    'filter[charge_id][nin]': z.string().optional(),
+    'filter[created_at][eq]': z.iso.datetime().optional(),
+    'filter[created_at][gt]': z.iso.datetime().optional(),
+    'filter[created_at][gte]': z.iso.datetime().optional(),
+    'filter[created_at][in]': z.string().optional(),
+    'filter[created_at][lt]': z.iso.datetime().optional(),
+    'filter[created_at][lte]': z.iso.datetime().optional(),
+    'filter[created_at][neq]': z.iso.datetime().optional(),
+    'filter[created_at][nin]': z.string().optional(),
+    'filter[id][eq]': z.uuid().optional(),
+    'filter[id][in]': z.string().optional(),
+    'filter[id][neq]': z.uuid().optional(),
+    'filter[id][nin]': z.string().optional(),
+    'filter[reason][eq]': z.string().max(255).optional(),
+    'filter[reason][in]': z.string().optional(),
+    'filter[reason][is_null]': z.boolean().optional(),
+    'filter[reason][neq]': z.string().max(255).optional(),
+    'filter[reason][nin]': z.string().optional(),
+    'filter[reason][starts_with]': z.string().max(255).optional(),
+    'filter[reference][eq]': z.string().max(255).optional(),
+    'filter[reference][in]': z.string().optional(),
+    'filter[reference][neq]': z.string().max(255).optional(),
+    'filter[reference][nin]': z.string().optional(),
+    'filter[reference][starts_with]': z.string().max(255).optional(),
+    'filter[reservation_id][eq]': z.uuid().optional(),
+    'filter[reservation_id][in]': z.string().optional(),
+    'filter[reservation_id][is_null]': z.boolean().optional(),
+    'filter[reservation_id][neq]': z.uuid().optional(),
+    'filter[reservation_id][nin]': z.string().optional(),
+    'filter[reversal_of][eq]': z.uuid().optional(),
+    'filter[reversal_of][in]': z.string().optional(),
+    'filter[reversal_of][is_null]': z.boolean().optional(),
+    'filter[reversal_of][neq]': z.uuid().optional(),
+    'filter[reversal_of][nin]': z.string().optional(),
+    'filter[seq][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[seq][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[seq][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[seq][in]': z.string().optional(),
+    'filter[seq][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[seq][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[seq][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[seq][nin]': z.string().optional(),
+    'filter[type][eq]': z.enum([
+        'CREDIT',
+        'DEBIT',
+        'REVERSAL'
+    ]).optional(),
+    'filter[type][in]': z.string().optional(),
+    'filter[type][neq]': z.enum([
+        'CREDIT',
+        'DEBIT',
+        'REVERSAL'
+    ]).optional(),
+    'filter[type][nin]': z.string().optional(),
+    sort: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).lte(10000).optional().default(0),
+    cursor: z.string().optional(),
+    page_info: z.enum(['full', 'cursor']).optional()
+});
+
+/**
+ * A page of ledger entry response rows, with the paging facts when the request asked for them.
+ */
+export const zLedgerAsTenantSystemResponse = zPageLedgerEntryResponse;
+
+export const zAggregatesAsTenantSystemQuery = z.object({
+    customerId: z.string(),
+    metric: z.array(z.string()).optional(),
+    from: z.iso.datetime(),
+    to: z.iso.datetime()
+});
+
+/**
+ * OK
+ */
+export const zAggregatesAsTenantSystemResponse = z.array(zTotalResponse);
+
+export const zSubscriptionAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A subscription with its history.
+ */
+export const zSubscriptionAsTenantSystemResponse = zSubscriptionDetailResponse;
+
+export const zReservationAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A hold on part of a wallet's balance.
+ */
+export const zReservationAsTenantSystemResponse = zReservationResponse;
+
+export const zRefundsAsTenantSystemQuery = z.object({
+    'filter[amount][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][in]': z.string().optional(),
+    'filter[amount][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][nin]': z.string().optional(),
+    'filter[completed_at][eq]': z.iso.datetime().optional(),
+    'filter[completed_at][gt]': z.iso.datetime().optional(),
+    'filter[completed_at][gte]': z.iso.datetime().optional(),
+    'filter[completed_at][in]': z.string().optional(),
+    'filter[completed_at][is_null]': z.boolean().optional(),
+    'filter[completed_at][lt]': z.iso.datetime().optional(),
+    'filter[completed_at][lte]': z.iso.datetime().optional(),
+    'filter[completed_at][neq]': z.iso.datetime().optional(),
+    'filter[completed_at][nin]': z.string().optional(),
+    'filter[created_at][eq]': z.iso.datetime().optional(),
+    'filter[created_at][gt]': z.iso.datetime().optional(),
+    'filter[created_at][gte]': z.iso.datetime().optional(),
+    'filter[created_at][in]': z.string().optional(),
+    'filter[created_at][lt]': z.iso.datetime().optional(),
+    'filter[created_at][lte]': z.iso.datetime().optional(),
+    'filter[created_at][neq]': z.iso.datetime().optional(),
+    'filter[created_at][nin]': z.string().optional(),
+    'filter[currency][eq]': z.string().max(255).optional(),
+    'filter[currency][in]': z.string().optional(),
+    'filter[currency][neq]': z.string().max(255).optional(),
+    'filter[currency][nin]': z.string().optional(),
+    'filter[currency][starts_with]': z.string().max(255).optional(),
+    'filter[id][eq]': z.uuid().optional(),
+    'filter[id][in]': z.string().optional(),
+    'filter[id][neq]': z.uuid().optional(),
+    'filter[id][nin]': z.string().optional(),
+    'filter[payment.customer_id][eq]': z.uuid().optional(),
+    'filter[payment.customer_id][in]': z.string().optional(),
+    'filter[payment.customer_id][neq]': z.uuid().optional(),
+    'filter[payment.customer_id][nin]': z.string().optional(),
+    'filter[payment_id][eq]': z.uuid().optional(),
+    'filter[payment_id][in]': z.string().optional(),
+    'filter[payment_id][neq]': z.uuid().optional(),
+    'filter[payment_id][nin]': z.string().optional(),
+    'filter[reason][eq]': z.string().max(255).optional(),
+    'filter[reason][in]': z.string().optional(),
+    'filter[reason][is_null]': z.boolean().optional(),
+    'filter[reason][neq]': z.string().max(255).optional(),
+    'filter[reason][nin]': z.string().optional(),
+    'filter[reason][starts_with]': z.string().max(255).optional(),
+    'filter[status][eq]': z.enum([
+        'FAILED',
+        'PENDING',
+        'SUCCEEDED'
+    ]).optional(),
+    'filter[status][in]': z.string().optional(),
+    'filter[status][neq]': z.enum([
+        'FAILED',
+        'PENDING',
+        'SUCCEEDED'
+    ]).optional(),
+    'filter[status][nin]': z.string().optional(),
+    sort: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).lte(10000).optional().default(0),
+    cursor: z.string().optional(),
+    page_info: z.enum(['full', 'cursor']).optional()
+});
+
+/**
+ * A page of refund response rows, with the paging facts when the request asked for them.
+ */
+export const zRefundsAsTenantSystemResponse = zPageRefundResponse;
+
+export const zGetRefundAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A refund of a payment.
+ */
+export const zGetRefundAsTenantSystemResponse = zRefundResponse;
+
+export const zGetRatingAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * The result of rating a period's usage.
+ */
+export const zGetRatingAsTenantSystemResponse = zRatingResponse;
+
+export const zListPlansAsTenantSystemQuery = z.object({
+    'filter[code][eq]': z.string().max(255).optional(),
+    'filter[code][in]': z.string().optional(),
+    'filter[code][neq]': z.string().max(255).optional(),
+    'filter[code][nin]': z.string().optional(),
+    'filter[code][starts_with]': z.string().max(255).optional(),
+    'filter[created_at][eq]': z.iso.datetime().optional(),
+    'filter[created_at][gt]': z.iso.datetime().optional(),
+    'filter[created_at][gte]': z.iso.datetime().optional(),
+    'filter[created_at][in]': z.string().optional(),
+    'filter[created_at][lt]': z.iso.datetime().optional(),
+    'filter[created_at][lte]': z.iso.datetime().optional(),
+    'filter[created_at][neq]': z.iso.datetime().optional(),
+    'filter[created_at][nin]': z.string().optional(),
+    'filter[currency][eq]': z.string().max(255).optional(),
+    'filter[currency][in]': z.string().optional(),
+    'filter[currency][neq]': z.string().max(255).optional(),
+    'filter[currency][nin]': z.string().optional(),
+    'filter[currency][starts_with]': z.string().max(255).optional(),
+    'filter[id][eq]': z.uuid().optional(),
+    'filter[id][in]': z.string().optional(),
+    'filter[id][neq]': z.uuid().optional(),
+    'filter[id][nin]': z.string().optional(),
+    'filter[model][eq]': z.enum([
+        'EVENT_BASED',
+        'HYBRID',
+        'SUBSCRIPTION',
+        'TIME_BASED',
+        'USAGE_BASED',
+        'WORKLOAD_BASED'
+    ]).optional(),
+    'filter[model][in]': z.string().optional(),
+    'filter[model][neq]': z.enum([
+        'EVENT_BASED',
+        'HYBRID',
+        'SUBSCRIPTION',
+        'TIME_BASED',
+        'USAGE_BASED',
+        'WORKLOAD_BASED'
+    ]).optional(),
+    'filter[model][nin]': z.string().optional(),
+    'filter[name][eq]': z.string().max(255).optional(),
+    'filter[name][in]': z.string().optional(),
+    'filter[name][neq]': z.string().max(255).optional(),
+    'filter[name][nin]': z.string().optional(),
+    'filter[name][starts_with]': z.string().max(255).optional(),
+    'filter[retired_at][eq]': z.iso.datetime().optional(),
+    'filter[retired_at][gt]': z.iso.datetime().optional(),
+    'filter[retired_at][gte]': z.iso.datetime().optional(),
+    'filter[retired_at][in]': z.string().optional(),
+    'filter[retired_at][is_null]': z.boolean().optional(),
+    'filter[retired_at][lt]': z.iso.datetime().optional(),
+    'filter[retired_at][lte]': z.iso.datetime().optional(),
+    'filter[retired_at][neq]': z.iso.datetime().optional(),
+    'filter[retired_at][nin]': z.string().optional(),
+    'filter[status][eq]': z.enum(['ACTIVE', 'RETIRED']).optional(),
+    'filter[status][in]': z.string().optional(),
+    'filter[status][neq]': z.enum(['ACTIVE', 'RETIRED']).optional(),
+    'filter[status][nin]': z.string().optional(),
+    sort: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).lte(10000).optional().default(0),
+    cursor: z.string().optional(),
+    page_info: z.enum(['full', 'cursor']).optional()
+});
+
+/**
+ * A page of plan response rows, with the paging facts when the request asked for them.
+ */
+export const zListPlansAsTenantSystemResponse = zPagePlanResponse;
+
+export const zGetPlanAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A pricing plan and its versions.
+ */
+export const zGetPlanAsTenantSystemResponse = zPlanResponse;
+
+export const zPaymentsAsTenantSystemQuery = z.object({
+    'filter[amount][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][in]': z.string().optional(),
+    'filter[amount][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[amount][nin]': z.string().optional(),
+    'filter[completed_at][eq]': z.iso.datetime().optional(),
+    'filter[completed_at][gt]': z.iso.datetime().optional(),
+    'filter[completed_at][gte]': z.iso.datetime().optional(),
+    'filter[completed_at][in]': z.string().optional(),
+    'filter[completed_at][is_null]': z.boolean().optional(),
+    'filter[completed_at][lt]': z.iso.datetime().optional(),
+    'filter[completed_at][lte]': z.iso.datetime().optional(),
+    'filter[completed_at][neq]': z.iso.datetime().optional(),
+    'filter[completed_at][nin]': z.string().optional(),
+    'filter[created_at][eq]': z.iso.datetime().optional(),
+    'filter[created_at][gt]': z.iso.datetime().optional(),
+    'filter[created_at][gte]': z.iso.datetime().optional(),
+    'filter[created_at][in]': z.string().optional(),
+    'filter[created_at][lt]': z.iso.datetime().optional(),
+    'filter[created_at][lte]': z.iso.datetime().optional(),
+    'filter[created_at][neq]': z.iso.datetime().optional(),
+    'filter[created_at][nin]': z.string().optional(),
+    'filter[currency][eq]': z.string().max(255).optional(),
+    'filter[currency][in]': z.string().optional(),
+    'filter[currency][neq]': z.string().max(255).optional(),
+    'filter[currency][nin]': z.string().optional(),
+    'filter[customer_id][eq]': z.uuid().optional(),
+    'filter[customer_id][in]': z.string().optional(),
+    'filter[customer_id][neq]': z.uuid().optional(),
+    'filter[customer_id][nin]': z.string().optional(),
+    'filter[id][eq]': z.uuid().optional(),
+    'filter[id][in]': z.string().optional(),
+    'filter[id][neq]': z.uuid().optional(),
+    'filter[id][nin]': z.string().optional(),
+    'filter[invoice_id][eq]': z.uuid().optional(),
+    'filter[invoice_id][in]': z.string().optional(),
+    'filter[invoice_id][is_null]': z.boolean().optional(),
+    'filter[invoice_id][neq]': z.uuid().optional(),
+    'filter[invoice_id][nin]': z.string().optional(),
+    'filter[ledger_entry_id][eq]': z.uuid().optional(),
+    'filter[ledger_entry_id][in]': z.string().optional(),
+    'filter[ledger_entry_id][is_null]': z.boolean().optional(),
+    'filter[ledger_entry_id][neq]': z.uuid().optional(),
+    'filter[ledger_entry_id][nin]': z.string().optional(),
+    'filter[refunded_amount][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[refunded_amount][gt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[refunded_amount][gte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[refunded_amount][in]': z.string().optional(),
+    'filter[refunded_amount][lt]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[refunded_amount][lte]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[refunded_amount][neq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    'filter[refunded_amount][nin]': z.string().optional(),
+    'filter[status][eq]': z.enum([
+        'CANCELED',
+        'FAILED',
+        'PROCESSING',
+        'REQUIRES_ACTION',
+        'SUCCEEDED'
+    ]).optional(),
+    'filter[status][in]': z.string().optional(),
+    'filter[status][neq]': z.enum([
+        'CANCELED',
+        'FAILED',
+        'PROCESSING',
+        'REQUIRES_ACTION',
+        'SUCCEEDED'
+    ]).optional(),
+    'filter[status][nin]': z.string().optional(),
+    'filter[updated_at][eq]': z.iso.datetime().optional(),
+    'filter[updated_at][gt]': z.iso.datetime().optional(),
+    'filter[updated_at][gte]': z.iso.datetime().optional(),
+    'filter[updated_at][in]': z.string().optional(),
+    'filter[updated_at][lt]': z.iso.datetime().optional(),
+    'filter[updated_at][lte]': z.iso.datetime().optional(),
+    'filter[updated_at][neq]': z.iso.datetime().optional(),
+    'filter[updated_at][nin]': z.string().optional(),
+    'filter[wallet_id][eq]': z.uuid().optional(),
+    'filter[wallet_id][in]': z.string().optional(),
+    'filter[wallet_id][neq]': z.uuid().optional(),
+    'filter[wallet_id][nin]': z.string().optional(),
+    sort: z.string().optional(),
+    limit: z.int().gte(1).lte(200).optional().default(50),
+    offset: z.int().gte(0).lte(10000).optional().default(0),
+    cursor: z.string().optional(),
+    page_info: z.enum(['full', 'cursor']).optional()
+});
+
+/**
+ * A page of payment response rows, with the paging facts when the request asked for them.
+ */
+export const zPaymentsAsTenantSystemResponse = zPagePaymentResponse;
+
+export const zPaymentAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A payment with its refunds and failed attempts.
+ */
+export const zPaymentAsTenantSystemResponse = zPaymentDetailResponse;
+
+export const zInvoiceAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * An invoice with its items and payments.
+ */
+export const zInvoiceAsTenantSystemResponse = zInvoiceDetailResponse;
+
+export const zByExternalUserAsTenantSystemPath = z.object({
+    externalUserId: z.string()
+});
+
+export const zByExternalUserAsTenantSystemQuery = z.object({
+    tenantSystemId: z.string().optional()
+});
+
+/**
+ * A billing customer.
+ */
+export const zByExternalUserAsTenantSystemResponse = zCustomerResponse;
+
+export const zCouponAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A coupon.
+ */
+export const zCouponAsTenantSystemResponse = zCouponResponse;
+
+export const zRedemptionAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A coupon redeemed onto a wallet.
+ */
+export const zRedemptionAsTenantSystemResponse = zRedemptionResponse;
+
+export const zGetChargeAsTenantSystemPath = z.object({
+    id: z.string()
+});
+
+/**
+ * A charge made against a wallet.
+ */
+export const zGetChargeAsTenantSystemResponse = zChargeResponse;
 
 export const zWallets1Query = z.object({
     'filter[balance][eq]': z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),

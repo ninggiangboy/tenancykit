@@ -243,8 +243,7 @@ paths:
       - "Customers"
       summary: "Get a customer"
       description: "Returns one customer; its version is also the response's `ETag`.\
-        \ An unknown id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `billing:customer:read`."
+        \ An unknown id answers `404`.\n\nCallers: tenant-user. Requires `billing:customer:read`."
       operationId: "get"
       parameters:
       - name: "id"
@@ -269,14 +268,13 @@ paths:
       x-required-permission: "billing:customer:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     put:
       tags:
       - "Customers"
       summary: "Update a customer"
       description: "Changes the customer's display name and email. Pass the current\
         \ `ETag` in `If-Match`; a stale version is refused with `412`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `billing:customer:write`."
+        \ tenant-user. Requires `billing:customer:write`."
       operationId: "update"
       parameters:
       - name: "id"
@@ -343,7 +341,6 @@ paths:
       x-required-permission: "billing:customer:write"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-endpoints:
     get:
       tags:
@@ -360,8 +357,7 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `billing:webhook:read`."
+        \ omit it for the rows alone.\n\nCallers: tenant-user. Requires `billing:webhook:read`."
       operationId: "listEndpoints"
       parameters:
       - name: "filter[created_at][eq]"
@@ -763,15 +759,13 @@ paths:
       x-required-permission: "billing:webhook:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Webhook endpoints"
       summary: "Create a webhook endpoint"
       description: "Registers an HTTPS endpoint that subscribes to a subset of Billing's\
         \ event types. The signing secret is returned once, in this response, and\
-        \ never again. Answers `201`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `billing:webhook:manage`."
+        \ never again. Answers `201`.\n\nCallers: tenant-user. Requires `billing:webhook:manage`."
       operationId: "createEndpoint"
       parameters:
       - name: "X-Request-Id"
@@ -804,14 +798,13 @@ paths:
       x-required-permission: "billing:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-endpoints/{id}/rotate-secret:
     post:
       tags:
       - "Webhook endpoints"
       summary: "Rotate a webhook endpoint's secret"
       description: "Replaces the endpoint's signing secret and returns the new one\
-        \ once, never again.\n\nCallers: tenant-user, tenant-system. Requires `billing:webhook:manage`."
+        \ once, never again.\n\nCallers: tenant-user. Requires `billing:webhook:manage`."
       operationId: "rotateSecret"
       parameters:
       - name: "id"
@@ -843,7 +836,6 @@ paths:
       x-required-permission: "billing:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-deliveries/{id}/resend:
     post:
       tags:
@@ -851,7 +843,7 @@ paths:
       summary: "Resend a webhook delivery"
       description: "Queues a fresh delivery of the same stored event to the same endpoint\
         \ and answers `202`: sending happens asynchronously. The original keeps its\
-        \ history.\n\nCallers: tenant-user, tenant-system. Requires `billing:webhook:manage`."
+        \ history.\n\nCallers: tenant-user. Requires `billing:webhook:manage`."
       operationId: "resend"
       parameters:
       - name: "id"
@@ -883,7 +875,6 @@ paths:
       x-required-permission: "billing:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/wallets:
     get:
       tags:
@@ -901,7 +892,7 @@ paths:
         page\": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total`\
         \ and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor`\
         \ alone, without counting the matching rows; omit it for the rows alone.\n\
-        \nCallers: tenant-user, tenant-system. Requires `billing:wallet:read`."
+        \nCallers: tenant-user. Requires `billing:wallet:read`."
       operationId: "wallets"
       parameters:
       - name: "filter[balance][eq]"
@@ -1357,7 +1348,6 @@ paths:
       x-required-permission: "billing:wallet:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Wallets"
@@ -1366,7 +1356,7 @@ paths:
         \ (`mode`, with a `creditLimit` for postpaid). Amounts are integers in minor\
         \ units. Asking again with the same settings answers the existing wallet;\
         \ different settings are a conflict, because a wallet's currency and mode\
-        \ never change.\n\nCallers: tenant-user, tenant-system. Requires `billing:wallet:manage`."
+        \ never change.\n\nCallers: tenant-user. Requires `billing:wallet:manage`."
       operationId: "openWallet"
       parameters:
       - name: "X-Request-Id"
@@ -1413,7 +1403,6 @@ paths:
       x-required-permission: "billing:wallet:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/wallets/{walletId}/coupon-redemptions:
     get:
       tags:
@@ -1430,8 +1419,7 @@ paths:
         \ The body is `{\"data\": [...], \"page\": null}`. `page_info=full` fills\
         \ `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `billing:coupon:read`."
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-user. Requires `billing:coupon:read`."
       operationId: "redemptionsOfWallet"
       parameters:
       - name: "walletId"
@@ -2158,7 +2146,6 @@ paths:
       x-required-permission: "billing:coupon:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Coupon redemptions"
@@ -2167,7 +2154,7 @@ paths:
         \ a repeat of the same key and body answers the first result with `200`. Every\
         \ refusal answers `404`, so a caller cannot learn whether a code exists, is\
         \ inactive, expired or exhausted. Answers `201` for a new redemption.\n\n\
-        Callers: tenant-user, tenant-system. Requires `billing:coupon:redeem`."
+        Callers: tenant-user. Requires `billing:coupon:redeem`."
       operationId: "redeemByCode"
       parameters:
       - name: "walletId"
@@ -2232,7 +2219,6 @@ paths:
       x-required-permission: "billing:coupon:redeem"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/wallets/{walletId}/coupon-redemptions/attach:
     post:
       tags:
@@ -2242,8 +2228,7 @@ paths:
         \ code's own limits and so needs the coupon manage permission rather than\
         \ the redeem one. A Tenant System uses it to grant a coupon it chose itself.\
         \ Send an `Idempotency-Key`; a repeat of the same key and body answers the\
-        \ first result with `200`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `billing:coupon:manage`."
+        \ first result with `200`.\n\nCallers: tenant-user. Requires `billing:coupon:manage`."
       operationId: "attach"
       parameters:
       - name: "walletId"
@@ -2302,7 +2287,6 @@ paths:
       x-required-permission: "billing:coupon:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/usage-events:
     get:
       tags:
@@ -2320,7 +2304,7 @@ paths:
         page\": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total`\
         \ and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor`\
         \ alone, without counting the matching rows; omit it for the rows alone.\n\
-        \nCallers: tenant-user, tenant-system. Requires `billing:usage:read`."
+        \nCallers: tenant-user. Requires `billing:usage:read`."
       operationId: "history"
       parameters:
       - name: "filter[customer_id][eq]"
@@ -2785,7 +2769,6 @@ paths:
       x-required-permission: "billing:usage:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Usage"
@@ -2795,8 +2778,7 @@ paths:
         \ when it `occurredAt`. Each event carries its own `idempotencyKey`, so a\
         \ retry never records anything twice: `201` for a new event, `200` with the\
         \ recorded event when it was already recorded, and `409` when the key arrives\
-        \ with different content.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `billing:usage:record`."
+        \ with different content.\n\nCallers: tenant-user. Requires `billing:usage:record`."
       operationId: "recordOne"
       requestBody:
         description: "One usage event to record."
@@ -2834,15 +2816,14 @@ paths:
       x-required-permission: "billing:usage:record"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/usage-events/batch:
     post:
       tags:
       - "Usage"
       summary: "Record usage events in a batch"
       description: "Reports up to 500 usage events at once, all-or-nothing: if any\
-        \ event is invalid or conflicts, none is stored.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `billing:usage:record`."
+        \ event is invalid or conflicts, none is stored.\n\nCallers: tenant-user.\
+        \ Requires `billing:usage:record`."
       operationId: "recordBatch"
       requestBody:
         description: "The usage events to record, at most 500, all or none."
@@ -2867,7 +2848,6 @@ paths:
       x-required-permission: "billing:usage:record"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/subscriptions:
     get:
       tags:
@@ -2885,8 +2865,7 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `billing:subscription:read`."
+        \ omit it for the rows alone.\n\nCallers: tenant-user. Requires `billing:subscription:read`."
       operationId: "subscriptions"
       parameters:
       - name: "filter[anchor][eq]"
@@ -3566,7 +3545,6 @@ paths:
       x-required-permission: "billing:subscription:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Subscriptions"
@@ -3576,8 +3554,7 @@ paths:
         \ plan and stay fixed for the life of the subscription. A first period the\
         \ wallet cannot pay leaves the subscription `PAST_DUE` rather than rejecting\
         \ it. Send an `Idempotency-Key`; a repeat of the same key and body answers\
-        \ the first result with `200`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `billing:subscription:manage`."
+        \ the first result with `200`.\n\nCallers: tenant-user. Requires `billing:subscription:manage`."
       operationId: "subscribe"
       parameters:
       - name: "Idempotency-Key"
@@ -3627,7 +3604,6 @@ paths:
       x-required-permission: "billing:subscription:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/subscriptions/{id}/cancel:
     post:
       tags:
@@ -3636,8 +3612,7 @@ paths:
       description: "Cancels at the end of the period already paid, so the customer\
         \ keeps what was paid for, or at once when no paid period is running. Repeating\
         \ it changes nothing. Billing stops no resource: the Tenant System decides\
-        \ what the end means for it.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `billing:subscription:manage`."
+        \ what the end means for it.\n\nCallers: tenant-user. Requires `billing:subscription:manage`."
       operationId: "cancel"
       parameters:
       - name: "id"
@@ -3669,7 +3644,6 @@ paths:
       x-required-permission: "billing:subscription:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/stripe/reconcile:
     post:
       tags:
@@ -3901,7 +3875,7 @@ paths:
         page\": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total`\
         \ and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor`\
         \ alone, without counting the matching rows; omit it for the rows alone.\n\
-        \nCallers: tenant-user, tenant-system. Requires `billing:wallet:read`."
+        \nCallers: tenant-user. Requires `billing:wallet:read`."
       operationId: "reservations"
       parameters:
       - name: "filter[amount][eq]"
@@ -4401,7 +4375,6 @@ paths:
       x-required-permission: "billing:wallet:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Reservations"
@@ -4410,8 +4383,7 @@ paths:
         \ for a later charge, after checking the wallet can cover it or its postpaid\
         \ limit. Nothing is posted to the ledger until the reservation is captured.\
         \ Send an `Idempotency-Key`; a repeat of the same key and body answers the\
-        \ first result with `200`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `billing:reservation:manage`."
+        \ first result with `200`.\n\nCallers: tenant-user. Requires `billing:reservation:manage`."
       operationId: "reserve"
       parameters:
       - name: "Idempotency-Key"
@@ -4460,15 +4432,14 @@ paths:
       x-required-permission: "billing:reservation:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/reservations/{id}/release:
     post:
       tags:
       - "Reservations"
       summary: "Release a reservation"
       description: "Gives the held amount back to the wallet. Releasing a reservation\
-        \ that is already released changes nothing.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `billing:reservation:manage`."
+        \ that is already released changes nothing.\n\nCallers: tenant-user. Requires\
+        \ `billing:reservation:manage`."
       operationId: "release"
       parameters:
       - name: "id"
@@ -4493,7 +4464,6 @@ paths:
       x-required-permission: "billing:reservation:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/reservations/{id}/capture:
     post:
       tags:
@@ -4501,8 +4471,7 @@ paths:
       summary: "Capture a reservation"
       description: "Charges the actual cost against the reservation and releases whatever\
         \ was not used. Send an `Idempotency-Key`; a repeat of the same key and body\
-        \ answers the first result with `200`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `billing:charge:create`."
+        \ answers the first result with `200`.\n\nCallers: tenant-user. Requires `billing:charge:create`."
       operationId: "capture"
       parameters:
       - name: "id"
@@ -4553,14 +4522,13 @@ paths:
       x-required-permission: "billing:charge:create"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/promotion-codes/{id}/deactivate:
     post:
       tags:
       - "Coupons"
       summary: "Deactivate a promotion code"
       description: "Stops a promotion code being redeemed; the coupon and its other\
-        \ codes are unaffected.\n\nCallers: tenant-user, tenant-system. Requires `billing:coupon:manage`."
+        \ codes are unaffected.\n\nCallers: tenant-user. Requires `billing:coupon:manage`."
       operationId: "deactivateCode"
       parameters:
       - name: "id"
@@ -4592,7 +4560,6 @@ paths:
       x-required-permission: "billing:coupon:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/pricing/usage-charges:
     post:
       tags:
@@ -4602,7 +4569,7 @@ paths:
         \ the plan and charges the wallet, exactly once per usage event. Answers `201`\
         \ when charged, `200` when repeated or when there was nothing to charge, and\
         \ `402` when the wallet could not pay; the same request succeeds after a top-up.\n\
-        \nCallers: tenant-user, tenant-system. Requires `billing:charge:create`."
+        \nCallers: tenant-user. Requires `billing:charge:create`."
       operationId: "chargeUsage"
       requestBody:
         description: "The usage period to price and charge."
@@ -4641,7 +4608,6 @@ paths:
       x-required-permission: "billing:charge:create"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/pricing/reservations:
     post:
       tags:
@@ -4649,8 +4615,8 @@ paths:
       summary: "Reserve an estimated cost"
       description: "Holds the estimated cost of a resource on the wallet before it\
         \ runs. Answers `201` for a new reservation, `200` when the `Idempotency-Key`\
-        \ replays one, and `402` when the wallet cannot cover it.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `billing:reservation:manage`."
+        \ replays one, and `402` when the wallet cannot cover it.\n\nCallers: tenant-user.\
+        \ Requires `billing:reservation:manage`."
       operationId: "reserveEstimate"
       parameters:
       - name: "Idempotency-Key"
@@ -4699,7 +4665,6 @@ paths:
       x-required-permission: "billing:reservation:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/pricing/estimates:
     post:
       tags:
@@ -4708,8 +4673,7 @@ paths:
       description: "A pure calculation: prices expected `usage` against a plan version\
         \ with the same rules and the same single rounding as the real charge, and\
         \ stores nothing. When `walletId` is named, it also shows what that wallet\
-        \ would pay after its coupons.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `billing:pricing:read`."
+        \ would pay after its coupons.\n\nCallers: tenant-user. Requires `billing:pricing:read`."
       operationId: "estimate"
       requestBody:
         description: "The expected usage to price."
@@ -4734,7 +4698,6 @@ paths:
       x-required-permission: "billing:pricing:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/pricing-plans:
     get:
       tags:
@@ -4751,8 +4714,7 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `billing:pricing:read`."
+        \ omit it for the rows alone.\n\nCallers: tenant-user. Requires `billing:pricing:read`."
       operationId: "listPlans"
       parameters:
       - name: "filter[code][eq]"
@@ -5131,7 +5093,6 @@ paths:
       x-required-permission: "billing:pricing:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Pricing plans"
@@ -5270,7 +5231,7 @@ paths:
         \ wallet is debited only when Stripe confirms. Answers `409` when the amount\
         \ exceeds what is left to refund or the wallet has already spent it. Send\
         \ an `Idempotency-Key`; a repeat of the same key and body answers the first\
-        \ result with `200`.\n\nCallers: tenant-user, tenant-system. Requires `billing:refund:create`."
+        \ result with `200`.\n\nCallers: tenant-user. Requires `billing:refund:create`."
       operationId: "requestRefund"
       parameters:
       - name: "id"
@@ -5346,7 +5307,6 @@ paths:
       x-required-permission: "billing:refund:create"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/payments/top-ups:
     post:
       tags:
@@ -5356,8 +5316,7 @@ paths:
         \ where the customer pays. Creating a payment never changes a balance: the\
         \ wallet is credited only when a verified Stripe event says the money arrived.\
         \ Send an `Idempotency-Key`; a repeat of the same key and body answers the\
-        \ first result with `200`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `billing:payment:create`."
+        \ first result with `200`.\n\nCallers: tenant-user. Requires `billing:payment:create`."
       operationId: "createTopUp"
       parameters:
       - name: "Idempotency-Key"
@@ -5420,7 +5379,6 @@ paths:
       x-required-permission: "billing:payment:create"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/ledger-entries/{id}/reverse:
     post:
       tags:
@@ -5481,7 +5439,7 @@ paths:
         page\": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total`\
         \ and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor`\
         \ alone, without counting the matching rows; omit it for the rows alone.\n\
-        \nCallers: tenant-user, tenant-system. Requires `billing:invoice:read`."
+        \nCallers: tenant-user. Requires `billing:invoice:read`."
       operationId: "invoices"
       parameters:
       - name: "filter[created_at][eq]"
@@ -6212,7 +6170,6 @@ paths:
       x-required-permission: "billing:invoice:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Invoices"
@@ -6221,8 +6178,7 @@ paths:
         \ as a cycle invoice. A charge is billed on one line at most, so asking again\
         \ answers the existing invoice with `200` and needs no key. A postpaid charge\
         \ opens for payment; a prepaid charge was paid from the wallet, so its invoice\
-        \ is a paid record. Answers `201`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `billing:invoice:create`."
+        \ is a paid record. Answers `201`.\n\nCallers: tenant-user. Requires `billing:invoice:create`."
       operationId: "invoiceCharge"
       parameters:
       - name: "X-Request-Id"
@@ -6261,7 +6217,6 @@ paths:
       x-required-permission: "billing:invoice:create"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/invoices/{id}/void:
     post:
       tags:
@@ -6364,7 +6319,7 @@ paths:
         \ page where the customer pays. The invoice is paid, and the debt paid off,\
         \ only when Stripe's verified result arrives. Send an `Idempotency-Key`; a\
         \ repeat of the same key and body answers the first result with `200`.\n\n\
-        Callers: tenant-user, tenant-system. Requires `billing:payment:create`."
+        Callers: tenant-user. Requires `billing:payment:create`."
       operationId: "pay"
       parameters:
       - name: "id"
@@ -6428,7 +6383,6 @@ paths:
       x-required-permission: "billing:payment:create"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/customers:
     get:
       tags:
@@ -6446,7 +6400,7 @@ paths:
         page\": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total`\
         \ and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor`\
         \ alone, without counting the matching rows; omit it for the rows alone.\n\
-        \nCallers: tenant-user, tenant-system. Requires `billing:customer:read`."
+        \nCallers: tenant-user. Requires `billing:customer:read`."
       operationId: "list_1"
       parameters:
       - name: "filter[created_at][eq]"
@@ -6700,7 +6654,6 @@ paths:
       x-required-permission: "billing:customer:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Customers"
@@ -6710,7 +6663,7 @@ paths:
         \ its own users; a Tenant User names the tenant system explicitly. Safe to\
         \ retry: the same `Idempotency-Key` returns the same customer (`201` for a\
         \ new one, `200` for a replay), and the same key with a different body answers\
-        \ `409`.\n\nCallers: tenant-user, tenant-system. Requires `billing:customer:write`."
+        \ `409`.\n\nCallers: tenant-user. Requires `billing:customer:write`."
       operationId: "create"
       parameters:
       - name: "Idempotency-Key"
@@ -6764,15 +6717,14 @@ paths:
       x-required-permission: "billing:customer:write"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/customers/{id}/deactivate:
     post:
       tags:
       - "Customers"
       summary: "Deactivate a customer"
       description: "Deactivates the customer. Pass the current `ETag` in `If-Match`;\
-        \ a stale version is refused with `412`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `billing:customer:write`."
+        \ a stale version is refused with `412`.\n\nCallers: tenant-user. Requires\
+        \ `billing:customer:write`."
       operationId: "deactivate"
       parameters:
       - name: "id"
@@ -6830,7 +6782,6 @@ paths:
       x-required-permission: "billing:customer:write"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/coupons:
     get:
       tags:
@@ -6847,8 +6798,7 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `billing:coupon:read`."
+        \ omit it for the rows alone.\n\nCallers: tenant-user. Requires `billing:coupon:read`."
       operationId: "coupons"
       parameters:
       - name: "filter[benefit_type][eq]"
@@ -7464,7 +7414,6 @@ paths:
       x-required-permission: "billing:coupon:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Coupons"
@@ -7474,8 +7423,8 @@ paths:
         \ and optionally its first promotion code. A coupon without a total bound,\
         \ a benefit out of range or a currency mismatch is refused before anything\
         \ is stored. An Administrator and a Tenant System both create coupons, and\
-        \ the creating actor is stored on the coupon. Answers `201`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `billing:coupon:manage`."
+        \ the creating actor is stored on the coupon. Answers `201`.\n\nCallers: tenant-user.\
+        \ Requires `billing:coupon:manage`."
       operationId: "createCoupon"
       parameters:
       - name: "X-Request-Id"
@@ -7508,7 +7457,6 @@ paths:
       x-required-permission: "billing:coupon:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/coupons/{id}/deactivate:
     post:
       tags:
@@ -7517,7 +7465,7 @@ paths:
       description: "Final: stops new redemptions of the coupon and deactivates its\
         \ codes. A running redemption keeps working unless `revokeRedemptions` is\
         \ set, which pulls a bad coupon without invalidating a charge that already\
-        \ used it.\n\nCallers: tenant-user, tenant-system. Requires `billing:coupon:manage`."
+        \ used it.\n\nCallers: tenant-user. Requires `billing:coupon:manage`."
       operationId: "deactivateCoupon"
       parameters:
       - name: "id"
@@ -7557,7 +7505,6 @@ paths:
       x-required-permission: "billing:coupon:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/coupons/{id}/codes:
     get:
       tags:
@@ -7574,8 +7521,7 @@ paths:
         \ The body is `{\"data\": [...], \"page\": null}`. `page_info=full` fills\
         \ `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `billing:coupon:read`."
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-user. Requires `billing:coupon:read`."
       operationId: "codes"
       parameters:
       - name: "id"
@@ -7981,14 +7927,13 @@ paths:
       x-required-permission: "billing:coupon:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Coupons"
       summary: "Add a promotion code"
       description: "Adds a promotion code to a coupon, with an optional redemption\
         \ limit and `redeemBy` date. A code never outlives its coupon's terms. Answers\
-        \ `201`.\n\nCallers: tenant-user, tenant-system. Requires `billing:coupon:manage`."
+        \ `201`.\n\nCallers: tenant-user. Requires `billing:coupon:manage`."
       operationId: "addCode"
       parameters:
       - name: "id"
@@ -8029,7 +7974,6 @@ paths:
       x-required-permission: "billing:coupon:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/coupon-redemptions/{id}/revoke:
     post:
       tags:
@@ -8037,8 +7981,8 @@ paths:
       summary: "Revoke a coupon redemption"
       description: "Ends the redemption early. Nothing is released or refunded: discounts\
         \ already given were charged correctly at the time. Idempotent: revoking again\
-        \ changes nothing and announces nothing.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `billing:coupon:manage`."
+        \ changes nothing and announces nothing.\n\nCallers: tenant-user. Requires\
+        \ `billing:coupon:manage`."
       operationId: "revoke"
       parameters:
       - name: "id"
@@ -8070,7 +8014,6 @@ paths:
       x-required-permission: "billing:coupon:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/charges:
     get:
       tags:
@@ -8088,7 +8031,7 @@ paths:
         page\": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total`\
         \ and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor`\
         \ alone, without counting the matching rows; omit it for the rows alone.\n\
-        \nCallers: tenant-user, tenant-system. Requires `billing:wallet:read`."
+        \nCallers: tenant-user. Requires `billing:wallet:read`."
       operationId: "charges"
       parameters:
       - name: "filter[amount][eq]"
@@ -8553,7 +8496,6 @@ paths:
       x-required-permission: "billing:wallet:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Charges"
@@ -8561,8 +8503,8 @@ paths:
       description: "Records the actual cost incurred against a wallet (`walletId`,\
         \ `amount` in minor units, `currency`), once per `Idempotency-Key`. A wallet\
         \ that cannot pay yields a recorded `insufficient_funds` failure rather than\
-        \ an error. A repeat answers the first charge with `200`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `billing:charge:create`."
+        \ an error. A repeat answers the first charge with `200`.\n\nCallers: tenant-user.\
+        \ Requires `billing:charge:create`."
       operationId: "charge"
       parameters:
       - name: "Idempotency-Key"
@@ -8605,7 +8547,6 @@ paths:
       x-required-permission: "billing:charge:create"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/billing-sessions:
     post:
       tags:
@@ -8615,8 +8556,8 @@ paths:
         \ Tenant System that asked, with a `returnUrl` from the tenant's allowlist,\
         \ the `permissions` it grants and a lifetime. The answer carries the `portalUrl`\
         \ to open in the customer's browser; its single-use exchange token is shown\
-        \ once there, and only its digest is stored.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `billing:billing-session:create`."
+        \ once there, and only its digest is stored.\n\nCallers: tenant-user. Requires\
+        \ `billing:billing-session:create`."
       operationId: "create_1"
       parameters:
       - name: "X-Request-Id"
@@ -8649,15 +8590,14 @@ paths:
       x-required-permission: "billing:billing-session:create"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/billing-sessions/{id}/revoke:
     post:
       tags:
       - "Billing sessions"
       summary: "Revoke a billing session"
       description: "Revokes the session at once. A Tenant System may revoke only the\
-        \ sessions it issued; a Tenant User may revoke any.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `billing:billing-session:create`."
+        \ sessions it issued; a Tenant User may revoke any.\n\nCallers: tenant-user.\
+        \ Requires `billing:billing-session:create`."
       operationId: "revoke_1"
       parameters:
       - name: "id"
@@ -8685,15 +8625,14 @@ paths:
       x-required-permission: "billing:billing-session:create"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-endpoints/{id}:
     get:
       tags:
       - "Webhook endpoints"
       summary: "Get a webhook endpoint"
       description: "Returns one endpoint; its version is also the response's `ETag`.\
-        \ The secret is not returned. An unknown id answers `404`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `billing:webhook:read`."
+        \ The secret is not returned. An unknown id answers `404`.\n\nCallers: tenant-user.\
+        \ Requires `billing:webhook:read`."
       operationId: "getEndpoint"
       parameters:
       - name: "id"
@@ -8718,7 +8657,6 @@ paths:
       x-required-permission: "billing:webhook:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     patch:
       tags:
       - "Webhook endpoints"
@@ -8726,8 +8664,7 @@ paths:
       description: "Changes only the fields that are present: url, description, subscribed\
         \ event types or `status`. Setting `status` to `DISABLED` pauses delivery\
         \ without losing queued events. Pass the current `ETag` in `If-Match`; a stale\
-        \ version is refused with `412`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `billing:webhook:manage`."
+        \ version is refused with `412`.\n\nCallers: tenant-user. Requires `billing:webhook:manage`."
       operationId: "updateEndpoint"
       parameters:
       - name: "id"
@@ -8794,7 +8731,6 @@ paths:
       x-required-permission: "billing:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-deliveries:
     get:
       tags:
@@ -8812,8 +8748,7 @@ paths:
         \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
         \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `billing:webhook:read`."
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-user. Requires `billing:webhook:read`."
       operationId: "listDeliveries"
       parameters:
       - name: "filter[attempts][eq]"
@@ -9386,7 +9321,6 @@ paths:
       x-required-permission: "billing:webhook:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-deliveries/{id}:
     get:
       tags:
@@ -9394,7 +9328,7 @@ paths:
       summary: "Get a webhook delivery"
       description: "Returns one delivery with its state and every attempt: the status\
         \ code, error, response excerpt and latency. An unknown id answers `404`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `billing:webhook:read`."
+        \nCallers: tenant-user. Requires `billing:webhook:read`."
       operationId: "getDelivery"
       parameters:
       - name: "id"
@@ -9419,7 +9353,6 @@ paths:
       x-required-permission: "billing:webhook:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/wallets/{id}:
     get:
       tags:
@@ -9427,7 +9360,7 @@ paths:
       summary: "Get a wallet"
       description: "Returns one wallet with its balance, the amount held by reservations\
         \ and the amount available to spend. An unknown id answers `404`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `billing:wallet:read`."
+        \ tenant-user. Requires `billing:wallet:read`."
       operationId: "wallet_1"
       parameters:
       - name: "id"
@@ -9452,7 +9385,6 @@ paths:
       x-required-permission: "billing:wallet:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/wallets/{id}/ledger:
     get:
       tags:
@@ -9469,8 +9401,7 @@ paths:
         \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
         \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `billing:wallet:read`."
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-user. Requires `billing:wallet:read`."
       operationId: "ledger_1"
       parameters:
       - name: "id"
@@ -9974,7 +9905,6 @@ paths:
       x-required-permission: "billing:wallet:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/usage-aggregates:
     get:
       tags:
@@ -9982,8 +9912,7 @@ paths:
       summary: "Get usage aggregates"
       description: "Returns the quantity and the number of events per metric for a\
         \ customer over `[from, to)`, optionally for the `metric` values given. Rating\
-        \ and invoices read the same totals.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `billing:usage:read`."
+        \ and invoices read the same totals.\n\nCallers: tenant-user. Requires `billing:usage:read`."
       operationId: "aggregates"
       parameters:
       - name: "customerId"
@@ -10032,14 +9961,13 @@ paths:
       x-required-permission: "billing:usage:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/subscriptions/{id}:
     get:
       tags:
       - "Subscriptions"
       summary: "Get a subscription"
       description: "Returns one subscription with its history of periods. An unknown\
-        \ id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires `billing:subscription:read`."
+        \ id answers `404`.\n\nCallers: tenant-user. Requires `billing:subscription:read`."
       operationId: "subscription_1"
       parameters:
       - name: "id"
@@ -10064,7 +9992,6 @@ paths:
       x-required-permission: "billing:subscription:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/stripe/incidents:
     get:
       tags:
@@ -11039,8 +10966,8 @@ paths:
       - "Reservations"
       summary: "Get a reservation"
       description: "Returns one reservation with its status, amount, what was captured\
-        \ and when it expires. An unknown id answers `404`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `billing:wallet:read`."
+        \ and when it expires. An unknown id answers `404`.\n\nCallers: tenant-user.\
+        \ Requires `billing:wallet:read`."
       operationId: "reservation"
       parameters:
       - name: "id"
@@ -11065,7 +10992,6 @@ paths:
       x-required-permission: "billing:wallet:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/refunds:
     get:
       tags:
@@ -11083,7 +11009,7 @@ paths:
         page\": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total`\
         \ and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor`\
         \ alone, without counting the matching rows; omit it for the rows alone.\n\
-        \nCallers: tenant-user, tenant-system. Requires `billing:payment:read`."
+        \nCallers: tenant-user. Requires `billing:payment:read`."
       operationId: "refunds_1"
       parameters:
       - name: "filter[amount][eq]"
@@ -11506,14 +11432,13 @@ paths:
       x-required-permission: "billing:payment:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/refunds/{id}:
     get:
       tags:
       - "Refunds"
       summary: "Get a refund"
       description: "Returns one refund with its status and failure reason. An unknown\
-        \ id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires `billing:payment:read`."
+        \ id answers `404`.\n\nCallers: tenant-user. Requires `billing:payment:read`."
       operationId: "getRefund"
       parameters:
       - name: "id"
@@ -11538,15 +11463,14 @@ paths:
       x-required-permission: "billing:payment:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/pricing/usage-charges/{id}:
     get:
       tags:
       - "Rating"
       summary: "Get a usage rating"
       description: "Returns one rating with its lines, the period it covers and the\
-        \ charge it produced. An unknown id answers `404`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `billing:pricing:read`."
+        \ charge it produced. An unknown id answers `404`.\n\nCallers: tenant-user.\
+        \ Requires `billing:pricing:read`."
       operationId: "getRating"
       parameters:
       - name: "id"
@@ -11571,14 +11495,13 @@ paths:
       x-required-permission: "billing:pricing:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/pricing-plans/{id}:
     get:
       tags:
       - "Pricing plans"
       summary: "Get a pricing plan"
       description: "Returns one plan with its current version. An unknown id answers\
-        \ `404`.\n\nCallers: tenant-user, tenant-system. Requires `billing:pricing:read`."
+        \ `404`.\n\nCallers: tenant-user. Requires `billing:pricing:read`."
       operationId: "getPlan"
       parameters:
       - name: "id"
@@ -11603,7 +11526,6 @@ paths:
       x-required-permission: "billing:pricing:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/payments:
     get:
       tags:
@@ -11621,7 +11543,7 @@ paths:
         page\": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total`\
         \ and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor`\
         \ alone, without counting the matching rows; omit it for the rows alone.\n\
-        \nCallers: tenant-user, tenant-system. Requires `billing:payment:read`."
+        \nCallers: tenant-user. Requires `billing:payment:read`."
       operationId: "payments_1"
       parameters:
       - name: "filter[amount][eq]"
@@ -12175,15 +12097,13 @@ paths:
       x-required-permission: "billing:payment:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/payments/{id}:
     get:
       tags:
       - "Payments"
       summary: "Get a payment"
       description: "Returns one payment with its status and the amount refunded so\
-        \ far. An unknown id answers `404`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `billing:payment:read`."
+        \ far. An unknown id answers `404`.\n\nCallers: tenant-user. Requires `billing:payment:read`."
       operationId: "payment_1"
       parameters:
       - name: "id"
@@ -12208,7 +12128,6 @@ paths:
       x-required-permission: "billing:payment:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/invoices/{id}:
     get:
       tags:
@@ -12217,7 +12136,7 @@ paths:
       description: "Returns one invoice with its lines. An invoice becomes paid only\
         \ from a verified payment, or because the wallet already paid the charge it\
         \ documents; no request marks one paid. An unknown id answers `404`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `billing:invoice:read`."
+        \ tenant-user. Requires `billing:invoice:read`."
       operationId: "invoice_1"
       parameters:
       - name: "id"
@@ -12242,7 +12161,6 @@ paths:
       x-required-permission: "billing:invoice:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/customers/by-external-user/{externalUserId}:
     get:
       tags:
@@ -12251,7 +12169,7 @@ paths:
       description: "Returns the customer mapped to `externalUserId`, which is how\
         \ a Tenant System finds a customer by its own user reference. A Tenant User\
         \ also passes `tenantSystemId`. An unmapped user answers `404`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `billing:customer:read`."
+        \ tenant-user. Requires `billing:customer:read`."
       operationId: "byExternalUser"
       parameters:
       - name: "externalUserId"
@@ -12284,15 +12202,13 @@ paths:
       x-required-permission: "billing:customer:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/coupons/{id}:
     get:
       tags:
       - "Coupons"
       summary: "Get a coupon"
       description: "Returns one coupon with its terms and how much has been redeemed.\
-        \ An unknown id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `billing:coupon:read`."
+        \ An unknown id answers `404`.\n\nCallers: tenant-user. Requires `billing:coupon:read`."
       operationId: "coupon"
       parameters:
       - name: "id"
@@ -12317,14 +12233,13 @@ paths:
       x-required-permission: "billing:coupon:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/coupon-redemptions/{id}:
     get:
       tags:
       - "Coupon redemptions"
       summary: "Get a coupon redemption"
       description: "Returns one redemption with its coupon, code and wallet. An unknown\
-        \ id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires `billing:coupon:read`."
+        \ id answers `404`.\n\nCallers: tenant-user. Requires `billing:coupon:read`."
       operationId: "redemption"
       parameters:
       - name: "id"
@@ -12349,14 +12264,13 @@ paths:
       x-required-permission: "billing:coupon:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/charges/{id}:
     get:
       tags:
       - "Charges"
       summary: "Get a charge"
       description: "Returns one charge with the discounts applied to it. An unknown\
-        \ id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires `billing:wallet:read`."
+        \ id answers `404`.\n\nCallers: tenant-user. Requires `billing:wallet:read`."
       operationId: "getCharge"
       parameters:
       - name: "id"
@@ -12381,9 +12295,53 @@ paths:
       x-required-permission: "billing:wallet:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
 components:
   schemas:
+    UpdateCustomerRequest:
+      type: "object"
+      description: "The customer properties to store."
+      properties:
+        displayName:
+          type: "string"
+          description: "The name shown for the customer."
+        email:
+          type: "string"
+          description: "The customer's email address."
+    CustomerResponse:
+      type: "object"
+      description: "A billing customer."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        displayName:
+          type: "string"
+          description: "The name shown for the customer."
+        email:
+          type: "string"
+          description: "The customer's email address."
+        status:
+          type: "string"
+          description: "`ACTIVE` or `DEACTIVATED`."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        identities:
+          type: "array"
+          description: "The Tenant System users the customer is mapped to."
+          items:
+            $ref: "#/components/schemas/IdentityResponse"
+    IdentityResponse:
+      type: "object"
+      description: "A Tenant System user a customer is mapped to."
+      properties:
+        tenantSystemId:
+          type: "string"
+          description: "The tenant system."
+        externalUserId:
+          type: "string"
+          description: "The tenant system's own id of the user."
     WebhookSecretRequest:
       type: "object"
       description: "The webhook signing secret."
@@ -12464,139 +12422,6 @@ components:
             \ the stored list."
           items:
             type: "string"
-    UpdateCustomerRequest:
-      type: "object"
-      description: "The customer properties to store."
-      properties:
-        displayName:
-          type: "string"
-          description: "The name shown for the customer."
-        email:
-          type: "string"
-          description: "The customer's email address."
-    CustomerResponse:
-      type: "object"
-      description: "A billing customer."
-      properties:
-        id:
-          type: "string"
-          description: "The id."
-        displayName:
-          type: "string"
-          description: "The name shown for the customer."
-        email:
-          type: "string"
-          description: "The customer's email address."
-        status:
-          type: "string"
-          description: "`ACTIVE` or `DEACTIVATED`."
-        createdAt:
-          type: "string"
-          format: "date-time"
-          description: "When the record was created."
-        identities:
-          type: "array"
-          description: "The Tenant System users the customer is mapped to."
-          items:
-            $ref: "#/components/schemas/IdentityResponse"
-    IdentityResponse:
-      type: "object"
-      description: "A Tenant System user a customer is mapped to."
-      properties:
-        tenantSystemId:
-          type: "string"
-          description: "The tenant system."
-        externalUserId:
-          type: "string"
-          description: "The tenant system's own id of the user."
-    TopUpRequest:
-      type: "object"
-      description: "The top-up to start."
-      properties:
-        walletId:
-          type: "string"
-          description: "The wallet to top up."
-        amount:
-          type: "integer"
-          format: "int64"
-          description: "The amount to add, in minor units."
-        currency:
-          type: "string"
-          description: "The ISO 4217 currency code of the amounts."
-    MoneyDto:
-      type: "object"
-      description: "An amount of money."
-      properties:
-        amount:
-          type: "integer"
-          format: "int64"
-          description: "The amount in minor units of the currency."
-        currency:
-          type: "string"
-          description: "The ISO 4217 currency code."
-    TopUpResponse:
-      type: "object"
-      description: "A top-up that was started."
-      properties:
-        id:
-          type: "string"
-          description: "The id."
-        status:
-          type: "string"
-          description: "The payment's status."
-        amount:
-          $ref: "#/components/schemas/MoneyDto"
-          description: "The amount to be paid."
-        checkoutUrl:
-          type: "string"
-          description: "The Stripe-hosted page where the customer pays. Present only\
-            \ while the customer can still pay."
-    ExchangeRequest:
-      type: "object"
-      description: "The token to exchange."
-      properties:
-        token:
-          type: "string"
-          description: "The single-use token from the portal URL's fragment."
-    ExchangeResponse:
-      type: "object"
-      description: "The portal session the exchange opened."
-      properties:
-        session:
-          $ref: "#/components/schemas/SessionResponse"
-          description: "The session."
-        csrfToken:
-          type: "string"
-          description: "The CSRF token the portal sends back with writes."
-        returnUrl:
-          type: "string"
-          description: "Where the portal sends the customer back to."
-    SessionResponse:
-      type: "object"
-      description: "A portal session."
-      properties:
-        sessionId:
-          type: "string"
-          description: "The session's id."
-        customerId:
-          type: "string"
-          description: "The id of the customer."
-        permissions:
-          type: "array"
-          description: "What the session may do in the portal."
-          items:
-            type: "string"
-        expiresAt:
-          type: "string"
-          format: "date-time"
-          description: "When the session expires."
-    HostedPageResponse:
-      type: "object"
-      description: "A Stripe-hosted page."
-      properties:
-        url:
-          type: "string"
-          description: "The URL of the page to open."
     CreateEndpointRequest:
       type: "object"
       description: "The endpoint to register."
@@ -12726,6 +12551,17 @@ components:
           type: "integer"
           format: "int64"
           description: "For a postpaid wallet, how much it may owe at most."
+    MoneyDto:
+      type: "object"
+      description: "An amount of money."
+      properties:
+        amount:
+          type: "integer"
+          format: "int64"
+          description: "The amount in minor units of the currency."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code."
     WalletResponse:
       type: "object"
       description: "A customer's wallet in one currency."
@@ -13057,108 +12893,6 @@ components:
           type: "string"
           format: "date-time"
           description: "When the record was created."
-    ReconcileResponse:
-      type: "object"
-      description: "What a reconciliation found."
-      properties:
-        checked:
-          type: "integer"
-          format: "int32"
-          description: "How many payments and refunds were compared."
-        corrected:
-          type: "integer"
-          format: "int32"
-          description: "How many were corrected from Stripe."
-        mismatches:
-          type: "integer"
-          format: "int32"
-          description: "How many disagreements were recorded as incidents."
-    EventAttemptResponse:
-      type: "object"
-      description: "One attempt to process a Stripe event."
-      properties:
-        attempt:
-          type: "integer"
-          format: "int32"
-          description: "The attempt's number, starting at 1."
-        outcome:
-          type: "string"
-          description: "How the attempt ended."
-        detail:
-          type: "string"
-          description: "Details of what happened."
-        attemptedAt:
-          type: "string"
-          format: "date-time"
-          description: "When the attempt was made."
-    EventDetailResponse:
-      type: "object"
-      description: "A Stripe event with how its processing went."
-      properties:
-        event:
-          $ref: "#/components/schemas/EventResponse"
-          description: "The event."
-        history:
-          type: "array"
-          description: "Every processing attempt."
-          items:
-            $ref: "#/components/schemas/EventAttemptResponse"
-    EventResponse:
-      type: "object"
-      description: "A Stripe event that was received."
-      properties:
-        id:
-          type: "string"
-          description: "The id."
-        stripeEventId:
-          type: "string"
-          description: "Stripe's id of the event."
-        type:
-          type: "string"
-          description: "The Stripe event type."
-        status:
-          type: "string"
-          description: "`RECEIVED`, `PROCESSED` or `IGNORED`."
-        attempts:
-          type: "integer"
-          format: "int32"
-          description: "How many times processing was tried."
-        nextAttemptAt:
-          type: "string"
-          format: "date-time"
-          description: "When the next try is due, or null."
-        lastError:
-          type: "string"
-          description: "The last error, or null."
-        receivedAt:
-          type: "string"
-          format: "date-time"
-          description: "When the event was received."
-        processedAt:
-          type: "string"
-          format: "date-time"
-          description: "When it was processed, or null."
-    ConnectRequest:
-      type: "object"
-      description: "The tenant's details for Stripe Connect onboarding."
-      properties:
-        displayName:
-          type: "string"
-          description: "The name Stripe shows for the account."
-        contactEmail:
-          type: "string"
-          description: "The contact email of the account."
-    ConnectionResponse:
-      type: "object"
-      description: "The Stripe connection and the onboarding page."
-      properties:
-        configuration:
-          $ref: "#/components/schemas/ConfigurationResponse"
-          description: "The configuration."
-        onboardingUrl:
-          type: "string"
-          description: "A Stripe-hosted page, present while the tenant still has onboarding\
-            \ to finish."
     ReserveRequest:
       type: "object"
       description: "The hold to place on a wallet."
@@ -13530,198 +13264,6 @@ components:
         walletId:
           type: "string"
           description: "A wallet whose coupons the estimate also applies, or null."
-    CreatePlanRequest:
-      type: "object"
-      description: "The plan to create, with its first version."
-      properties:
-        code:
-          type: "string"
-          description: "The plan's code, unique per tenant."
-        name:
-          type: "string"
-          description: "The name."
-        currency:
-          type: "string"
-          description: "The ISO 4217 currency code of the amounts."
-        model:
-          type: "string"
-          description: "The pricing model: `TIME_BASED`, `USAGE_BASED`, `WORKLOAD_BASED`,\
-            \ `EVENT_BASED`, `SUBSCRIPTION` or `HYBRID`."
-        version:
-          $ref: "#/components/schemas/VersionRequest"
-          description: "The plan's first version."
-    RuleDto:
-      type: "object"
-      description: "A pricing strategy: how a quantity of usage becomes an amount.\
-        \ Prices are decimals in minor units, and rounding to whole minor units happens\
-        \ once, on the total."
-      properties:
-        model:
-          type: "string"
-          description: "The pricing model: `TIME_BASED` (price per unit of time),\
-            \ `USAGE_BASED` (by quantity consumed, with tiers), `WORKLOAD_BASED` (a\
-            \ start fee per execution plus a rate for the work), `EVENT_BASED` (per\
-            \ discrete event), `SUBSCRIPTION` (a fixed amount per cycle) or `HYBRID`\
-            \ (a base amount plus usage components)."
-        metric:
-          type: "string"
-          description: "The metric the rule prices. Not used by a fixed price."
-        unit:
-          type: "string"
-          description: "The unit the metric is measured in. Not used by a fixed price."
-        unitPrice:
-          type: "string"
-          description: "The price of one unit, as a decimal string. Used by time-based,\
-            \ workload-based and event-based rules."
-        increment:
-          type: "string"
-          description: "For a time-based rule, the duration is first rounded up to\
-            \ a whole number of increments, such as per started minute. Zero or null\
-            \ means no rounding."
-        mode:
-          type: "string"
-          description: "For a usage-based rule: `GRADUATED` prices each band of the\
-            \ quantity at its own tier's rate, `VOLUME` prices the whole quantity\
-            \ at the rate of the tier it falls in."
-        tiers:
-          type: "array"
-          description: "For a usage-based rule, the price bands. One tier is a flat\
-            \ rate; a first tier priced at zero is an included allowance."
-          items:
-            $ref: "#/components/schemas/TierDto"
-        executionFee:
-          type: "string"
-          description: "For a workload-based rule, the start fee of every execution,\
-            \ as a decimal string."
-        fixedPrice:
-          type: "string"
-          description: "The amount for one billing cycle whatever is used, as a decimal\
-            \ string. Used by a subscription rule and as the base of a hybrid."
-        components:
-          type: "array"
-          description: "For a hybrid rule, the usage rules added to the base amount.\
-            \ Each metric appears once."
-          items:
-            $ref: "#/components/schemas/RuleDto"
-    TierDto:
-      type: "object"
-      description: "One price tier."
-      properties:
-        upTo:
-          type: "string"
-          description: "The quantity the band runs up to, as a decimal string, or\
-            \ null when it is unbounded."
-        unitPrice:
-          type: "string"
-          description: "The price of one unit in the band, as a decimal string."
-    VersionRequest:
-      type: "object"
-      description: "A version of a plan."
-      properties:
-        rule:
-          $ref: "#/components/schemas/RuleDto"
-          description: "The price rule."
-        billingCycle:
-          type: "string"
-          description: "For a subscription: `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY`\
-            \ or `YEARLY`."
-        minCharge:
-          type: "integer"
-          format: "int64"
-          description: "The least a charge is rounded up to, in minor units, or null."
-        maxCharge:
-          type: "integer"
-          format: "int64"
-          description: "The most a charge is capped at, in minor units, or null."
-        rounding:
-          type: "string"
-          description: "How a fractional amount is rounded: `HALF_UP`, `HALF_EVEN`,\
-            \ `UP` or `DOWN`."
-        validFrom:
-          type: "string"
-          format: "date-time"
-          description: "When the version takes effect."
-        validUntil:
-          type: "string"
-          format: "date-time"
-          description: "When the version stops applying, or null."
-    PlanResponse:
-      type: "object"
-      description: "A pricing plan and its versions."
-      properties:
-        id:
-          type: "string"
-          description: "The id."
-        code:
-          type: "string"
-          description: "The code, unique per tenant."
-        name:
-          type: "string"
-          description: "The name."
-        model:
-          type: "string"
-          description: "The pricing model."
-        currency:
-          type: "string"
-          description: "The ISO 4217 currency code of the amounts."
-        status:
-          type: "string"
-          description: "`ACTIVE` or `RETIRED`."
-        createdAt:
-          type: "string"
-          format: "date-time"
-          description: "When the record was created."
-        retiredAt:
-          type: "string"
-          format: "date-time"
-          description: "When the plan was retired, or null."
-        versions:
-          type: "array"
-          description: "Every version, earlier ones unchanged."
-          items:
-            $ref: "#/components/schemas/VersionResponse"
-    VersionResponse:
-      type: "object"
-      description: "One version of a pricing plan. Earlier versions, and every charge\
-        \ that used them, are unchanged."
-      properties:
-        version:
-          type: "integer"
-          format: "int32"
-          description: "The version of the plan."
-        rule:
-          $ref: "#/components/schemas/RuleDto"
-          description: "The price rule."
-        billingCycle:
-          type: "string"
-          description: "For a subscription: `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY`\
-            \ or `YEARLY`."
-        minCharge:
-          type: "integer"
-          format: "int64"
-          description: "The least a charge is rounded up to, in minor units, or null."
-        maxCharge:
-          type: "integer"
-          format: "int64"
-          description: "The most a charge is capped at, in minor units, or null."
-        rounding:
-          type: "string"
-          description: "How a fractional amount is rounded."
-        validFrom:
-          type: "string"
-          format: "date-time"
-          description: "When the version takes effect."
-        validUntil:
-          type: "string"
-          format: "date-time"
-          description: "When the version stops applying, or null."
-        createdAt:
-          type: "string"
-          format: "date-time"
-          description: "When the record was created."
-        createdBy:
-          type: "string"
-          description: "Who published the version."
     RefundRequest:
       type: "object"
       description: "The refund to request."
@@ -13771,6 +13313,20 @@ components:
           type: "string"
           format: "date-time"
           description: "When it completed, or null."
+    TopUpRequest:
+      type: "object"
+      description: "The top-up to start."
+      properties:
+        walletId:
+          type: "string"
+          description: "The wallet to top up."
+        amount:
+          type: "integer"
+          format: "int64"
+          description: "The amount to add, in minor units."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code of the amounts."
     PaymentResponse:
       type: "object"
       description: "A payment of a top-up or an invoice."
@@ -13816,87 +13372,6 @@ components:
           type: "string"
           format: "date-time"
           description: "When it completed, or null."
-    ReplacementRequest:
-      type: "object"
-      description: "The entry that replaces a reversed one."
-      properties:
-        type:
-          type: "string"
-          description: "`CREDIT` or `DEBIT`."
-        amount:
-          type: "integer"
-          format: "int64"
-          description: "The amount of the replacement, in minor units."
-        currency:
-          type: "string"
-          description: "The ISO 4217 currency code of the amounts."
-        reference:
-          type: "string"
-          description: "A reference the caller chose, recorded with the record."
-    ReverseRequest:
-      type: "object"
-      description: "The correction to post."
-      properties:
-        reason:
-          type: "string"
-          description: "Why the entry is reversed."
-        replacement:
-          $ref: "#/components/schemas/ReplacementRequest"
-          description: "An entry to post in its place with the right amount, or null\
-            \ for none."
-    LedgerEntryResponse:
-      type: "object"
-      description: "One entry of a wallet's append-only ledger."
-      properties:
-        id:
-          type: "string"
-          description: "The id."
-        sequence:
-          type: "integer"
-          format: "int64"
-          description: "The entry's position in the wallet's ledger."
-        type:
-          type: "string"
-          description: "`CREDIT` or `DEBIT`."
-        amount:
-          $ref: "#/components/schemas/MoneyDto"
-          description: "The amount of the entry."
-        reference:
-          type: "string"
-          description: "A reference the caller chose, recorded with the record."
-        reservationId:
-          type: "string"
-          description: "The reservation the entry belongs to, or null."
-        chargeId:
-          type: "string"
-          description: "The id of the charge."
-        reversalOf:
-          type: "string"
-          description: "The id of the entry this one reverses, or null."
-        actor:
-          type: "string"
-          description: "Who caused the entry."
-        reason:
-          type: "string"
-          description: "The reason given."
-        createdAt:
-          type: "string"
-          format: "date-time"
-          description: "When the record was created."
-    ReversalResponse:
-      type: "object"
-      description: "The entries a reversal posted."
-      properties:
-        reversal:
-          $ref: "#/components/schemas/LedgerEntryResponse"
-          description: "The entry that negates the original."
-        replacement:
-          $ref: "#/components/schemas/LedgerEntryResponse"
-          description: "The replacement entry, or null."
-        replayed:
-          type: "boolean"
-          description: "Whether the answer is the earlier result of the same request,\
-            \ not a new one."
     InvoiceChargeRequest:
       type: "object"
       description: "The charge to invoice."
@@ -14039,13 +13514,6 @@ components:
           type: "string"
           format: "date-time"
           description: "When the cost was incurred."
-    VoidRequest:
-      type: "object"
-      description: "Why the invoice is voided."
-      properties:
-        reason:
-          type: "string"
-          description: "Why the request for payment is cancelled."
     PayInvoiceResponse:
       type: "object"
       description: "The invoice and the payment that was started."
@@ -14412,6 +13880,451 @@ components:
           type: "string"
           format: "date-time"
           description: "When the session expires."
+    TopUpResponse:
+      type: "object"
+      description: "A top-up that was started."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        status:
+          type: "string"
+          description: "The payment's status."
+        amount:
+          $ref: "#/components/schemas/MoneyDto"
+          description: "The amount to be paid."
+        checkoutUrl:
+          type: "string"
+          description: "The Stripe-hosted page where the customer pays. Present only\
+            \ while the customer can still pay."
+    ExchangeRequest:
+      type: "object"
+      description: "The token to exchange."
+      properties:
+        token:
+          type: "string"
+          description: "The single-use token from the portal URL's fragment."
+    ExchangeResponse:
+      type: "object"
+      description: "The portal session the exchange opened."
+      properties:
+        session:
+          $ref: "#/components/schemas/SessionResponse"
+          description: "The session."
+        csrfToken:
+          type: "string"
+          description: "The CSRF token the portal sends back with writes."
+        returnUrl:
+          type: "string"
+          description: "Where the portal sends the customer back to."
+    SessionResponse:
+      type: "object"
+      description: "A portal session."
+      properties:
+        sessionId:
+          type: "string"
+          description: "The session's id."
+        customerId:
+          type: "string"
+          description: "The id of the customer."
+        permissions:
+          type: "array"
+          description: "What the session may do in the portal."
+          items:
+            type: "string"
+        expiresAt:
+          type: "string"
+          format: "date-time"
+          description: "When the session expires."
+    HostedPageResponse:
+      type: "object"
+      description: "A Stripe-hosted page."
+      properties:
+        url:
+          type: "string"
+          description: "The URL of the page to open."
+    ReconcileResponse:
+      type: "object"
+      description: "What a reconciliation found."
+      properties:
+        checked:
+          type: "integer"
+          format: "int32"
+          description: "How many payments and refunds were compared."
+        corrected:
+          type: "integer"
+          format: "int32"
+          description: "How many were corrected from Stripe."
+        mismatches:
+          type: "integer"
+          format: "int32"
+          description: "How many disagreements were recorded as incidents."
+    EventAttemptResponse:
+      type: "object"
+      description: "One attempt to process a Stripe event."
+      properties:
+        attempt:
+          type: "integer"
+          format: "int32"
+          description: "The attempt's number, starting at 1."
+        outcome:
+          type: "string"
+          description: "How the attempt ended."
+        detail:
+          type: "string"
+          description: "Details of what happened."
+        attemptedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the attempt was made."
+    EventDetailResponse:
+      type: "object"
+      description: "A Stripe event with how its processing went."
+      properties:
+        event:
+          $ref: "#/components/schemas/EventResponse"
+          description: "The event."
+        history:
+          type: "array"
+          description: "Every processing attempt."
+          items:
+            $ref: "#/components/schemas/EventAttemptResponse"
+    EventResponse:
+      type: "object"
+      description: "A Stripe event that was received."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        stripeEventId:
+          type: "string"
+          description: "Stripe's id of the event."
+        type:
+          type: "string"
+          description: "The Stripe event type."
+        status:
+          type: "string"
+          description: "`RECEIVED`, `PROCESSED` or `IGNORED`."
+        attempts:
+          type: "integer"
+          format: "int32"
+          description: "How many times processing was tried."
+        nextAttemptAt:
+          type: "string"
+          format: "date-time"
+          description: "When the next try is due, or null."
+        lastError:
+          type: "string"
+          description: "The last error, or null."
+        receivedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the event was received."
+        processedAt:
+          type: "string"
+          format: "date-time"
+          description: "When it was processed, or null."
+    ConnectRequest:
+      type: "object"
+      description: "The tenant's details for Stripe Connect onboarding."
+      properties:
+        displayName:
+          type: "string"
+          description: "The name Stripe shows for the account."
+        contactEmail:
+          type: "string"
+          description: "The contact email of the account."
+    ConnectionResponse:
+      type: "object"
+      description: "The Stripe connection and the onboarding page."
+      properties:
+        configuration:
+          $ref: "#/components/schemas/ConfigurationResponse"
+          description: "The configuration."
+        onboardingUrl:
+          type: "string"
+          description: "A Stripe-hosted page, present while the tenant still has onboarding\
+            \ to finish."
+    CreatePlanRequest:
+      type: "object"
+      description: "The plan to create, with its first version."
+      properties:
+        code:
+          type: "string"
+          description: "The plan's code, unique per tenant."
+        name:
+          type: "string"
+          description: "The name."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code of the amounts."
+        model:
+          type: "string"
+          description: "The pricing model: `TIME_BASED`, `USAGE_BASED`, `WORKLOAD_BASED`,\
+            \ `EVENT_BASED`, `SUBSCRIPTION` or `HYBRID`."
+        version:
+          $ref: "#/components/schemas/VersionRequest"
+          description: "The plan's first version."
+    RuleDto:
+      type: "object"
+      description: "A pricing strategy: how a quantity of usage becomes an amount.\
+        \ Prices are decimals in minor units, and rounding to whole minor units happens\
+        \ once, on the total."
+      properties:
+        model:
+          type: "string"
+          description: "The pricing model: `TIME_BASED` (price per unit of time),\
+            \ `USAGE_BASED` (by quantity consumed, with tiers), `WORKLOAD_BASED` (a\
+            \ start fee per execution plus a rate for the work), `EVENT_BASED` (per\
+            \ discrete event), `SUBSCRIPTION` (a fixed amount per cycle) or `HYBRID`\
+            \ (a base amount plus usage components)."
+        metric:
+          type: "string"
+          description: "The metric the rule prices. Not used by a fixed price."
+        unit:
+          type: "string"
+          description: "The unit the metric is measured in. Not used by a fixed price."
+        unitPrice:
+          type: "string"
+          description: "The price of one unit, as a decimal string. Used by time-based,\
+            \ workload-based and event-based rules."
+        increment:
+          type: "string"
+          description: "For a time-based rule, the duration is first rounded up to\
+            \ a whole number of increments, such as per started minute. Zero or null\
+            \ means no rounding."
+        mode:
+          type: "string"
+          description: "For a usage-based rule: `GRADUATED` prices each band of the\
+            \ quantity at its own tier's rate, `VOLUME` prices the whole quantity\
+            \ at the rate of the tier it falls in."
+        tiers:
+          type: "array"
+          description: "For a usage-based rule, the price bands. One tier is a flat\
+            \ rate; a first tier priced at zero is an included allowance."
+          items:
+            $ref: "#/components/schemas/TierDto"
+        executionFee:
+          type: "string"
+          description: "For a workload-based rule, the start fee of every execution,\
+            \ as a decimal string."
+        fixedPrice:
+          type: "string"
+          description: "The amount for one billing cycle whatever is used, as a decimal\
+            \ string. Used by a subscription rule and as the base of a hybrid."
+        components:
+          type: "array"
+          description: "For a hybrid rule, the usage rules added to the base amount.\
+            \ Each metric appears once."
+          items:
+            $ref: "#/components/schemas/RuleDto"
+    TierDto:
+      type: "object"
+      description: "One price tier."
+      properties:
+        upTo:
+          type: "string"
+          description: "The quantity the band runs up to, as a decimal string, or\
+            \ null when it is unbounded."
+        unitPrice:
+          type: "string"
+          description: "The price of one unit in the band, as a decimal string."
+    VersionRequest:
+      type: "object"
+      description: "A version of a plan."
+      properties:
+        rule:
+          $ref: "#/components/schemas/RuleDto"
+          description: "The price rule."
+        billingCycle:
+          type: "string"
+          description: "For a subscription: `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY`\
+            \ or `YEARLY`."
+        minCharge:
+          type: "integer"
+          format: "int64"
+          description: "The least a charge is rounded up to, in minor units, or null."
+        maxCharge:
+          type: "integer"
+          format: "int64"
+          description: "The most a charge is capped at, in minor units, or null."
+        rounding:
+          type: "string"
+          description: "How a fractional amount is rounded: `HALF_UP`, `HALF_EVEN`,\
+            \ `UP` or `DOWN`."
+        validFrom:
+          type: "string"
+          format: "date-time"
+          description: "When the version takes effect."
+        validUntil:
+          type: "string"
+          format: "date-time"
+          description: "When the version stops applying, or null."
+    PlanResponse:
+      type: "object"
+      description: "A pricing plan and its versions."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        code:
+          type: "string"
+          description: "The code, unique per tenant."
+        name:
+          type: "string"
+          description: "The name."
+        model:
+          type: "string"
+          description: "The pricing model."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code of the amounts."
+        status:
+          type: "string"
+          description: "`ACTIVE` or `RETIRED`."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        retiredAt:
+          type: "string"
+          format: "date-time"
+          description: "When the plan was retired, or null."
+        versions:
+          type: "array"
+          description: "Every version, earlier ones unchanged."
+          items:
+            $ref: "#/components/schemas/VersionResponse"
+    VersionResponse:
+      type: "object"
+      description: "One version of a pricing plan. Earlier versions, and every charge\
+        \ that used them, are unchanged."
+      properties:
+        version:
+          type: "integer"
+          format: "int32"
+          description: "The version of the plan."
+        rule:
+          $ref: "#/components/schemas/RuleDto"
+          description: "The price rule."
+        billingCycle:
+          type: "string"
+          description: "For a subscription: `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY`\
+            \ or `YEARLY`."
+        minCharge:
+          type: "integer"
+          format: "int64"
+          description: "The least a charge is rounded up to, in minor units, or null."
+        maxCharge:
+          type: "integer"
+          format: "int64"
+          description: "The most a charge is capped at, in minor units, or null."
+        rounding:
+          type: "string"
+          description: "How a fractional amount is rounded."
+        validFrom:
+          type: "string"
+          format: "date-time"
+          description: "When the version takes effect."
+        validUntil:
+          type: "string"
+          format: "date-time"
+          description: "When the version stops applying, or null."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        createdBy:
+          type: "string"
+          description: "Who published the version."
+    ReplacementRequest:
+      type: "object"
+      description: "The entry that replaces a reversed one."
+      properties:
+        type:
+          type: "string"
+          description: "`CREDIT` or `DEBIT`."
+        amount:
+          type: "integer"
+          format: "int64"
+          description: "The amount of the replacement, in minor units."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code of the amounts."
+        reference:
+          type: "string"
+          description: "A reference the caller chose, recorded with the record."
+    ReverseRequest:
+      type: "object"
+      description: "The correction to post."
+      properties:
+        reason:
+          type: "string"
+          description: "Why the entry is reversed."
+        replacement:
+          $ref: "#/components/schemas/ReplacementRequest"
+          description: "An entry to post in its place with the right amount, or null\
+            \ for none."
+    LedgerEntryResponse:
+      type: "object"
+      description: "One entry of a wallet's append-only ledger."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        sequence:
+          type: "integer"
+          format: "int64"
+          description: "The entry's position in the wallet's ledger."
+        type:
+          type: "string"
+          description: "`CREDIT` or `DEBIT`."
+        amount:
+          $ref: "#/components/schemas/MoneyDto"
+          description: "The amount of the entry."
+        reference:
+          type: "string"
+          description: "A reference the caller chose, recorded with the record."
+        reservationId:
+          type: "string"
+          description: "The reservation the entry belongs to, or null."
+        chargeId:
+          type: "string"
+          description: "The id of the charge."
+        reversalOf:
+          type: "string"
+          description: "The id of the entry this one reverses, or null."
+        actor:
+          type: "string"
+          description: "Who caused the entry."
+        reason:
+          type: "string"
+          description: "The reason given."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+    ReversalResponse:
+      type: "object"
+      description: "The entries a reversal posted."
+      properties:
+        reversal:
+          $ref: "#/components/schemas/LedgerEntryResponse"
+          description: "The entry that negates the original."
+        replacement:
+          $ref: "#/components/schemas/LedgerEntryResponse"
+          description: "The replacement entry, or null."
+        replayed:
+          type: "boolean"
+          description: "Whether the answer is the earlier result of the same request,\
+            \ not a new one."
+    VoidRequest:
+      type: "object"
+      description: "Why the invoice is voided."
+      properties:
+        reason:
+          type: "string"
+          description: "Why the request for payment is cancelled."
     UpdateEndpointRequest:
       type: "object"
       description: "The fields to change. A field that is left out keeps its value."
@@ -14431,6 +14344,22 @@ components:
           type: "string"
           description: "`ACTIVE`, or `DISABLED` to pause delivery without losing queued\
             \ events."
+    PageEndpointResponse:
+      type: "object"
+      description: "A page of endpoint response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/EndpointResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageInfo:
       type: "object"
       description: "The paging facts of a list answer, present when the request asked\
@@ -14460,6 +14389,58 @@ components:
           - "null"
           description: "The cursor of the following page, or null on the last page.\
             \ Pass it as `cursor` with the same filter and sort."
+    PageDeliveryResponse:
+      type: "object"
+      description: "A page of delivery response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/DeliveryResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    AttemptResponse:
+      type: "object"
+      description: "One attempt: a failed attempt to pay, or an attempt to deliver\
+        \ a webhook event."
+      properties:
+        attemptNo:
+          type: "integer"
+          format: "int32"
+        statusCode:
+          type: "integer"
+          format: "int32"
+        error:
+          type: "string"
+        responseExcerpt:
+          type: "string"
+        latencyMs:
+          type: "integer"
+          format: "int64"
+        attemptedAt:
+          type: "string"
+          format: "date-time"
+    DeliveryDetailResponse:
+      type: "object"
+      description: "A delivery with the body that was sent and every attempt."
+      properties:
+        delivery:
+          $ref: "#/components/schemas/DeliveryResponse"
+          description: "The delivery."
+        body:
+          type: "string"
+          description: "The event body that is sent."
+        attempts:
+          type: "array"
+          description: "Every attempt, oldest first."
+          items:
+            $ref: "#/components/schemas/AttemptResponse"
     PageWalletResponse:
       type: "object"
       description: "A page of wallet response rows, with the paging facts when the\
@@ -14470,6 +14451,22 @@ components:
           description: "The rows of this page."
           items:
             $ref: "#/components/schemas/WalletResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageRedemptionResponse:
+      type: "object"
+      description: "A page of redemption response rows, with the paging facts when\
+        \ the request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/RedemptionResponse"
         page:
           description: "The paging facts, or null when the request did not ask for\
             \ them with `page_info`."
@@ -14492,23 +14489,6 @@ components:
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
-    UsageTotalResponse:
-      type: "object"
-      description: "The usage of one metric over a period."
-      properties:
-        metric:
-          type: "string"
-          description: "The name of the metric."
-        unit:
-          type: "string"
-          description: "The unit the metric is measured in."
-        quantity:
-          type: "string"
-          description: "The quantity as a decimal string with up to six decimal places."
-        events:
-          type: "integer"
-          format: "int64"
-          description: "The number of events counted."
     PageUsageEventResponse:
       type: "object"
       description: "A page of usage event response rows, with the paging facts when\
@@ -14525,6 +14505,23 @@ components:
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
+    TotalResponse:
+      type: "object"
+      description: "The usage of one metric over a period."
+      properties:
+        metric:
+          type: "string"
+          description: "The name of the metric."
+        unit:
+          type: "string"
+          description: "The unit the metric is measured in."
+        quantity:
+          type: "string"
+          description: "The quantity as a decimal string with up to six decimal places."
+        events:
+          type: "integer"
+          format: "int64"
+          description: "The number of events counted."
     PageSubscriptionResponse:
       type: "object"
       description: "A page of subscription response rows, with the paging facts when\
@@ -14535,6 +14532,22 @@ components:
           description: "The rows of this page."
           items:
             $ref: "#/components/schemas/SubscriptionResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageReservationResponse:
+      type: "object"
+      description: "A page of reservation response rows, with the paging facts when\
+        \ the request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/ReservationResponse"
         page:
           description: "The paging facts, or null when the request did not ask for\
             \ them with `page_info`."
@@ -14557,6 +14570,22 @@ components:
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
+    PagePlanResponse:
+      type: "object"
+      description: "A page of plan response rows, with the paging facts when the request\
+        \ asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/PlanResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PagePaymentResponse:
       type: "object"
       description: "A page of payment response rows, with the paging facts when the\
@@ -14573,21 +14602,6 @@ components:
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
-    AttemptResponse:
-      type: "object"
-      description: "One attempt: a failed attempt to pay, or an attempt to deliver\
-        \ a webhook event."
-      properties:
-        failureCode:
-          type: "string"
-          description: "The code of the failure."
-        failureMessage:
-          type: "string"
-          description: "What went wrong."
-        occurredAt:
-          type: "string"
-          format: "date-time"
-          description: "When the attempt happened."
     PaymentDetailResponse:
       type: "object"
       description: "A payment with its refunds and failed attempts."
@@ -14621,6 +14635,54 @@ components:
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
+    PageCustomerResponse:
+      type: "object"
+      description: "A page of customer response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/CustomerResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageCouponResponse:
+      type: "object"
+      description: "A page of coupon response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/CouponResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PagePromotionCodeResponse:
+      type: "object"
+      description: "A page of promotion code response rows, with the paging facts\
+        \ when the request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/PromotionCodeResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageChargeResponse:
       type: "object"
       description: "A page of charge response rows, with the paging facts when the\
@@ -14637,70 +14699,7 @@ components:
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
-    PageEndpointResponse:
-      type: "object"
-      description: "A page of endpoint response rows, with the paging facts when the\
-        \ request asked for them."
-      properties:
-        data:
-          type: "array"
-          description: "The rows of this page."
-          items:
-            $ref: "#/components/schemas/EndpointResponse"
-        page:
-          description: "The paging facts, or null when the request did not ask for\
-            \ them with `page_info`."
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    PageDeliveryResponse:
-      type: "object"
-      description: "A page of delivery response rows, with the paging facts when the\
-        \ request asked for them."
-      properties:
-        data:
-          type: "array"
-          description: "The rows of this page."
-          items:
-            $ref: "#/components/schemas/DeliveryResponse"
-        page:
-          description: "The paging facts, or null when the request did not ask for\
-            \ them with `page_info`."
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    DeliveryDetailResponse:
-      type: "object"
-      description: "A delivery with the body that was sent and every attempt."
-      properties:
-        delivery:
-          $ref: "#/components/schemas/DeliveryResponse"
-          description: "The delivery."
-        body:
-          type: "string"
-          description: "The event body that is sent."
-        attempts:
-          type: "array"
-          description: "Every attempt, oldest first."
-          items:
-            $ref: "#/components/schemas/AttemptResponse"
-    PageRedemptionResponse:
-      type: "object"
-      description: "A page of redemption response rows, with the paging facts when\
-        \ the request asked for them."
-      properties:
-        data:
-          type: "array"
-          description: "The rows of this page."
-          items:
-            $ref: "#/components/schemas/RedemptionResponse"
-        page:
-          description: "The paging facts, or null when the request did not ask for\
-            \ them with `page_info`."
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    TotalResponse:
+    UsageTotalResponse:
       type: "object"
       description: "The usage of one metric over a period."
       properties:
@@ -14776,86 +14775,6 @@ components:
           description: "The rows of this page."
           items:
             $ref: "#/components/schemas/EventResponse"
-        page:
-          description: "The paging facts, or null when the request did not ask for\
-            \ them with `page_info`."
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    PageReservationResponse:
-      type: "object"
-      description: "A page of reservation response rows, with the paging facts when\
-        \ the request asked for them."
-      properties:
-        data:
-          type: "array"
-          description: "The rows of this page."
-          items:
-            $ref: "#/components/schemas/ReservationResponse"
-        page:
-          description: "The paging facts, or null when the request did not ask for\
-            \ them with `page_info`."
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    PagePlanResponse:
-      type: "object"
-      description: "A page of plan response rows, with the paging facts when the request\
-        \ asked for them."
-      properties:
-        data:
-          type: "array"
-          description: "The rows of this page."
-          items:
-            $ref: "#/components/schemas/PlanResponse"
-        page:
-          description: "The paging facts, or null when the request did not ask for\
-            \ them with `page_info`."
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    PageCustomerResponse:
-      type: "object"
-      description: "A page of customer response rows, with the paging facts when the\
-        \ request asked for them."
-      properties:
-        data:
-          type: "array"
-          description: "The rows of this page."
-          items:
-            $ref: "#/components/schemas/CustomerResponse"
-        page:
-          description: "The paging facts, or null when the request did not ask for\
-            \ them with `page_info`."
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    PageCouponResponse:
-      type: "object"
-      description: "A page of coupon response rows, with the paging facts when the\
-        \ request asked for them."
-      properties:
-        data:
-          type: "array"
-          description: "The rows of this page."
-          items:
-            $ref: "#/components/schemas/CouponResponse"
-        page:
-          description: "The paging facts, or null when the request did not ask for\
-            \ them with `page_info`."
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    PagePromotionCodeResponse:
-      type: "object"
-      description: "A page of promotion code response rows, with the paging facts\
-        \ when the request asked for them."
-      properties:
-        data:
-          type: "array"
-          description: "The rows of this page."
-          items:
-            $ref: "#/components/schemas/PromotionCodeResponse"
         page:
           description: "The paging facts, or null when the request did not ask for\
             \ them with `page_info`."

@@ -5,6 +5,64 @@ export type ClientOptions = {
 };
 
 /**
+ * The customer properties to store.
+ */
+export type UpdateCustomerRequest = {
+    /**
+     * The name shown for the customer.
+     */
+    displayName?: string;
+    /**
+     * The customer's email address.
+     */
+    email?: string;
+};
+
+/**
+ * A billing customer.
+ */
+export type CustomerResponse = {
+    /**
+     * The id.
+     */
+    id?: string;
+    /**
+     * The name shown for the customer.
+     */
+    displayName?: string;
+    /**
+     * The customer's email address.
+     */
+    email?: string;
+    /**
+     * `ACTIVE` or `DEACTIVATED`.
+     */
+    status?: string;
+    /**
+     * When the record was created.
+     */
+    createdAt?: string;
+    /**
+     * The Tenant System users the customer is mapped to.
+     */
+    identities?: Array<IdentityResponse>;
+};
+
+/**
+ * A Tenant System user a customer is mapped to.
+ */
+export type IdentityResponse = {
+    /**
+     * The tenant system.
+     */
+    tenantSystemId?: string;
+    /**
+     * The tenant system's own id of the user.
+     */
+    externalUserId?: string;
+};
+
+/**
  * The webhook signing secret.
  */
 export type WebhookSecretRequest = {
@@ -98,178 +156,6 @@ export type ReplaceRequest = {
      * The URLs a billing session may return the customer to, replacing the stored list.
      */
     urls?: Array<string>;
-};
-
-/**
- * The customer properties to store.
- */
-export type UpdateCustomerRequest = {
-    /**
-     * The name shown for the customer.
-     */
-    displayName?: string;
-    /**
-     * The customer's email address.
-     */
-    email?: string;
-};
-
-/**
- * A billing customer.
- */
-export type CustomerResponse = {
-    /**
-     * The id.
-     */
-    id?: string;
-    /**
-     * The name shown for the customer.
-     */
-    displayName?: string;
-    /**
-     * The customer's email address.
-     */
-    email?: string;
-    /**
-     * `ACTIVE` or `DEACTIVATED`.
-     */
-    status?: string;
-    /**
-     * When the record was created.
-     */
-    createdAt?: string;
-    /**
-     * The Tenant System users the customer is mapped to.
-     */
-    identities?: Array<IdentityResponse>;
-};
-
-/**
- * A Tenant System user a customer is mapped to.
- */
-export type IdentityResponse = {
-    /**
-     * The tenant system.
-     */
-    tenantSystemId?: string;
-    /**
-     * The tenant system's own id of the user.
-     */
-    externalUserId?: string;
-};
-
-/**
- * The top-up to start.
- */
-export type TopUpRequest = {
-    /**
-     * The wallet to top up.
-     */
-    walletId?: string;
-    /**
-     * The amount to add, in minor units.
-     */
-    amount?: number;
-    /**
-     * The ISO 4217 currency code of the amounts.
-     */
-    currency?: string;
-};
-
-/**
- * An amount of money.
- */
-export type MoneyDto = {
-    /**
-     * The amount in minor units of the currency.
-     */
-    amount?: number;
-    /**
-     * The ISO 4217 currency code.
-     */
-    currency?: string;
-};
-
-/**
- * A top-up that was started.
- */
-export type TopUpResponse = {
-    /**
-     * The id.
-     */
-    id?: string;
-    /**
-     * The payment's status.
-     */
-    status?: string;
-    /**
-     * The amount to be paid.
-     */
-    amount?: MoneyDto;
-    /**
-     * The Stripe-hosted page where the customer pays. Present only while the customer can still pay.
-     */
-    checkoutUrl?: string;
-};
-
-/**
- * The token to exchange.
- */
-export type ExchangeRequest = {
-    /**
-     * The single-use token from the portal URL's fragment.
-     */
-    token?: string;
-};
-
-/**
- * The portal session the exchange opened.
- */
-export type ExchangeResponse = {
-    /**
-     * The session.
-     */
-    session?: SessionResponse;
-    /**
-     * The CSRF token the portal sends back with writes.
-     */
-    csrfToken?: string;
-    /**
-     * Where the portal sends the customer back to.
-     */
-    returnUrl?: string;
-};
-
-/**
- * A portal session.
- */
-export type SessionResponse = {
-    /**
-     * The session's id.
-     */
-    sessionId?: string;
-    /**
-     * The id of the customer.
-     */
-    customerId?: string;
-    /**
-     * What the session may do in the portal.
-     */
-    permissions?: Array<string>;
-    /**
-     * When the session expires.
-     */
-    expiresAt?: string;
-};
-
-/**
- * A Stripe-hosted page.
- */
-export type HostedPageResponse = {
-    /**
-     * The URL of the page to open.
-     */
-    url?: string;
 };
 
 /**
@@ -420,6 +306,20 @@ export type OpenWalletRequest = {
      * For a postpaid wallet, how much it may owe at most.
      */
     creditLimit?: number;
+};
+
+/**
+ * An amount of money.
+ */
+export type MoneyDto = {
+    /**
+     * The amount in minor units of the currency.
+     */
+    amount?: number;
+    /**
+     * The ISO 4217 currency code.
+     */
+    currency?: string;
 };
 
 /**
@@ -820,130 +720,6 @@ export type SubscriptionResponse = {
      * When the record was created.
      */
     createdAt?: string;
-};
-
-/**
- * What a reconciliation found.
- */
-export type ReconcileResponse = {
-    /**
-     * How many payments and refunds were compared.
-     */
-    checked?: number;
-    /**
-     * How many were corrected from Stripe.
-     */
-    corrected?: number;
-    /**
-     * How many disagreements were recorded as incidents.
-     */
-    mismatches?: number;
-};
-
-/**
- * One attempt to process a Stripe event.
- */
-export type EventAttemptResponse = {
-    /**
-     * The attempt's number, starting at 1.
-     */
-    attempt?: number;
-    /**
-     * How the attempt ended.
-     */
-    outcome?: string;
-    /**
-     * Details of what happened.
-     */
-    detail?: string;
-    /**
-     * When the attempt was made.
-     */
-    attemptedAt?: string;
-};
-
-/**
- * A Stripe event with how its processing went.
- */
-export type EventDetailResponse = {
-    /**
-     * The event.
-     */
-    event?: EventResponse;
-    /**
-     * Every processing attempt.
-     */
-    history?: Array<EventAttemptResponse>;
-};
-
-/**
- * A Stripe event that was received.
- */
-export type EventResponse = {
-    /**
-     * The id.
-     */
-    id?: string;
-    /**
-     * Stripe's id of the event.
-     */
-    stripeEventId?: string;
-    /**
-     * The Stripe event type.
-     */
-    type?: string;
-    /**
-     * `RECEIVED`, `PROCESSED` or `IGNORED`.
-     */
-    status?: string;
-    /**
-     * How many times processing was tried.
-     */
-    attempts?: number;
-    /**
-     * When the next try is due, or null.
-     */
-    nextAttemptAt?: string;
-    /**
-     * The last error, or null.
-     */
-    lastError?: string;
-    /**
-     * When the event was received.
-     */
-    receivedAt?: string;
-    /**
-     * When it was processed, or null.
-     */
-    processedAt?: string;
-};
-
-/**
- * The tenant's details for Stripe Connect onboarding.
- */
-export type ConnectRequest = {
-    /**
-     * The name Stripe shows for the account.
-     */
-    displayName?: string;
-    /**
-     * The contact email of the account.
-     */
-    contactEmail?: string;
-};
-
-/**
- * The Stripe connection and the onboarding page.
- */
-export type ConnectionResponse = {
-    /**
-     * The configuration.
-     */
-    configuration?: ConfigurationResponse;
-    /**
-     * A Stripe-hosted page, present while the tenant still has onboarding to finish.
-     */
-    onboardingUrl?: string;
 };
 
 /**
@@ -1401,214 +1177,6 @@ export type EstimateRequest = {
 };
 
 /**
- * The plan to create, with its first version.
- */
-export type CreatePlanRequest = {
-    /**
-     * The plan's code, unique per tenant.
-     */
-    code?: string;
-    /**
-     * The name.
-     */
-    name?: string;
-    /**
-     * The ISO 4217 currency code of the amounts.
-     */
-    currency?: string;
-    /**
-     * The pricing model: `TIME_BASED`, `USAGE_BASED`, `WORKLOAD_BASED`, `EVENT_BASED`, `SUBSCRIPTION` or `HYBRID`.
-     */
-    model?: string;
-    /**
-     * The plan's first version.
-     */
-    version?: VersionRequest;
-};
-
-/**
- * A pricing strategy: how a quantity of usage becomes an amount. Prices are decimals in minor units, and rounding to whole minor units happens once, on the total.
- */
-export type RuleDto = {
-    /**
-     * The pricing model: `TIME_BASED` (price per unit of time), `USAGE_BASED` (by quantity consumed, with tiers), `WORKLOAD_BASED` (a start fee per execution plus a rate for the work), `EVENT_BASED` (per discrete event), `SUBSCRIPTION` (a fixed amount per cycle) or `HYBRID` (a base amount plus usage components).
-     */
-    model?: string;
-    /**
-     * The metric the rule prices. Not used by a fixed price.
-     */
-    metric?: string;
-    /**
-     * The unit the metric is measured in. Not used by a fixed price.
-     */
-    unit?: string;
-    /**
-     * The price of one unit, as a decimal string. Used by time-based, workload-based and event-based rules.
-     */
-    unitPrice?: string;
-    /**
-     * For a time-based rule, the duration is first rounded up to a whole number of increments, such as per started minute. Zero or null means no rounding.
-     */
-    increment?: string;
-    /**
-     * For a usage-based rule: `GRADUATED` prices each band of the quantity at its own tier's rate, `VOLUME` prices the whole quantity at the rate of the tier it falls in.
-     */
-    mode?: string;
-    /**
-     * For a usage-based rule, the price bands. One tier is a flat rate; a first tier priced at zero is an included allowance.
-     */
-    tiers?: Array<TierDto>;
-    /**
-     * For a workload-based rule, the start fee of every execution, as a decimal string.
-     */
-    executionFee?: string;
-    /**
-     * The amount for one billing cycle whatever is used, as a decimal string. Used by a subscription rule and as the base of a hybrid.
-     */
-    fixedPrice?: string;
-    /**
-     * For a hybrid rule, the usage rules added to the base amount. Each metric appears once.
-     */
-    components?: Array<RuleDto>;
-};
-
-/**
- * One price tier.
- */
-export type TierDto = {
-    /**
-     * The quantity the band runs up to, as a decimal string, or null when it is unbounded.
-     */
-    upTo?: string;
-    /**
-     * The price of one unit in the band, as a decimal string.
-     */
-    unitPrice?: string;
-};
-
-/**
- * A version of a plan.
- */
-export type VersionRequest = {
-    /**
-     * The price rule.
-     */
-    rule?: RuleDto;
-    /**
-     * For a subscription: `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY` or `YEARLY`.
-     */
-    billingCycle?: string;
-    /**
-     * The least a charge is rounded up to, in minor units, or null.
-     */
-    minCharge?: number;
-    /**
-     * The most a charge is capped at, in minor units, or null.
-     */
-    maxCharge?: number;
-    /**
-     * How a fractional amount is rounded: `HALF_UP`, `HALF_EVEN`, `UP` or `DOWN`.
-     */
-    rounding?: string;
-    /**
-     * When the version takes effect.
-     */
-    validFrom?: string;
-    /**
-     * When the version stops applying, or null.
-     */
-    validUntil?: string;
-};
-
-/**
- * A pricing plan and its versions.
- */
-export type PlanResponse = {
-    /**
-     * The id.
-     */
-    id?: string;
-    /**
-     * The code, unique per tenant.
-     */
-    code?: string;
-    /**
-     * The name.
-     */
-    name?: string;
-    /**
-     * The pricing model.
-     */
-    model?: string;
-    /**
-     * The ISO 4217 currency code of the amounts.
-     */
-    currency?: string;
-    /**
-     * `ACTIVE` or `RETIRED`.
-     */
-    status?: string;
-    /**
-     * When the record was created.
-     */
-    createdAt?: string;
-    /**
-     * When the plan was retired, or null.
-     */
-    retiredAt?: string;
-    /**
-     * Every version, earlier ones unchanged.
-     */
-    versions?: Array<VersionResponse>;
-};
-
-/**
- * One version of a pricing plan. Earlier versions, and every charge that used them, are unchanged.
- */
-export type VersionResponse = {
-    /**
-     * The version of the plan.
-     */
-    version?: number;
-    /**
-     * The price rule.
-     */
-    rule?: RuleDto;
-    /**
-     * For a subscription: `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY` or `YEARLY`.
-     */
-    billingCycle?: string;
-    /**
-     * The least a charge is rounded up to, in minor units, or null.
-     */
-    minCharge?: number;
-    /**
-     * The most a charge is capped at, in minor units, or null.
-     */
-    maxCharge?: number;
-    /**
-     * How a fractional amount is rounded.
-     */
-    rounding?: string;
-    /**
-     * When the version takes effect.
-     */
-    validFrom?: string;
-    /**
-     * When the version stops applying, or null.
-     */
-    validUntil?: string;
-    /**
-     * When the record was created.
-     */
-    createdAt?: string;
-    /**
-     * Who published the version.
-     */
-    createdBy?: string;
-};
-
-/**
  * The refund to request.
  */
 export type RefundRequest = {
@@ -1669,6 +1237,24 @@ export type RefundResponse = {
 };
 
 /**
+ * The top-up to start.
+ */
+export type TopUpRequest = {
+    /**
+     * The wallet to top up.
+     */
+    walletId?: string;
+    /**
+     * The amount to add, in minor units.
+     */
+    amount?: number;
+    /**
+     * The ISO 4217 currency code of the amounts.
+     */
+    currency?: string;
+};
+
+/**
  * A payment of a top-up or an invoice.
  */
 export type PaymentResponse = {
@@ -1720,110 +1306,6 @@ export type PaymentResponse = {
      * When it completed, or null.
      */
     completedAt?: string;
-};
-
-/**
- * The entry that replaces a reversed one.
- */
-export type ReplacementRequest = {
-    /**
-     * `CREDIT` or `DEBIT`.
-     */
-    type?: string;
-    /**
-     * The amount of the replacement, in minor units.
-     */
-    amount?: number;
-    /**
-     * The ISO 4217 currency code of the amounts.
-     */
-    currency?: string;
-    /**
-     * A reference the caller chose, recorded with the record.
-     */
-    reference?: string;
-};
-
-/**
- * The correction to post.
- */
-export type ReverseRequest = {
-    /**
-     * Why the entry is reversed.
-     */
-    reason?: string;
-    /**
-     * An entry to post in its place with the right amount, or null for none.
-     */
-    replacement?: ReplacementRequest;
-};
-
-/**
- * One entry of a wallet's append-only ledger.
- */
-export type LedgerEntryResponse = {
-    /**
-     * The id.
-     */
-    id?: string;
-    /**
-     * The entry's position in the wallet's ledger.
-     */
-    sequence?: number;
-    /**
-     * `CREDIT` or `DEBIT`.
-     */
-    type?: string;
-    /**
-     * The amount of the entry.
-     */
-    amount?: MoneyDto;
-    /**
-     * A reference the caller chose, recorded with the record.
-     */
-    reference?: string;
-    /**
-     * The reservation the entry belongs to, or null.
-     */
-    reservationId?: string;
-    /**
-     * The id of the charge.
-     */
-    chargeId?: string;
-    /**
-     * The id of the entry this one reverses, or null.
-     */
-    reversalOf?: string;
-    /**
-     * Who caused the entry.
-     */
-    actor?: string;
-    /**
-     * The reason given.
-     */
-    reason?: string;
-    /**
-     * When the record was created.
-     */
-    createdAt?: string;
-};
-
-/**
- * The entries a reversal posted.
- */
-export type ReversalResponse = {
-    /**
-     * The entry that negates the original.
-     */
-    reversal?: LedgerEntryResponse;
-    /**
-     * The replacement entry, or null.
-     */
-    replacement?: LedgerEntryResponse;
-    /**
-     * Whether the answer is the earlier result of the same request, not a new one.
-     */
-    replayed?: boolean;
 };
 
 /**
@@ -1994,16 +1476,6 @@ export type ItemResponse = {
      * When the cost was incurred.
      */
     incurredAt?: string;
-};
-
-/**
- * Why the invoice is voided.
- */
-export type VoidRequest = {
-    /**
-     * Why the request for payment is cancelled.
-     */
-    reason?: string;
 };
 
 /**
@@ -2427,6 +1899,534 @@ export type CreateResponse = {
 };
 
 /**
+ * A top-up that was started.
+ */
+export type TopUpResponse = {
+    /**
+     * The id.
+     */
+    id?: string;
+    /**
+     * The payment's status.
+     */
+    status?: string;
+    /**
+     * The amount to be paid.
+     */
+    amount?: MoneyDto;
+    /**
+     * The Stripe-hosted page where the customer pays. Present only while the customer can still pay.
+     */
+    checkoutUrl?: string;
+};
+
+/**
+ * The token to exchange.
+ */
+export type ExchangeRequest = {
+    /**
+     * The single-use token from the portal URL's fragment.
+     */
+    token?: string;
+};
+
+/**
+ * The portal session the exchange opened.
+ */
+export type ExchangeResponse = {
+    /**
+     * The session.
+     */
+    session?: SessionResponse;
+    /**
+     * The CSRF token the portal sends back with writes.
+     */
+    csrfToken?: string;
+    /**
+     * Where the portal sends the customer back to.
+     */
+    returnUrl?: string;
+};
+
+/**
+ * A portal session.
+ */
+export type SessionResponse = {
+    /**
+     * The session's id.
+     */
+    sessionId?: string;
+    /**
+     * The id of the customer.
+     */
+    customerId?: string;
+    /**
+     * What the session may do in the portal.
+     */
+    permissions?: Array<string>;
+    /**
+     * When the session expires.
+     */
+    expiresAt?: string;
+};
+
+/**
+ * A Stripe-hosted page.
+ */
+export type HostedPageResponse = {
+    /**
+     * The URL of the page to open.
+     */
+    url?: string;
+};
+
+/**
+ * What a reconciliation found.
+ */
+export type ReconcileResponse = {
+    /**
+     * How many payments and refunds were compared.
+     */
+    checked?: number;
+    /**
+     * How many were corrected from Stripe.
+     */
+    corrected?: number;
+    /**
+     * How many disagreements were recorded as incidents.
+     */
+    mismatches?: number;
+};
+
+/**
+ * One attempt to process a Stripe event.
+ */
+export type EventAttemptResponse = {
+    /**
+     * The attempt's number, starting at 1.
+     */
+    attempt?: number;
+    /**
+     * How the attempt ended.
+     */
+    outcome?: string;
+    /**
+     * Details of what happened.
+     */
+    detail?: string;
+    /**
+     * When the attempt was made.
+     */
+    attemptedAt?: string;
+};
+
+/**
+ * A Stripe event with how its processing went.
+ */
+export type EventDetailResponse = {
+    /**
+     * The event.
+     */
+    event?: EventResponse;
+    /**
+     * Every processing attempt.
+     */
+    history?: Array<EventAttemptResponse>;
+};
+
+/**
+ * A Stripe event that was received.
+ */
+export type EventResponse = {
+    /**
+     * The id.
+     */
+    id?: string;
+    /**
+     * Stripe's id of the event.
+     */
+    stripeEventId?: string;
+    /**
+     * The Stripe event type.
+     */
+    type?: string;
+    /**
+     * `RECEIVED`, `PROCESSED` or `IGNORED`.
+     */
+    status?: string;
+    /**
+     * How many times processing was tried.
+     */
+    attempts?: number;
+    /**
+     * When the next try is due, or null.
+     */
+    nextAttemptAt?: string;
+    /**
+     * The last error, or null.
+     */
+    lastError?: string;
+    /**
+     * When the event was received.
+     */
+    receivedAt?: string;
+    /**
+     * When it was processed, or null.
+     */
+    processedAt?: string;
+};
+
+/**
+ * The tenant's details for Stripe Connect onboarding.
+ */
+export type ConnectRequest = {
+    /**
+     * The name Stripe shows for the account.
+     */
+    displayName?: string;
+    /**
+     * The contact email of the account.
+     */
+    contactEmail?: string;
+};
+
+/**
+ * The Stripe connection and the onboarding page.
+ */
+export type ConnectionResponse = {
+    /**
+     * The configuration.
+     */
+    configuration?: ConfigurationResponse;
+    /**
+     * A Stripe-hosted page, present while the tenant still has onboarding to finish.
+     */
+    onboardingUrl?: string;
+};
+
+/**
+ * The plan to create, with its first version.
+ */
+export type CreatePlanRequest = {
+    /**
+     * The plan's code, unique per tenant.
+     */
+    code?: string;
+    /**
+     * The name.
+     */
+    name?: string;
+    /**
+     * The ISO 4217 currency code of the amounts.
+     */
+    currency?: string;
+    /**
+     * The pricing model: `TIME_BASED`, `USAGE_BASED`, `WORKLOAD_BASED`, `EVENT_BASED`, `SUBSCRIPTION` or `HYBRID`.
+     */
+    model?: string;
+    /**
+     * The plan's first version.
+     */
+    version?: VersionRequest;
+};
+
+/**
+ * A pricing strategy: how a quantity of usage becomes an amount. Prices are decimals in minor units, and rounding to whole minor units happens once, on the total.
+ */
+export type RuleDto = {
+    /**
+     * The pricing model: `TIME_BASED` (price per unit of time), `USAGE_BASED` (by quantity consumed, with tiers), `WORKLOAD_BASED` (a start fee per execution plus a rate for the work), `EVENT_BASED` (per discrete event), `SUBSCRIPTION` (a fixed amount per cycle) or `HYBRID` (a base amount plus usage components).
+     */
+    model?: string;
+    /**
+     * The metric the rule prices. Not used by a fixed price.
+     */
+    metric?: string;
+    /**
+     * The unit the metric is measured in. Not used by a fixed price.
+     */
+    unit?: string;
+    /**
+     * The price of one unit, as a decimal string. Used by time-based, workload-based and event-based rules.
+     */
+    unitPrice?: string;
+    /**
+     * For a time-based rule, the duration is first rounded up to a whole number of increments, such as per started minute. Zero or null means no rounding.
+     */
+    increment?: string;
+    /**
+     * For a usage-based rule: `GRADUATED` prices each band of the quantity at its own tier's rate, `VOLUME` prices the whole quantity at the rate of the tier it falls in.
+     */
+    mode?: string;
+    /**
+     * For a usage-based rule, the price bands. One tier is a flat rate; a first tier priced at zero is an included allowance.
+     */
+    tiers?: Array<TierDto>;
+    /**
+     * For a workload-based rule, the start fee of every execution, as a decimal string.
+     */
+    executionFee?: string;
+    /**
+     * The amount for one billing cycle whatever is used, as a decimal string. Used by a subscription rule and as the base of a hybrid.
+     */
+    fixedPrice?: string;
+    /**
+     * For a hybrid rule, the usage rules added to the base amount. Each metric appears once.
+     */
+    components?: Array<RuleDto>;
+};
+
+/**
+ * One price tier.
+ */
+export type TierDto = {
+    /**
+     * The quantity the band runs up to, as a decimal string, or null when it is unbounded.
+     */
+    upTo?: string;
+    /**
+     * The price of one unit in the band, as a decimal string.
+     */
+    unitPrice?: string;
+};
+
+/**
+ * A version of a plan.
+ */
+export type VersionRequest = {
+    /**
+     * The price rule.
+     */
+    rule?: RuleDto;
+    /**
+     * For a subscription: `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY` or `YEARLY`.
+     */
+    billingCycle?: string;
+    /**
+     * The least a charge is rounded up to, in minor units, or null.
+     */
+    minCharge?: number;
+    /**
+     * The most a charge is capped at, in minor units, or null.
+     */
+    maxCharge?: number;
+    /**
+     * How a fractional amount is rounded: `HALF_UP`, `HALF_EVEN`, `UP` or `DOWN`.
+     */
+    rounding?: string;
+    /**
+     * When the version takes effect.
+     */
+    validFrom?: string;
+    /**
+     * When the version stops applying, or null.
+     */
+    validUntil?: string;
+};
+
+/**
+ * A pricing plan and its versions.
+ */
+export type PlanResponse = {
+    /**
+     * The id.
+     */
+    id?: string;
+    /**
+     * The code, unique per tenant.
+     */
+    code?: string;
+    /**
+     * The name.
+     */
+    name?: string;
+    /**
+     * The pricing model.
+     */
+    model?: string;
+    /**
+     * The ISO 4217 currency code of the amounts.
+     */
+    currency?: string;
+    /**
+     * `ACTIVE` or `RETIRED`.
+     */
+    status?: string;
+    /**
+     * When the record was created.
+     */
+    createdAt?: string;
+    /**
+     * When the plan was retired, or null.
+     */
+    retiredAt?: string;
+    /**
+     * Every version, earlier ones unchanged.
+     */
+    versions?: Array<VersionResponse>;
+};
+
+/**
+ * One version of a pricing plan. Earlier versions, and every charge that used them, are unchanged.
+ */
+export type VersionResponse = {
+    /**
+     * The version of the plan.
+     */
+    version?: number;
+    /**
+     * The price rule.
+     */
+    rule?: RuleDto;
+    /**
+     * For a subscription: `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY` or `YEARLY`.
+     */
+    billingCycle?: string;
+    /**
+     * The least a charge is rounded up to, in minor units, or null.
+     */
+    minCharge?: number;
+    /**
+     * The most a charge is capped at, in minor units, or null.
+     */
+    maxCharge?: number;
+    /**
+     * How a fractional amount is rounded.
+     */
+    rounding?: string;
+    /**
+     * When the version takes effect.
+     */
+    validFrom?: string;
+    /**
+     * When the version stops applying, or null.
+     */
+    validUntil?: string;
+    /**
+     * When the record was created.
+     */
+    createdAt?: string;
+    /**
+     * Who published the version.
+     */
+    createdBy?: string;
+};
+
+/**
+ * The entry that replaces a reversed one.
+ */
+export type ReplacementRequest = {
+    /**
+     * `CREDIT` or `DEBIT`.
+     */
+    type?: string;
+    /**
+     * The amount of the replacement, in minor units.
+     */
+    amount?: number;
+    /**
+     * The ISO 4217 currency code of the amounts.
+     */
+    currency?: string;
+    /**
+     * A reference the caller chose, recorded with the record.
+     */
+    reference?: string;
+};
+
+/**
+ * The correction to post.
+ */
+export type ReverseRequest = {
+    /**
+     * Why the entry is reversed.
+     */
+    reason?: string;
+    /**
+     * An entry to post in its place with the right amount, or null for none.
+     */
+    replacement?: ReplacementRequest;
+};
+
+/**
+ * One entry of a wallet's append-only ledger.
+ */
+export type LedgerEntryResponse = {
+    /**
+     * The id.
+     */
+    id?: string;
+    /**
+     * The entry's position in the wallet's ledger.
+     */
+    sequence?: number;
+    /**
+     * `CREDIT` or `DEBIT`.
+     */
+    type?: string;
+    /**
+     * The amount of the entry.
+     */
+    amount?: MoneyDto;
+    /**
+     * A reference the caller chose, recorded with the record.
+     */
+    reference?: string;
+    /**
+     * The reservation the entry belongs to, or null.
+     */
+    reservationId?: string;
+    /**
+     * The id of the charge.
+     */
+    chargeId?: string;
+    /**
+     * The id of the entry this one reverses, or null.
+     */
+    reversalOf?: string;
+    /**
+     * Who caused the entry.
+     */
+    actor?: string;
+    /**
+     * The reason given.
+     */
+    reason?: string;
+    /**
+     * When the record was created.
+     */
+    createdAt?: string;
+};
+
+/**
+ * The entries a reversal posted.
+ */
+export type ReversalResponse = {
+    /**
+     * The entry that negates the original.
+     */
+    reversal?: LedgerEntryResponse;
+    /**
+     * The replacement entry, or null.
+     */
+    replacement?: LedgerEntryResponse;
+    /**
+     * Whether the answer is the earlier result of the same request, not a new one.
+     */
+    replayed?: boolean;
+};
+
+/**
+ * Why the invoice is voided.
+ */
+export type VoidRequest = {
+    /**
+     * Why the request for payment is cancelled.
+     */
+    reason?: string;
+};
+
+/**
  * The fields to change. A field that is left out keeps its value.
  */
 export type UpdateEndpointRequest = {
@@ -2446,6 +2446,20 @@ export type UpdateEndpointRequest = {
      * `ACTIVE`, or `DISABLED` to pause delivery without losing queued events.
      */
     status?: string;
+};
+
+/**
+ * A page of endpoint response rows, with the paging facts when the request asked for them.
+ */
+export type PageEndpointResponse = {
+    /**
+     * The rows of this page.
+     */
+    data?: Array<EndpointResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
+    page?: PageInfo | null;
 };
 
 /**
@@ -2471,6 +2485,50 @@ export type PageInfo = {
 };
 
 /**
+ * A page of delivery response rows, with the paging facts when the request asked for them.
+ */
+export type PageDeliveryResponse = {
+    /**
+     * The rows of this page.
+     */
+    data?: Array<DeliveryResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
+    page?: PageInfo | null;
+};
+
+/**
+ * One attempt: a failed attempt to pay, or an attempt to deliver a webhook event.
+ */
+export type AttemptResponse = {
+    attemptNo?: number;
+    statusCode?: number;
+    error?: string;
+    responseExcerpt?: string;
+    latencyMs?: number;
+    attemptedAt?: string;
+};
+
+/**
+ * A delivery with the body that was sent and every attempt.
+ */
+export type DeliveryDetailResponse = {
+    /**
+     * The delivery.
+     */
+    delivery?: DeliveryResponse;
+    /**
+     * The event body that is sent.
+     */
+    body?: string;
+    /**
+     * Every attempt, oldest first.
+     */
+    attempts?: Array<AttemptResponse>;
+};
+
+/**
  * A page of wallet response rows, with the paging facts when the request asked for them.
  */
 export type PageWalletResponse = {
@@ -2478,6 +2536,20 @@ export type PageWalletResponse = {
      * The rows of this page.
      */
     data?: Array<WalletResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
+    page?: PageInfo | null;
+};
+
+/**
+ * A page of redemption response rows, with the paging facts when the request asked for them.
+ */
+export type PageRedemptionResponse = {
+    /**
+     * The rows of this page.
+     */
+    data?: Array<RedemptionResponse>;
     /**
      * The paging facts, or null when the request did not ask for them with `page_info`.
      */
@@ -2499,9 +2571,23 @@ export type PageLedgerEntryResponse = {
 };
 
 /**
+ * A page of usage event response rows, with the paging facts when the request asked for them.
+ */
+export type PageUsageEventResponse = {
+    /**
+     * The rows of this page.
+     */
+    data?: Array<UsageEventResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
+    page?: PageInfo | null;
+};
+
+/**
  * The usage of one metric over a period.
  */
-export type UsageTotalResponse = {
+export type TotalResponse = {
     /**
      * The name of the metric.
      */
@@ -2521,20 +2607,6 @@ export type UsageTotalResponse = {
 };
 
 /**
- * A page of usage event response rows, with the paging facts when the request asked for them.
- */
-export type PageUsageEventResponse = {
-    /**
-     * The rows of this page.
-     */
-    data?: Array<UsageEventResponse>;
-    /**
-     * The paging facts, or null when the request did not ask for them with `page_info`.
-     */
-    page?: PageInfo | null;
-};
-
-/**
  * A page of subscription response rows, with the paging facts when the request asked for them.
  */
 export type PageSubscriptionResponse = {
@@ -2542,6 +2614,20 @@ export type PageSubscriptionResponse = {
      * The rows of this page.
      */
     data?: Array<SubscriptionResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
+    page?: PageInfo | null;
+};
+
+/**
+ * A page of reservation response rows, with the paging facts when the request asked for them.
+ */
+export type PageReservationResponse = {
+    /**
+     * The rows of this page.
+     */
+    data?: Array<ReservationResponse>;
     /**
      * The paging facts, or null when the request did not ask for them with `page_info`.
      */
@@ -2563,6 +2649,20 @@ export type PageRefundResponse = {
 };
 
 /**
+ * A page of plan response rows, with the paging facts when the request asked for them.
+ */
+export type PagePlanResponse = {
+    /**
+     * The rows of this page.
+     */
+    data?: Array<PlanResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
+    page?: PageInfo | null;
+};
+
+/**
  * A page of payment response rows, with the paging facts when the request asked for them.
  */
 export type PagePaymentResponse = {
@@ -2574,24 +2674,6 @@ export type PagePaymentResponse = {
      * The paging facts, or null when the request did not ask for them with `page_info`.
      */
     page?: PageInfo | null;
-};
-
-/**
- * One attempt: a failed attempt to pay, or an attempt to deliver a webhook event.
- */
-export type AttemptResponse = {
-    /**
-     * The code of the failure.
-     */
-    failureCode?: string;
-    /**
-     * What went wrong.
-     */
-    failureMessage?: string;
-    /**
-     * When the attempt happened.
-     */
-    occurredAt?: string;
 };
 
 /**
@@ -2627,6 +2709,48 @@ export type PageInvoiceResponse = {
 };
 
 /**
+ * A page of customer response rows, with the paging facts when the request asked for them.
+ */
+export type PageCustomerResponse = {
+    /**
+     * The rows of this page.
+     */
+    data?: Array<CustomerResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
+    page?: PageInfo | null;
+};
+
+/**
+ * A page of coupon response rows, with the paging facts when the request asked for them.
+ */
+export type PageCouponResponse = {
+    /**
+     * The rows of this page.
+     */
+    data?: Array<CouponResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
+    page?: PageInfo | null;
+};
+
+/**
+ * A page of promotion code response rows, with the paging facts when the request asked for them.
+ */
+export type PagePromotionCodeResponse = {
+    /**
+     * The rows of this page.
+     */
+    data?: Array<PromotionCodeResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
+    page?: PageInfo | null;
+};
+
+/**
  * A page of charge response rows, with the paging facts when the request asked for them.
  */
 export type PageChargeResponse = {
@@ -2641,69 +2765,9 @@ export type PageChargeResponse = {
 };
 
 /**
- * A page of endpoint response rows, with the paging facts when the request asked for them.
- */
-export type PageEndpointResponse = {
-    /**
-     * The rows of this page.
-     */
-    data?: Array<EndpointResponse>;
-    /**
-     * The paging facts, or null when the request did not ask for them with `page_info`.
-     */
-    page?: PageInfo | null;
-};
-
-/**
- * A page of delivery response rows, with the paging facts when the request asked for them.
- */
-export type PageDeliveryResponse = {
-    /**
-     * The rows of this page.
-     */
-    data?: Array<DeliveryResponse>;
-    /**
-     * The paging facts, or null when the request did not ask for them with `page_info`.
-     */
-    page?: PageInfo | null;
-};
-
-/**
- * A delivery with the body that was sent and every attempt.
- */
-export type DeliveryDetailResponse = {
-    /**
-     * The delivery.
-     */
-    delivery?: DeliveryResponse;
-    /**
-     * The event body that is sent.
-     */
-    body?: string;
-    /**
-     * Every attempt, oldest first.
-     */
-    attempts?: Array<AttemptResponse>;
-};
-
-/**
- * A page of redemption response rows, with the paging facts when the request asked for them.
- */
-export type PageRedemptionResponse = {
-    /**
-     * The rows of this page.
-     */
-    data?: Array<RedemptionResponse>;
-    /**
-     * The paging facts, or null when the request did not ask for them with `page_info`.
-     */
-    page?: PageInfo | null;
-};
-
-/**
  * The usage of one metric over a period.
  */
-export type TotalResponse = {
+export type UsageTotalResponse = {
     /**
      * The name of the metric.
      */
@@ -2789,76 +2853,6 @@ export type PageEventResponse = {
 };
 
 /**
- * A page of reservation response rows, with the paging facts when the request asked for them.
- */
-export type PageReservationResponse = {
-    /**
-     * The rows of this page.
-     */
-    data?: Array<ReservationResponse>;
-    /**
-     * The paging facts, or null when the request did not ask for them with `page_info`.
-     */
-    page?: PageInfo | null;
-};
-
-/**
- * A page of plan response rows, with the paging facts when the request asked for them.
- */
-export type PagePlanResponse = {
-    /**
-     * The rows of this page.
-     */
-    data?: Array<PlanResponse>;
-    /**
-     * The paging facts, or null when the request did not ask for them with `page_info`.
-     */
-    page?: PageInfo | null;
-};
-
-/**
- * A page of customer response rows, with the paging facts when the request asked for them.
- */
-export type PageCustomerResponse = {
-    /**
-     * The rows of this page.
-     */
-    data?: Array<CustomerResponse>;
-    /**
-     * The paging facts, or null when the request did not ask for them with `page_info`.
-     */
-    page?: PageInfo | null;
-};
-
-/**
- * A page of coupon response rows, with the paging facts when the request asked for them.
- */
-export type PageCouponResponse = {
-    /**
-     * The rows of this page.
-     */
-    data?: Array<CouponResponse>;
-    /**
-     * The paging facts, or null when the request did not ask for them with `page_info`.
-     */
-    page?: PageInfo | null;
-};
-
-/**
- * A page of promotion code response rows, with the paging facts when the request asked for them.
- */
-export type PagePromotionCodeResponse = {
-    /**
-     * The rows of this page.
-     */
-    data?: Array<PromotionCodeResponse>;
-    /**
-     * The paging facts, or null when the request did not ask for them with `page_info`.
-     */
-    page?: PageInfo | null;
-};
-
-/**
  * The body of every error: an RFC 9457 problem.
  */
 export type ProblemDetail = {
@@ -2883,6 +2877,103 @@ export type ProblemDetail = {
      */
     instance?: string;
 };
+
+export type GetAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the customer.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/customers/{id}';
+};
+
+export type GetAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type GetAsTenantSystemError = GetAsTenantSystemErrors[keyof GetAsTenantSystemErrors];
+
+export type GetAsTenantSystemResponses = {
+    /**
+     * A billing customer.
+     */
+    200: CustomerResponse;
+};
+
+export type GetAsTenantSystemResponse = GetAsTenantSystemResponses[keyof GetAsTenantSystemResponses];
+
+export type UpdateAsTenantSystemData = {
+    /**
+     * The customer properties to store.
+     */
+    body: UpdateCustomerRequest;
+    headers?: {
+        /**
+         * The `ETag` of the version the caller last read. The change is refused with `412` when the resource has moved on since.
+         */
+        'If-Match'?: string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path: {
+        /**
+         * The id of the customer.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/customers/{id}';
+};
+
+export type UpdateAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The resource changed since the caller read it; the current ETag is returned in the header
+     */
+    412: ProblemDetail;
+};
+
+export type UpdateAsTenantSystemError = UpdateAsTenantSystemErrors[keyof UpdateAsTenantSystemErrors];
+
+export type UpdateAsTenantSystemResponses = {
+    /**
+     * A billing customer.
+     */
+    200: CustomerResponse;
+};
+
+export type UpdateAsTenantSystemResponse = UpdateAsTenantSystemResponses[keyof UpdateAsTenantSystemResponses];
 
 export type SetWebhookSecretData = {
     /**
@@ -3144,6 +3235,4958 @@ export type UpdateResponses = {
 
 export type UpdateResponse = UpdateResponses[keyof UpdateResponses];
 
+export type ListEndpointsAsTenantSystemData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `created_at` eq the value.
+         */
+        'filter[created_at][eq]'?: string;
+        /**
+         * `created_at` gt the value.
+         */
+        'filter[created_at][gt]'?: string;
+        /**
+         * `created_at` gte the value.
+         */
+        'filter[created_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `created_at`.
+         */
+        'filter[created_at][in]'?: string;
+        /**
+         * `created_at` lt the value.
+         */
+        'filter[created_at][lt]'?: string;
+        /**
+         * `created_at` lte the value.
+         */
+        'filter[created_at][lte]'?: string;
+        /**
+         * `created_at` neq the value.
+         */
+        'filter[created_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `created_at`.
+         */
+        'filter[created_at][nin]'?: string;
+        /**
+         * `description` eq the value.
+         */
+        'filter[description][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `description`.
+         */
+        'filter[description][in]'?: string;
+        /**
+         * `true` for rows where `description` is null, `false` for rows where it is set.
+         */
+        'filter[description][is_null]'?: boolean;
+        /**
+         * `description` neq the value.
+         */
+        'filter[description][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `description`.
+         */
+        'filter[description][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `description`.
+         */
+        'filter[description][starts_with]'?: string;
+        /**
+         * `id` eq the value.
+         */
+        'filter[id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `id`.
+         */
+        'filter[id][in]'?: string;
+        /**
+         * `id` neq the value.
+         */
+        'filter[id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `id`.
+         */
+        'filter[id][nin]'?: string;
+        /**
+         * `key_id` eq the value.
+         */
+        'filter[key_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `key_id`.
+         */
+        'filter[key_id][in]'?: string;
+        /**
+         * `key_id` neq the value.
+         */
+        'filter[key_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `key_id`.
+         */
+        'filter[key_id][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `key_id`.
+         */
+        'filter[key_id][starts_with]'?: string;
+        /**
+         * `secret_rotated_at` eq the value.
+         */
+        'filter[secret_rotated_at][eq]'?: string;
+        /**
+         * `secret_rotated_at` gt the value.
+         */
+        'filter[secret_rotated_at][gt]'?: string;
+        /**
+         * `secret_rotated_at` gte the value.
+         */
+        'filter[secret_rotated_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `secret_rotated_at`.
+         */
+        'filter[secret_rotated_at][in]'?: string;
+        /**
+         * `true` for rows where `secret_rotated_at` is null, `false` for rows where it is set.
+         */
+        'filter[secret_rotated_at][is_null]'?: boolean;
+        /**
+         * `secret_rotated_at` lt the value.
+         */
+        'filter[secret_rotated_at][lt]'?: string;
+        /**
+         * `secret_rotated_at` lte the value.
+         */
+        'filter[secret_rotated_at][lte]'?: string;
+        /**
+         * `secret_rotated_at` neq the value.
+         */
+        'filter[secret_rotated_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `secret_rotated_at`.
+         */
+        'filter[secret_rotated_at][nin]'?: string;
+        /**
+         * `status` eq the value.
+         */
+        'filter[status][eq]'?: 'ACTIVE' | 'DISABLED';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `status`.
+         */
+        'filter[status][in]'?: string;
+        /**
+         * `status` neq the value.
+         */
+        'filter[status][neq]'?: 'ACTIVE' | 'DISABLED';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `status`.
+         */
+        'filter[status][nin]'?: string;
+        /**
+         * `updated_at` eq the value.
+         */
+        'filter[updated_at][eq]'?: string;
+        /**
+         * `updated_at` gt the value.
+         */
+        'filter[updated_at][gt]'?: string;
+        /**
+         * `updated_at` gte the value.
+         */
+        'filter[updated_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `updated_at`.
+         */
+        'filter[updated_at][in]'?: string;
+        /**
+         * `updated_at` lt the value.
+         */
+        'filter[updated_at][lt]'?: string;
+        /**
+         * `updated_at` lte the value.
+         */
+        'filter[updated_at][lte]'?: string;
+        /**
+         * `updated_at` neq the value.
+         */
+        'filter[updated_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `updated_at`.
+         */
+        'filter[updated_at][nin]'?: string;
+        /**
+         * `url` eq the value.
+         */
+        'filter[url][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `url`.
+         */
+        'filter[url][in]'?: string;
+        /**
+         * `url` neq the value.
+         */
+        'filter[url][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `url`.
+         */
+        'filter[url][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `url`.
+         */
+        'filter[url][starts_with]'?: string;
+        /**
+         * Comma-separated sortable fields, each optionally prefixed with `-` for descending: created_at, id. At most 4 fields; `id` is appended to make the order total. Default: `created_at,id`.
+         */
+        sort?: string;
+        /**
+         * Page size, 1 to 200.
+         */
+        limit?: number;
+        /**
+         * Rows to skip, at most 10000. Not combinable with `cursor`.
+         */
+        offset?: number;
+        /**
+         * The `next_cursor` of the previous page. Valid only with the same filter and sort.
+         */
+        cursor?: string;
+        /**
+         * `full` fills `page` with the limit, offset, total and next cursor; `cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; omit it for the rows alone.
+         */
+        page_info?: 'full' | 'cursor';
+    };
+    url: '/system/v1/webhook-endpoints';
+};
+
+export type ListEndpointsAsTenantSystemErrors = {
+    /**
+     * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type ListEndpointsAsTenantSystemError = ListEndpointsAsTenantSystemErrors[keyof ListEndpointsAsTenantSystemErrors];
+
+export type ListEndpointsAsTenantSystemResponses = {
+    /**
+     * A page of endpoint response rows, with the paging facts when the request asked for them.
+     */
+    200: PageEndpointResponse;
+};
+
+export type ListEndpointsAsTenantSystemResponse = ListEndpointsAsTenantSystemResponses[keyof ListEndpointsAsTenantSystemResponses];
+
+export type CreateEndpointAsTenantSystemData = {
+    /**
+     * The endpoint to register.
+     */
+    body: CreateEndpointRequest;
+    headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/system/v1/webhook-endpoints';
+};
+
+export type CreateEndpointAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type CreateEndpointAsTenantSystemError = CreateEndpointAsTenantSystemErrors[keyof CreateEndpointAsTenantSystemErrors];
+
+export type CreateEndpointAsTenantSystemResponses = {
+    /**
+     * An endpoint with its signing secret, shown once.
+     */
+    201: EndpointWithSecretResponse;
+};
+
+export type CreateEndpointAsTenantSystemResponse = CreateEndpointAsTenantSystemResponses[keyof CreateEndpointAsTenantSystemResponses];
+
+export type RotateSecretAsTenantSystemData = {
+    body?: never;
+    headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path: {
+        /**
+         * The id of the webhook endpoint.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/webhook-endpoints/{id}/rotate-secret';
+};
+
+export type RotateSecretAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type RotateSecretAsTenantSystemError = RotateSecretAsTenantSystemErrors[keyof RotateSecretAsTenantSystemErrors];
+
+export type RotateSecretAsTenantSystemResponses = {
+    /**
+     * An endpoint with its signing secret, shown once.
+     */
+    200: EndpointWithSecretResponse;
+};
+
+export type RotateSecretAsTenantSystemResponse = RotateSecretAsTenantSystemResponses[keyof RotateSecretAsTenantSystemResponses];
+
+export type ResendAsTenantSystemData = {
+    body?: never;
+    headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path: {
+        /**
+         * The id of the webhook delivery.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/webhook-deliveries/{id}/resend';
+};
+
+export type ResendAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type ResendAsTenantSystemError = ResendAsTenantSystemErrors[keyof ResendAsTenantSystemErrors];
+
+export type ResendAsTenantSystemResponses = {
+    /**
+     * One delivery of an event to an endpoint.
+     */
+    202: DeliveryResponse;
+};
+
+export type ResendAsTenantSystemResponse = ResendAsTenantSystemResponses[keyof ResendAsTenantSystemResponses];
+
+export type WalletsAsTenantSystemData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `balance` eq the value.
+         */
+        'filter[balance][eq]'?: number;
+        /**
+         * `balance` gt the value.
+         */
+        'filter[balance][gt]'?: number;
+        /**
+         * `balance` gte the value.
+         */
+        'filter[balance][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `balance`.
+         */
+        'filter[balance][in]'?: string;
+        /**
+         * `balance` lt the value.
+         */
+        'filter[balance][lt]'?: number;
+        /**
+         * `balance` lte the value.
+         */
+        'filter[balance][lte]'?: number;
+        /**
+         * `balance` neq the value.
+         */
+        'filter[balance][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `balance`.
+         */
+        'filter[balance][nin]'?: string;
+        /**
+         * `created_at` eq the value.
+         */
+        'filter[created_at][eq]'?: string;
+        /**
+         * `created_at` gt the value.
+         */
+        'filter[created_at][gt]'?: string;
+        /**
+         * `created_at` gte the value.
+         */
+        'filter[created_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `created_at`.
+         */
+        'filter[created_at][in]'?: string;
+        /**
+         * `created_at` lt the value.
+         */
+        'filter[created_at][lt]'?: string;
+        /**
+         * `created_at` lte the value.
+         */
+        'filter[created_at][lte]'?: string;
+        /**
+         * `created_at` neq the value.
+         */
+        'filter[created_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `created_at`.
+         */
+        'filter[created_at][nin]'?: string;
+        /**
+         * `credit_limit` eq the value.
+         */
+        'filter[credit_limit][eq]'?: number;
+        /**
+         * `credit_limit` gt the value.
+         */
+        'filter[credit_limit][gt]'?: number;
+        /**
+         * `credit_limit` gte the value.
+         */
+        'filter[credit_limit][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `credit_limit`.
+         */
+        'filter[credit_limit][in]'?: string;
+        /**
+         * `credit_limit` lt the value.
+         */
+        'filter[credit_limit][lt]'?: number;
+        /**
+         * `credit_limit` lte the value.
+         */
+        'filter[credit_limit][lte]'?: number;
+        /**
+         * `credit_limit` neq the value.
+         */
+        'filter[credit_limit][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `credit_limit`.
+         */
+        'filter[credit_limit][nin]'?: string;
+        /**
+         * `currency` eq the value.
+         */
+        'filter[currency][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `currency`.
+         */
+        'filter[currency][in]'?: string;
+        /**
+         * `currency` neq the value.
+         */
+        'filter[currency][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `currency`.
+         */
+        'filter[currency][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `currency`.
+         */
+        'filter[currency][starts_with]'?: string;
+        /**
+         * `customer_id` eq the value.
+         */
+        'filter[customer_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `customer_id`.
+         */
+        'filter[customer_id][in]'?: string;
+        /**
+         * `customer_id` neq the value.
+         */
+        'filter[customer_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `customer_id`.
+         */
+        'filter[customer_id][nin]'?: string;
+        /**
+         * `held` eq the value.
+         */
+        'filter[held][eq]'?: number;
+        /**
+         * `held` gt the value.
+         */
+        'filter[held][gt]'?: number;
+        /**
+         * `held` gte the value.
+         */
+        'filter[held][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `held`.
+         */
+        'filter[held][in]'?: string;
+        /**
+         * `held` lt the value.
+         */
+        'filter[held][lt]'?: number;
+        /**
+         * `held` lte the value.
+         */
+        'filter[held][lte]'?: number;
+        /**
+         * `held` neq the value.
+         */
+        'filter[held][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `held`.
+         */
+        'filter[held][nin]'?: string;
+        /**
+         * `id` eq the value.
+         */
+        'filter[id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `id`.
+         */
+        'filter[id][in]'?: string;
+        /**
+         * `id` neq the value.
+         */
+        'filter[id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `id`.
+         */
+        'filter[id][nin]'?: string;
+        /**
+         * `last_sequence` eq the value.
+         */
+        'filter[last_sequence][eq]'?: number;
+        /**
+         * `last_sequence` gt the value.
+         */
+        'filter[last_sequence][gt]'?: number;
+        /**
+         * `last_sequence` gte the value.
+         */
+        'filter[last_sequence][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `last_sequence`.
+         */
+        'filter[last_sequence][in]'?: string;
+        /**
+         * `last_sequence` lt the value.
+         */
+        'filter[last_sequence][lt]'?: number;
+        /**
+         * `last_sequence` lte the value.
+         */
+        'filter[last_sequence][lte]'?: number;
+        /**
+         * `last_sequence` neq the value.
+         */
+        'filter[last_sequence][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `last_sequence`.
+         */
+        'filter[last_sequence][nin]'?: string;
+        /**
+         * `mode` eq the value.
+         */
+        'filter[mode][eq]'?: 'POSTPAID' | 'PREPAID';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `mode`.
+         */
+        'filter[mode][in]'?: string;
+        /**
+         * `mode` neq the value.
+         */
+        'filter[mode][neq]'?: 'POSTPAID' | 'PREPAID';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `mode`.
+         */
+        'filter[mode][nin]'?: string;
+        /**
+         * Comma-separated sortable fields, each optionally prefixed with `-` for descending: created_at, id. At most 4 fields; `id` is appended to make the order total. Default: `-created_at,id`.
+         */
+        sort?: string;
+        /**
+         * Page size, 1 to 200.
+         */
+        limit?: number;
+        /**
+         * Rows to skip, at most 10000. Not combinable with `cursor`.
+         */
+        offset?: number;
+        /**
+         * The `next_cursor` of the previous page. Valid only with the same filter and sort.
+         */
+        cursor?: string;
+        /**
+         * `full` fills `page` with the limit, offset, total and next cursor; `cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; omit it for the rows alone.
+         */
+        page_info?: 'full' | 'cursor';
+    };
+    url: '/system/v1/wallets';
+};
+
+export type WalletsAsTenantSystemErrors = {
+    /**
+     * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type WalletsAsTenantSystemError = WalletsAsTenantSystemErrors[keyof WalletsAsTenantSystemErrors];
+
+export type WalletsAsTenantSystemResponses = {
+    /**
+     * A page of wallet response rows, with the paging facts when the request asked for them.
+     */
+    200: PageWalletResponse;
+};
+
+export type WalletsAsTenantSystemResponse = WalletsAsTenantSystemResponses[keyof WalletsAsTenantSystemResponses];
+
+export type OpenWalletAsTenantSystemData = {
+    /**
+     * The wallet to open.
+     */
+    body: OpenWalletRequest;
+    headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/system/v1/wallets';
+};
+
+export type OpenWalletAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type OpenWalletAsTenantSystemError = OpenWalletAsTenantSystemErrors[keyof OpenWalletAsTenantSystemErrors];
+
+export type OpenWalletAsTenantSystemResponses = {
+    /**
+     * A customer's wallet in one currency.
+     */
+    200: WalletResponse;
+};
+
+export type OpenWalletAsTenantSystemResponse = OpenWalletAsTenantSystemResponses[keyof OpenWalletAsTenantSystemResponses];
+
+export type RedemptionsOfWalletAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the wallet.
+         */
+        walletId: string;
+    };
+    query?: {
+        /**
+         * `applications_used` eq the value.
+         */
+        'filter[applications_used][eq]'?: number;
+        /**
+         * `applications_used` gt the value.
+         */
+        'filter[applications_used][gt]'?: number;
+        /**
+         * `applications_used` gte the value.
+         */
+        'filter[applications_used][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `applications_used`.
+         */
+        'filter[applications_used][in]'?: string;
+        /**
+         * `applications_used` lt the value.
+         */
+        'filter[applications_used][lt]'?: number;
+        /**
+         * `applications_used` lte the value.
+         */
+        'filter[applications_used][lte]'?: number;
+        /**
+         * `applications_used` neq the value.
+         */
+        'filter[applications_used][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `applications_used`.
+         */
+        'filter[applications_used][nin]'?: string;
+        /**
+         * `code_id` eq the value.
+         */
+        'filter[code_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `code_id`.
+         */
+        'filter[code_id][in]'?: string;
+        /**
+         * `true` for rows where `code_id` is null, `false` for rows where it is set.
+         */
+        'filter[code_id][is_null]'?: boolean;
+        /**
+         * `code_id` neq the value.
+         */
+        'filter[code_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `code_id`.
+         */
+        'filter[code_id][nin]'?: string;
+        /**
+         * `coupon_id` eq the value.
+         */
+        'filter[coupon_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `coupon_id`.
+         */
+        'filter[coupon_id][in]'?: string;
+        /**
+         * `coupon_id` neq the value.
+         */
+        'filter[coupon_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `coupon_id`.
+         */
+        'filter[coupon_id][nin]'?: string;
+        /**
+         * `currency` eq the value.
+         */
+        'filter[currency][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `currency`.
+         */
+        'filter[currency][in]'?: string;
+        /**
+         * `currency` neq the value.
+         */
+        'filter[currency][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `currency`.
+         */
+        'filter[currency][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `currency`.
+         */
+        'filter[currency][starts_with]'?: string;
+        /**
+         * `customer_id` eq the value.
+         */
+        'filter[customer_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `customer_id`.
+         */
+        'filter[customer_id][in]'?: string;
+        /**
+         * `customer_id` neq the value.
+         */
+        'filter[customer_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `customer_id`.
+         */
+        'filter[customer_id][nin]'?: string;
+        /**
+         * `discount_total` eq the value.
+         */
+        'filter[discount_total][eq]'?: number;
+        /**
+         * `discount_total` gt the value.
+         */
+        'filter[discount_total][gt]'?: number;
+        /**
+         * `discount_total` gte the value.
+         */
+        'filter[discount_total][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `discount_total`.
+         */
+        'filter[discount_total][in]'?: string;
+        /**
+         * `discount_total` lt the value.
+         */
+        'filter[discount_total][lt]'?: number;
+        /**
+         * `discount_total` lte the value.
+         */
+        'filter[discount_total][lte]'?: number;
+        /**
+         * `discount_total` neq the value.
+         */
+        'filter[discount_total][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `discount_total`.
+         */
+        'filter[discount_total][nin]'?: string;
+        /**
+         * `end_reason` eq the value.
+         */
+        'filter[end_reason][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `end_reason`.
+         */
+        'filter[end_reason][in]'?: string;
+        /**
+         * `true` for rows where `end_reason` is null, `false` for rows where it is set.
+         */
+        'filter[end_reason][is_null]'?: boolean;
+        /**
+         * `end_reason` neq the value.
+         */
+        'filter[end_reason][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `end_reason`.
+         */
+        'filter[end_reason][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `end_reason`.
+         */
+        'filter[end_reason][starts_with]'?: string;
+        /**
+         * `ended_at` eq the value.
+         */
+        'filter[ended_at][eq]'?: string;
+        /**
+         * `ended_at` gt the value.
+         */
+        'filter[ended_at][gt]'?: string;
+        /**
+         * `ended_at` gte the value.
+         */
+        'filter[ended_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `ended_at`.
+         */
+        'filter[ended_at][in]'?: string;
+        /**
+         * `true` for rows where `ended_at` is null, `false` for rows where it is set.
+         */
+        'filter[ended_at][is_null]'?: boolean;
+        /**
+         * `ended_at` lt the value.
+         */
+        'filter[ended_at][lt]'?: string;
+        /**
+         * `ended_at` lte the value.
+         */
+        'filter[ended_at][lte]'?: string;
+        /**
+         * `ended_at` neq the value.
+         */
+        'filter[ended_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `ended_at`.
+         */
+        'filter[ended_at][nin]'?: string;
+        /**
+         * `ends_at` eq the value.
+         */
+        'filter[ends_at][eq]'?: string;
+        /**
+         * `ends_at` gt the value.
+         */
+        'filter[ends_at][gt]'?: string;
+        /**
+         * `ends_at` gte the value.
+         */
+        'filter[ends_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `ends_at`.
+         */
+        'filter[ends_at][in]'?: string;
+        /**
+         * `true` for rows where `ends_at` is null, `false` for rows where it is set.
+         */
+        'filter[ends_at][is_null]'?: boolean;
+        /**
+         * `ends_at` lt the value.
+         */
+        'filter[ends_at][lt]'?: string;
+        /**
+         * `ends_at` lte the value.
+         */
+        'filter[ends_at][lte]'?: string;
+        /**
+         * `ends_at` neq the value.
+         */
+        'filter[ends_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `ends_at`.
+         */
+        'filter[ends_at][nin]'?: string;
+        /**
+         * `id` eq the value.
+         */
+        'filter[id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `id`.
+         */
+        'filter[id][in]'?: string;
+        /**
+         * `id` neq the value.
+         */
+        'filter[id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `id`.
+         */
+        'filter[id][nin]'?: string;
+        /**
+         * `max_applications` eq the value.
+         */
+        'filter[max_applications][eq]'?: number;
+        /**
+         * `max_applications` gt the value.
+         */
+        'filter[max_applications][gt]'?: number;
+        /**
+         * `max_applications` gte the value.
+         */
+        'filter[max_applications][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `max_applications`.
+         */
+        'filter[max_applications][in]'?: string;
+        /**
+         * `true` for rows where `max_applications` is null, `false` for rows where it is set.
+         */
+        'filter[max_applications][is_null]'?: boolean;
+        /**
+         * `max_applications` lt the value.
+         */
+        'filter[max_applications][lt]'?: number;
+        /**
+         * `max_applications` lte the value.
+         */
+        'filter[max_applications][lte]'?: number;
+        /**
+         * `max_applications` neq the value.
+         */
+        'filter[max_applications][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `max_applications`.
+         */
+        'filter[max_applications][nin]'?: string;
+        /**
+         * `max_total_discount` eq the value.
+         */
+        'filter[max_total_discount][eq]'?: number;
+        /**
+         * `max_total_discount` gt the value.
+         */
+        'filter[max_total_discount][gt]'?: number;
+        /**
+         * `max_total_discount` gte the value.
+         */
+        'filter[max_total_discount][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `max_total_discount`.
+         */
+        'filter[max_total_discount][in]'?: string;
+        /**
+         * `true` for rows where `max_total_discount` is null, `false` for rows where it is set.
+         */
+        'filter[max_total_discount][is_null]'?: boolean;
+        /**
+         * `max_total_discount` lt the value.
+         */
+        'filter[max_total_discount][lt]'?: number;
+        /**
+         * `max_total_discount` lte the value.
+         */
+        'filter[max_total_discount][lte]'?: number;
+        /**
+         * `max_total_discount` neq the value.
+         */
+        'filter[max_total_discount][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `max_total_discount`.
+         */
+        'filter[max_total_discount][nin]'?: string;
+        /**
+         * `redeemed_at` eq the value.
+         */
+        'filter[redeemed_at][eq]'?: string;
+        /**
+         * `redeemed_at` gt the value.
+         */
+        'filter[redeemed_at][gt]'?: string;
+        /**
+         * `redeemed_at` gte the value.
+         */
+        'filter[redeemed_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `redeemed_at`.
+         */
+        'filter[redeemed_at][in]'?: string;
+        /**
+         * `redeemed_at` lt the value.
+         */
+        'filter[redeemed_at][lt]'?: string;
+        /**
+         * `redeemed_at` lte the value.
+         */
+        'filter[redeemed_at][lte]'?: string;
+        /**
+         * `redeemed_at` neq the value.
+         */
+        'filter[redeemed_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `redeemed_at`.
+         */
+        'filter[redeemed_at][nin]'?: string;
+        /**
+         * `status` eq the value.
+         */
+        'filter[status][eq]'?: 'ACTIVE' | 'ENDED' | 'REVOKED';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `status`.
+         */
+        'filter[status][in]'?: string;
+        /**
+         * `status` neq the value.
+         */
+        'filter[status][neq]'?: 'ACTIVE' | 'ENDED' | 'REVOKED';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `status`.
+         */
+        'filter[status][nin]'?: string;
+        /**
+         * `wallet_id` eq the value.
+         */
+        'filter[wallet_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `wallet_id`.
+         */
+        'filter[wallet_id][in]'?: string;
+        /**
+         * `wallet_id` neq the value.
+         */
+        'filter[wallet_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `wallet_id`.
+         */
+        'filter[wallet_id][nin]'?: string;
+        /**
+         * Comma-separated sortable fields, each optionally prefixed with `-` for descending: id, redeemed_at. At most 4 fields; `id` is appended to make the order total. Default: `-redeemed_at,id`.
+         */
+        sort?: string;
+        /**
+         * Page size, 1 to 200.
+         */
+        limit?: number;
+        /**
+         * Rows to skip, at most 10000. Not combinable with `cursor`.
+         */
+        offset?: number;
+        /**
+         * The `next_cursor` of the previous page. Valid only with the same filter and sort.
+         */
+        cursor?: string;
+        /**
+         * `full` fills `page` with the limit, offset, total and next cursor; `cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; omit it for the rows alone.
+         */
+        page_info?: 'full' | 'cursor';
+    };
+    url: '/system/v1/wallets/{walletId}/coupon-redemptions';
+};
+
+export type RedemptionsOfWalletAsTenantSystemErrors = {
+    /**
+     * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type RedemptionsOfWalletAsTenantSystemError = RedemptionsOfWalletAsTenantSystemErrors[keyof RedemptionsOfWalletAsTenantSystemErrors];
+
+export type RedemptionsOfWalletAsTenantSystemResponses = {
+    /**
+     * A page of redemption response rows, with the paging facts when the request asked for them.
+     */
+    200: PageRedemptionResponse;
+};
+
+export type RedemptionsOfWalletAsTenantSystemResponse = RedemptionsOfWalletAsTenantSystemResponses[keyof RedemptionsOfWalletAsTenantSystemResponses];
+
+export type RedeemByCodeAsTenantSystemData = {
+    /**
+     * The coupon to redeem. Give a `code`, or a `couponId` to attach it directly.
+     */
+    body: RedeemRequest;
+    headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
+        'Idempotency-Key': string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path: {
+        /**
+         * The id of the wallet.
+         */
+        walletId: string;
+    };
+    query?: never;
+    url: '/system/v1/wallets/{walletId}/coupon-redemptions';
+};
+
+export type RedeemByCodeAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type RedeemByCodeAsTenantSystemError = RedeemByCodeAsTenantSystemErrors[keyof RedeemByCodeAsTenantSystemErrors];
+
+export type RedeemByCodeAsTenantSystemResponses = {
+    /**
+     * An earlier identical request already created it; that resource is returned
+     */
+    200: RedemptionResponse;
+    /**
+     * A coupon redeemed onto a wallet.
+     */
+    201: RedemptionResponse;
+};
+
+export type RedeemByCodeAsTenantSystemResponse = RedeemByCodeAsTenantSystemResponses[keyof RedeemByCodeAsTenantSystemResponses];
+
+export type AttachAsTenantSystemData = {
+    /**
+     * The coupon to redeem. Give a `code`, or a `couponId` to attach it directly.
+     */
+    body: RedeemRequest;
+    headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
+        'Idempotency-Key': string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path: {
+        /**
+         * The id of the wallet.
+         */
+        walletId: string;
+    };
+    query?: never;
+    url: '/system/v1/wallets/{walletId}/coupon-redemptions/attach';
+};
+
+export type AttachAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type AttachAsTenantSystemError = AttachAsTenantSystemErrors[keyof AttachAsTenantSystemErrors];
+
+export type AttachAsTenantSystemResponses = {
+    /**
+     * An earlier identical request already created it; that resource is returned
+     */
+    200: RedemptionResponse;
+    /**
+     * A coupon redeemed onto a wallet.
+     */
+    201: RedemptionResponse;
+};
+
+export type AttachAsTenantSystemResponse = AttachAsTenantSystemResponses[keyof AttachAsTenantSystemResponses];
+
+export type HistoryAsTenantSystemData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `customer_id` eq the value.
+         */
+        'filter[customer_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `customer_id`.
+         */
+        'filter[customer_id][in]'?: string;
+        /**
+         * `customer_id` neq the value.
+         */
+        'filter[customer_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `customer_id`.
+         */
+        'filter[customer_id][nin]'?: string;
+        /**
+         * `id` eq the value.
+         */
+        'filter[id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `id`.
+         */
+        'filter[id][in]'?: string;
+        /**
+         * `id` neq the value.
+         */
+        'filter[id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `id`.
+         */
+        'filter[id][nin]'?: string;
+        /**
+         * Case-insensitive substring match on `metric`.
+         */
+        'filter[metric][contains]'?: string;
+        /**
+         * `metric` eq the value.
+         */
+        'filter[metric][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `metric`.
+         */
+        'filter[metric][in]'?: string;
+        /**
+         * `metric` neq the value.
+         */
+        'filter[metric][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `metric`.
+         */
+        'filter[metric][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `metric`.
+         */
+        'filter[metric][starts_with]'?: string;
+        /**
+         * `occurred_at` eq the value.
+         */
+        'filter[occurred_at][eq]'?: string;
+        /**
+         * `occurred_at` gt the value.
+         */
+        'filter[occurred_at][gt]'?: string;
+        /**
+         * `occurred_at` gte the value.
+         */
+        'filter[occurred_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `occurred_at`.
+         */
+        'filter[occurred_at][in]'?: string;
+        /**
+         * `occurred_at` lt the value.
+         */
+        'filter[occurred_at][lt]'?: string;
+        /**
+         * `occurred_at` lte the value.
+         */
+        'filter[occurred_at][lte]'?: string;
+        /**
+         * `occurred_at` neq the value.
+         */
+        'filter[occurred_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `occurred_at`.
+         */
+        'filter[occurred_at][nin]'?: string;
+        /**
+         * `quantity` eq the value.
+         */
+        'filter[quantity][eq]'?: number;
+        /**
+         * `quantity` gt the value.
+         */
+        'filter[quantity][gt]'?: number;
+        /**
+         * `quantity` gte the value.
+         */
+        'filter[quantity][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `quantity`.
+         */
+        'filter[quantity][in]'?: string;
+        /**
+         * `quantity` lt the value.
+         */
+        'filter[quantity][lt]'?: number;
+        /**
+         * `quantity` lte the value.
+         */
+        'filter[quantity][lte]'?: number;
+        /**
+         * `quantity` neq the value.
+         */
+        'filter[quantity][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `quantity`.
+         */
+        'filter[quantity][nin]'?: string;
+        /**
+         * `recorded_at` eq the value.
+         */
+        'filter[recorded_at][eq]'?: string;
+        /**
+         * `recorded_at` gt the value.
+         */
+        'filter[recorded_at][gt]'?: string;
+        /**
+         * `recorded_at` gte the value.
+         */
+        'filter[recorded_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `recorded_at`.
+         */
+        'filter[recorded_at][in]'?: string;
+        /**
+         * `recorded_at` lt the value.
+         */
+        'filter[recorded_at][lt]'?: string;
+        /**
+         * `recorded_at` lte the value.
+         */
+        'filter[recorded_at][lte]'?: string;
+        /**
+         * `recorded_at` neq the value.
+         */
+        'filter[recorded_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `recorded_at`.
+         */
+        'filter[recorded_at][nin]'?: string;
+        /**
+         * `resource_ref` eq the value.
+         */
+        'filter[resource_ref][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `resource_ref`.
+         */
+        'filter[resource_ref][in]'?: string;
+        /**
+         * `true` for rows where `resource_ref` is null, `false` for rows where it is set.
+         */
+        'filter[resource_ref][is_null]'?: boolean;
+        /**
+         * `resource_ref` neq the value.
+         */
+        'filter[resource_ref][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `resource_ref`.
+         */
+        'filter[resource_ref][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `resource_ref`.
+         */
+        'filter[resource_ref][starts_with]'?: string;
+        /**
+         * `source_event_id` eq the value.
+         */
+        'filter[source_event_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `source_event_id`.
+         */
+        'filter[source_event_id][in]'?: string;
+        /**
+         * `true` for rows where `source_event_id` is null, `false` for rows where it is set.
+         */
+        'filter[source_event_id][is_null]'?: boolean;
+        /**
+         * `source_event_id` neq the value.
+         */
+        'filter[source_event_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `source_event_id`.
+         */
+        'filter[source_event_id][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `source_event_id`.
+         */
+        'filter[source_event_id][starts_with]'?: string;
+        /**
+         * `tenant_system_id` eq the value.
+         */
+        'filter[tenant_system_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `tenant_system_id`.
+         */
+        'filter[tenant_system_id][in]'?: string;
+        /**
+         * `true` for rows where `tenant_system_id` is null, `false` for rows where it is set.
+         */
+        'filter[tenant_system_id][is_null]'?: boolean;
+        /**
+         * `tenant_system_id` neq the value.
+         */
+        'filter[tenant_system_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `tenant_system_id`.
+         */
+        'filter[tenant_system_id][nin]'?: string;
+        /**
+         * `unit` eq the value.
+         */
+        'filter[unit][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `unit`.
+         */
+        'filter[unit][in]'?: string;
+        /**
+         * `unit` neq the value.
+         */
+        'filter[unit][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `unit`.
+         */
+        'filter[unit][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `unit`.
+         */
+        'filter[unit][starts_with]'?: string;
+        /**
+         * Comma-separated sortable fields, each optionally prefixed with `-` for descending: id, occurred_at, recorded_at. At most 4 fields; `id` is appended to make the order total. Default: `-occurred_at,id`.
+         */
+        sort?: string;
+        /**
+         * Page size, 1 to 200.
+         */
+        limit?: number;
+        /**
+         * Rows to skip, at most 10000. Not combinable with `cursor`.
+         */
+        offset?: number;
+        /**
+         * The `next_cursor` of the previous page. Valid only with the same filter and sort.
+         */
+        cursor?: string;
+        /**
+         * `full` fills `page` with the limit, offset, total and next cursor; `cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; omit it for the rows alone.
+         */
+        page_info?: 'full' | 'cursor';
+    };
+    url: '/system/v1/usage-events';
+};
+
+export type HistoryAsTenantSystemErrors = {
+    /**
+     * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type HistoryAsTenantSystemError = HistoryAsTenantSystemErrors[keyof HistoryAsTenantSystemErrors];
+
+export type HistoryAsTenantSystemResponses = {
+    /**
+     * A page of usage event response rows, with the paging facts when the request asked for them.
+     */
+    200: PageUsageEventResponse;
+};
+
+export type HistoryAsTenantSystemResponse = HistoryAsTenantSystemResponses[keyof HistoryAsTenantSystemResponses];
+
+export type RecordOneAsTenantSystemData = {
+    /**
+     * One usage event to record.
+     */
+    body: UsageEventRequest;
+    path?: never;
+    query?: never;
+    url: '/system/v1/usage-events';
+};
+
+export type RecordOneAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type RecordOneAsTenantSystemError = RecordOneAsTenantSystemErrors[keyof RecordOneAsTenantSystemErrors];
+
+export type RecordOneAsTenantSystemResponses = {
+    /**
+     * The same event was already recorded; the recorded event is returned
+     */
+    200: RecordedResponse;
+    /**
+     * The result of recording one usage event.
+     */
+    201: RecordedResponse;
+};
+
+export type RecordOneAsTenantSystemResponse = RecordOneAsTenantSystemResponses[keyof RecordOneAsTenantSystemResponses];
+
+export type RecordBatchAsTenantSystemData = {
+    /**
+     * The usage events to record, at most 500, all or none.
+     */
+    body: BatchRequest;
+    path?: never;
+    query?: never;
+    url: '/system/v1/usage-events/batch';
+};
+
+export type RecordBatchAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type RecordBatchAsTenantSystemError = RecordBatchAsTenantSystemErrors[keyof RecordBatchAsTenantSystemErrors];
+
+export type RecordBatchAsTenantSystemResponses = {
+    /**
+     * The result per event, in request order.
+     */
+    200: BatchResponse;
+};
+
+export type RecordBatchAsTenantSystemResponse = RecordBatchAsTenantSystemResponses[keyof RecordBatchAsTenantSystemResponses];
+
+export type SubscriptionsAsTenantSystemData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `anchor` eq the value.
+         */
+        'filter[anchor][eq]'?: string;
+        /**
+         * `anchor` gt the value.
+         */
+        'filter[anchor][gt]'?: string;
+        /**
+         * `anchor` gte the value.
+         */
+        'filter[anchor][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `anchor`.
+         */
+        'filter[anchor][in]'?: string;
+        /**
+         * `anchor` lt the value.
+         */
+        'filter[anchor][lt]'?: string;
+        /**
+         * `anchor` lte the value.
+         */
+        'filter[anchor][lte]'?: string;
+        /**
+         * `anchor` neq the value.
+         */
+        'filter[anchor][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `anchor`.
+         */
+        'filter[anchor][nin]'?: string;
+        /**
+         * `cancel_at_period_end` eq the value.
+         */
+        'filter[cancel_at_period_end][eq]'?: boolean;
+        /**
+         * `cancel_at_period_end` neq the value.
+         */
+        'filter[cancel_at_period_end][neq]'?: boolean;
+        /**
+         * `canceled_at` eq the value.
+         */
+        'filter[canceled_at][eq]'?: string;
+        /**
+         * `canceled_at` gt the value.
+         */
+        'filter[canceled_at][gt]'?: string;
+        /**
+         * `canceled_at` gte the value.
+         */
+        'filter[canceled_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `canceled_at`.
+         */
+        'filter[canceled_at][in]'?: string;
+        /**
+         * `true` for rows where `canceled_at` is null, `false` for rows where it is set.
+         */
+        'filter[canceled_at][is_null]'?: boolean;
+        /**
+         * `canceled_at` lt the value.
+         */
+        'filter[canceled_at][lt]'?: string;
+        /**
+         * `canceled_at` lte the value.
+         */
+        'filter[canceled_at][lte]'?: string;
+        /**
+         * `canceled_at` neq the value.
+         */
+        'filter[canceled_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `canceled_at`.
+         */
+        'filter[canceled_at][nin]'?: string;
+        /**
+         * `created_at` eq the value.
+         */
+        'filter[created_at][eq]'?: string;
+        /**
+         * `created_at` gt the value.
+         */
+        'filter[created_at][gt]'?: string;
+        /**
+         * `created_at` gte the value.
+         */
+        'filter[created_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `created_at`.
+         */
+        'filter[created_at][in]'?: string;
+        /**
+         * `created_at` lt the value.
+         */
+        'filter[created_at][lt]'?: string;
+        /**
+         * `created_at` lte the value.
+         */
+        'filter[created_at][lte]'?: string;
+        /**
+         * `created_at` neq the value.
+         */
+        'filter[created_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `created_at`.
+         */
+        'filter[created_at][nin]'?: string;
+        /**
+         * `customer_id` eq the value.
+         */
+        'filter[customer_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `customer_id`.
+         */
+        'filter[customer_id][in]'?: string;
+        /**
+         * `customer_id` neq the value.
+         */
+        'filter[customer_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `customer_id`.
+         */
+        'filter[customer_id][nin]'?: string;
+        /**
+         * `cycle` eq the value.
+         */
+        'filter[cycle][eq]'?: 'DAILY' | 'MONTHLY' | 'QUARTERLY' | 'WEEKLY' | 'YEARLY';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `cycle`.
+         */
+        'filter[cycle][in]'?: string;
+        /**
+         * `cycle` neq the value.
+         */
+        'filter[cycle][neq]'?: 'DAILY' | 'MONTHLY' | 'QUARTERLY' | 'WEEKLY' | 'YEARLY';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `cycle`.
+         */
+        'filter[cycle][nin]'?: string;
+        /**
+         * `id` eq the value.
+         */
+        'filter[id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `id`.
+         */
+        'filter[id][in]'?: string;
+        /**
+         * `id` neq the value.
+         */
+        'filter[id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `id`.
+         */
+        'filter[id][nin]'?: string;
+        /**
+         * `next_renewal_at` eq the value.
+         */
+        'filter[next_renewal_at][eq]'?: string;
+        /**
+         * `next_renewal_at` gt the value.
+         */
+        'filter[next_renewal_at][gt]'?: string;
+        /**
+         * `next_renewal_at` gte the value.
+         */
+        'filter[next_renewal_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `next_renewal_at`.
+         */
+        'filter[next_renewal_at][in]'?: string;
+        /**
+         * `true` for rows where `next_renewal_at` is null, `false` for rows where it is set.
+         */
+        'filter[next_renewal_at][is_null]'?: boolean;
+        /**
+         * `next_renewal_at` lt the value.
+         */
+        'filter[next_renewal_at][lt]'?: string;
+        /**
+         * `next_renewal_at` lte the value.
+         */
+        'filter[next_renewal_at][lte]'?: string;
+        /**
+         * `next_renewal_at` neq the value.
+         */
+        'filter[next_renewal_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `next_renewal_at`.
+         */
+        'filter[next_renewal_at][nin]'?: string;
+        /**
+         * `periods_charged` eq the value.
+         */
+        'filter[periods_charged][eq]'?: number;
+        /**
+         * `periods_charged` gt the value.
+         */
+        'filter[periods_charged][gt]'?: number;
+        /**
+         * `periods_charged` gte the value.
+         */
+        'filter[periods_charged][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `periods_charged`.
+         */
+        'filter[periods_charged][in]'?: string;
+        /**
+         * `periods_charged` lt the value.
+         */
+        'filter[periods_charged][lt]'?: number;
+        /**
+         * `periods_charged` lte the value.
+         */
+        'filter[periods_charged][lte]'?: number;
+        /**
+         * `periods_charged` neq the value.
+         */
+        'filter[periods_charged][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `periods_charged`.
+         */
+        'filter[periods_charged][nin]'?: string;
+        /**
+         * `plan_code` eq the value.
+         */
+        'filter[plan_code][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `plan_code`.
+         */
+        'filter[plan_code][in]'?: string;
+        /**
+         * `plan_code` neq the value.
+         */
+        'filter[plan_code][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `plan_code`.
+         */
+        'filter[plan_code][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `plan_code`.
+         */
+        'filter[plan_code][starts_with]'?: string;
+        /**
+         * `plan_id` eq the value.
+         */
+        'filter[plan_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `plan_id`.
+         */
+        'filter[plan_id][in]'?: string;
+        /**
+         * `plan_id` neq the value.
+         */
+        'filter[plan_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `plan_id`.
+         */
+        'filter[plan_id][nin]'?: string;
+        /**
+         * `renewal_attempts` eq the value.
+         */
+        'filter[renewal_attempts][eq]'?: number;
+        /**
+         * `renewal_attempts` gt the value.
+         */
+        'filter[renewal_attempts][gt]'?: number;
+        /**
+         * `renewal_attempts` gte the value.
+         */
+        'filter[renewal_attempts][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `renewal_attempts`.
+         */
+        'filter[renewal_attempts][in]'?: string;
+        /**
+         * `renewal_attempts` lt the value.
+         */
+        'filter[renewal_attempts][lt]'?: number;
+        /**
+         * `renewal_attempts` lte the value.
+         */
+        'filter[renewal_attempts][lte]'?: number;
+        /**
+         * `renewal_attempts` neq the value.
+         */
+        'filter[renewal_attempts][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `renewal_attempts`.
+         */
+        'filter[renewal_attempts][nin]'?: string;
+        /**
+         * `status` eq the value.
+         */
+        'filter[status][eq]'?: 'ACTIVE' | 'CANCELED' | 'PAST_DUE';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `status`.
+         */
+        'filter[status][in]'?: string;
+        /**
+         * `status` neq the value.
+         */
+        'filter[status][neq]'?: 'ACTIVE' | 'CANCELED' | 'PAST_DUE';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `status`.
+         */
+        'filter[status][nin]'?: string;
+        /**
+         * `updated_at` eq the value.
+         */
+        'filter[updated_at][eq]'?: string;
+        /**
+         * `updated_at` gt the value.
+         */
+        'filter[updated_at][gt]'?: string;
+        /**
+         * `updated_at` gte the value.
+         */
+        'filter[updated_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `updated_at`.
+         */
+        'filter[updated_at][in]'?: string;
+        /**
+         * `updated_at` lt the value.
+         */
+        'filter[updated_at][lt]'?: string;
+        /**
+         * `updated_at` lte the value.
+         */
+        'filter[updated_at][lte]'?: string;
+        /**
+         * `updated_at` neq the value.
+         */
+        'filter[updated_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `updated_at`.
+         */
+        'filter[updated_at][nin]'?: string;
+        /**
+         * `wallet_id` eq the value.
+         */
+        'filter[wallet_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `wallet_id`.
+         */
+        'filter[wallet_id][in]'?: string;
+        /**
+         * `wallet_id` neq the value.
+         */
+        'filter[wallet_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `wallet_id`.
+         */
+        'filter[wallet_id][nin]'?: string;
+        /**
+         * Comma-separated sortable fields, each optionally prefixed with `-` for descending: created_at, id. At most 4 fields; `id` is appended to make the order total. Default: `-created_at,id`.
+         */
+        sort?: string;
+        /**
+         * Page size, 1 to 200.
+         */
+        limit?: number;
+        /**
+         * Rows to skip, at most 10000. Not combinable with `cursor`.
+         */
+        offset?: number;
+        /**
+         * The `next_cursor` of the previous page. Valid only with the same filter and sort.
+         */
+        cursor?: string;
+        /**
+         * `full` fills `page` with the limit, offset, total and next cursor; `cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; omit it for the rows alone.
+         */
+        page_info?: 'full' | 'cursor';
+    };
+    url: '/system/v1/subscriptions';
+};
+
+export type SubscriptionsAsTenantSystemErrors = {
+    /**
+     * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type SubscriptionsAsTenantSystemError = SubscriptionsAsTenantSystemErrors[keyof SubscriptionsAsTenantSystemErrors];
+
+export type SubscriptionsAsTenantSystemResponses = {
+    /**
+     * A page of subscription response rows, with the paging facts when the request asked for them.
+     */
+    200: PageSubscriptionResponse;
+};
+
+export type SubscriptionsAsTenantSystemResponse = SubscriptionsAsTenantSystemResponses[keyof SubscriptionsAsTenantSystemResponses];
+
+export type SubscribeAsTenantSystemData = {
+    /**
+     * The subscription to start.
+     */
+    body: SubscribeRequest;
+    headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
+        'Idempotency-Key': string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/system/v1/subscriptions';
+};
+
+export type SubscribeAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type SubscribeAsTenantSystemError = SubscribeAsTenantSystemErrors[keyof SubscribeAsTenantSystemErrors];
+
+export type SubscribeAsTenantSystemResponses = {
+    /**
+     * An earlier identical request already created it; that resource is returned
+     */
+    200: SubscriptionDetailResponse;
+    /**
+     * A subscription with its history.
+     */
+    201: SubscriptionDetailResponse;
+};
+
+export type SubscribeAsTenantSystemResponse = SubscribeAsTenantSystemResponses[keyof SubscribeAsTenantSystemResponses];
+
+export type CancelAsTenantSystemData = {
+    body?: never;
+    headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path: {
+        /**
+         * The id of the subscription.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/subscriptions/{id}/cancel';
+};
+
+export type CancelAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type CancelAsTenantSystemError = CancelAsTenantSystemErrors[keyof CancelAsTenantSystemErrors];
+
+export type CancelAsTenantSystemResponses = {
+    /**
+     * A subscription with its history.
+     */
+    200: SubscriptionDetailResponse;
+};
+
+export type CancelAsTenantSystemResponse = CancelAsTenantSystemResponses[keyof CancelAsTenantSystemResponses];
+
+export type ReservationsAsTenantSystemData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `amount` eq the value.
+         */
+        'filter[amount][eq]'?: number;
+        /**
+         * `amount` gt the value.
+         */
+        'filter[amount][gt]'?: number;
+        /**
+         * `amount` gte the value.
+         */
+        'filter[amount][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `amount`.
+         */
+        'filter[amount][in]'?: string;
+        /**
+         * `amount` lt the value.
+         */
+        'filter[amount][lt]'?: number;
+        /**
+         * `amount` lte the value.
+         */
+        'filter[amount][lte]'?: number;
+        /**
+         * `amount` neq the value.
+         */
+        'filter[amount][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `amount`.
+         */
+        'filter[amount][nin]'?: string;
+        /**
+         * `captured_amount` eq the value.
+         */
+        'filter[captured_amount][eq]'?: number;
+        /**
+         * `captured_amount` gt the value.
+         */
+        'filter[captured_amount][gt]'?: number;
+        /**
+         * `captured_amount` gte the value.
+         */
+        'filter[captured_amount][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `captured_amount`.
+         */
+        'filter[captured_amount][in]'?: string;
+        /**
+         * `captured_amount` lt the value.
+         */
+        'filter[captured_amount][lt]'?: number;
+        /**
+         * `captured_amount` lte the value.
+         */
+        'filter[captured_amount][lte]'?: number;
+        /**
+         * `captured_amount` neq the value.
+         */
+        'filter[captured_amount][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `captured_amount`.
+         */
+        'filter[captured_amount][nin]'?: string;
+        /**
+         * `closed_at` eq the value.
+         */
+        'filter[closed_at][eq]'?: string;
+        /**
+         * `closed_at` gt the value.
+         */
+        'filter[closed_at][gt]'?: string;
+        /**
+         * `closed_at` gte the value.
+         */
+        'filter[closed_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `closed_at`.
+         */
+        'filter[closed_at][in]'?: string;
+        /**
+         * `true` for rows where `closed_at` is null, `false` for rows where it is set.
+         */
+        'filter[closed_at][is_null]'?: boolean;
+        /**
+         * `closed_at` lt the value.
+         */
+        'filter[closed_at][lt]'?: string;
+        /**
+         * `closed_at` lte the value.
+         */
+        'filter[closed_at][lte]'?: string;
+        /**
+         * `closed_at` neq the value.
+         */
+        'filter[closed_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `closed_at`.
+         */
+        'filter[closed_at][nin]'?: string;
+        /**
+         * `created_at` eq the value.
+         */
+        'filter[created_at][eq]'?: string;
+        /**
+         * `created_at` gt the value.
+         */
+        'filter[created_at][gt]'?: string;
+        /**
+         * `created_at` gte the value.
+         */
+        'filter[created_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `created_at`.
+         */
+        'filter[created_at][in]'?: string;
+        /**
+         * `created_at` lt the value.
+         */
+        'filter[created_at][lt]'?: string;
+        /**
+         * `created_at` lte the value.
+         */
+        'filter[created_at][lte]'?: string;
+        /**
+         * `created_at` neq the value.
+         */
+        'filter[created_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `created_at`.
+         */
+        'filter[created_at][nin]'?: string;
+        /**
+         * `expires_at` eq the value.
+         */
+        'filter[expires_at][eq]'?: string;
+        /**
+         * `expires_at` gt the value.
+         */
+        'filter[expires_at][gt]'?: string;
+        /**
+         * `expires_at` gte the value.
+         */
+        'filter[expires_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `expires_at`.
+         */
+        'filter[expires_at][in]'?: string;
+        /**
+         * `expires_at` lt the value.
+         */
+        'filter[expires_at][lt]'?: string;
+        /**
+         * `expires_at` lte the value.
+         */
+        'filter[expires_at][lte]'?: string;
+        /**
+         * `expires_at` neq the value.
+         */
+        'filter[expires_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `expires_at`.
+         */
+        'filter[expires_at][nin]'?: string;
+        /**
+         * `id` eq the value.
+         */
+        'filter[id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `id`.
+         */
+        'filter[id][in]'?: string;
+        /**
+         * `id` neq the value.
+         */
+        'filter[id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `id`.
+         */
+        'filter[id][nin]'?: string;
+        /**
+         * `reference` eq the value.
+         */
+        'filter[reference][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `reference`.
+         */
+        'filter[reference][in]'?: string;
+        /**
+         * `true` for rows where `reference` is null, `false` for rows where it is set.
+         */
+        'filter[reference][is_null]'?: boolean;
+        /**
+         * `reference` neq the value.
+         */
+        'filter[reference][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `reference`.
+         */
+        'filter[reference][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `reference`.
+         */
+        'filter[reference][starts_with]'?: string;
+        /**
+         * `status` eq the value.
+         */
+        'filter[status][eq]'?: 'ACTIVE' | 'CAPTURED' | 'EXPIRED' | 'RELEASED';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `status`.
+         */
+        'filter[status][in]'?: string;
+        /**
+         * `status` neq the value.
+         */
+        'filter[status][neq]'?: 'ACTIVE' | 'CAPTURED' | 'EXPIRED' | 'RELEASED';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `status`.
+         */
+        'filter[status][nin]'?: string;
+        /**
+         * `wallet.customer_id` eq the value.
+         */
+        'filter[wallet.customer_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `wallet.customer_id`.
+         */
+        'filter[wallet.customer_id][in]'?: string;
+        /**
+         * `wallet.customer_id` neq the value.
+         */
+        'filter[wallet.customer_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `wallet.customer_id`.
+         */
+        'filter[wallet.customer_id][nin]'?: string;
+        /**
+         * `wallet_id` eq the value.
+         */
+        'filter[wallet_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `wallet_id`.
+         */
+        'filter[wallet_id][in]'?: string;
+        /**
+         * `wallet_id` neq the value.
+         */
+        'filter[wallet_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `wallet_id`.
+         */
+        'filter[wallet_id][nin]'?: string;
+        /**
+         * Comma-separated sortable fields, each optionally prefixed with `-` for descending: created_at, id. At most 4 fields; `id` is appended to make the order total. Default: `-created_at,id`.
+         */
+        sort?: string;
+        /**
+         * Page size, 1 to 200.
+         */
+        limit?: number;
+        /**
+         * Rows to skip, at most 10000. Not combinable with `cursor`.
+         */
+        offset?: number;
+        /**
+         * The `next_cursor` of the previous page. Valid only with the same filter and sort.
+         */
+        cursor?: string;
+        /**
+         * `full` fills `page` with the limit, offset, total and next cursor; `cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; omit it for the rows alone.
+         */
+        page_info?: 'full' | 'cursor';
+    };
+    url: '/system/v1/reservations';
+};
+
+export type ReservationsAsTenantSystemErrors = {
+    /**
+     * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type ReservationsAsTenantSystemError = ReservationsAsTenantSystemErrors[keyof ReservationsAsTenantSystemErrors];
+
+export type ReservationsAsTenantSystemResponses = {
+    /**
+     * A page of reservation response rows, with the paging facts when the request asked for them.
+     */
+    200: PageReservationResponse;
+};
+
+export type ReservationsAsTenantSystemResponse = ReservationsAsTenantSystemResponses[keyof ReservationsAsTenantSystemResponses];
+
+export type ReserveAsTenantSystemData = {
+    /**
+     * The hold to place on a wallet.
+     */
+    body: ReserveRequest;
+    headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
+        'Idempotency-Key': string;
+    };
+    path?: never;
+    query?: never;
+    url: '/system/v1/reservations';
+};
+
+export type ReserveAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type ReserveAsTenantSystemError = ReserveAsTenantSystemErrors[keyof ReserveAsTenantSystemErrors];
+
+export type ReserveAsTenantSystemResponses = {
+    /**
+     * An earlier identical request already created it; that resource is returned
+     */
+    200: ReservationResponse;
+    /**
+     * A hold on part of a wallet's balance.
+     */
+    201: ReservationResponse;
+};
+
+export type ReserveAsTenantSystemResponse = ReserveAsTenantSystemResponses[keyof ReserveAsTenantSystemResponses];
+
+export type ReleaseAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the reservation.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/reservations/{id}/release';
+};
+
+export type ReleaseAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type ReleaseAsTenantSystemError = ReleaseAsTenantSystemErrors[keyof ReleaseAsTenantSystemErrors];
+
+export type ReleaseAsTenantSystemResponses = {
+    /**
+     * A hold on part of a wallet's balance.
+     */
+    200: ReservationResponse;
+};
+
+export type ReleaseAsTenantSystemResponse = ReleaseAsTenantSystemResponses[keyof ReleaseAsTenantSystemResponses];
+
+export type CaptureAsTenantSystemData = {
+    /**
+     * The actual cost to charge against a reservation.
+     */
+    body: CaptureRequest;
+    headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
+        'Idempotency-Key': string;
+    };
+    path: {
+        /**
+         * The id of the reservation.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/reservations/{id}/capture';
+};
+
+export type CaptureAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type CaptureAsTenantSystemError = CaptureAsTenantSystemErrors[keyof CaptureAsTenantSystemErrors];
+
+export type CaptureAsTenantSystemResponses = {
+    /**
+     * An earlier identical request already created it; that resource is returned
+     */
+    200: ChargeResponse;
+    /**
+     * A charge made against a wallet.
+     */
+    201: ChargeResponse;
+};
+
+export type CaptureAsTenantSystemResponse = CaptureAsTenantSystemResponses[keyof CaptureAsTenantSystemResponses];
+
+export type DeactivateCodeAsTenantSystemData = {
+    body?: never;
+    headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path: {
+        /**
+         * The id of the promotion code.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/promotion-codes/{id}/deactivate';
+};
+
+export type DeactivateCodeAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type DeactivateCodeAsTenantSystemError = DeactivateCodeAsTenantSystemErrors[keyof DeactivateCodeAsTenantSystemErrors];
+
+export type DeactivateCodeAsTenantSystemResponses = {
+    /**
+     * A promotion code.
+     */
+    200: PromotionCodeResponse;
+};
+
+export type DeactivateCodeAsTenantSystemResponse = DeactivateCodeAsTenantSystemResponses[keyof DeactivateCodeAsTenantSystemResponses];
+
+export type ChargeUsageAsTenantSystemData = {
+    /**
+     * The usage period to price and charge.
+     */
+    body: ChargeUsageRequest;
+    path?: never;
+    query?: never;
+    url: '/system/v1/pricing/usage-charges';
+};
+
+export type ChargeUsageAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type ChargeUsageAsTenantSystemError = ChargeUsageAsTenantSystemErrors[keyof ChargeUsageAsTenantSystemErrors];
+
+export type ChargeUsageAsTenantSystemResponses = {
+    /**
+     * The usage was already charged and that rating is returned, or there was nothing to charge
+     */
+    200: RatingResponse;
+    /**
+     * The result of rating a period's usage.
+     */
+    201: RatingResponse;
+};
+
+export type ChargeUsageAsTenantSystemResponse = ChargeUsageAsTenantSystemResponses[keyof ChargeUsageAsTenantSystemResponses];
+
+export type ReserveEstimateAsTenantSystemData = {
+    /**
+     * The hold to place on a wallet.
+     */
+    body: ReserveRequest;
+    headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
+        'Idempotency-Key': string;
+    };
+    path?: never;
+    query?: never;
+    url: '/system/v1/pricing/reservations';
+};
+
+export type ReserveEstimateAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type ReserveEstimateAsTenantSystemError = ReserveEstimateAsTenantSystemErrors[keyof ReserveEstimateAsTenantSystemErrors];
+
+export type ReserveEstimateAsTenantSystemResponses = {
+    /**
+     * An earlier identical request already created it; that resource is returned
+     */
+    200: ReserveResponse;
+    /**
+     * The estimate and the reservation that holds it.
+     */
+    201: ReserveResponse;
+};
+
+export type ReserveEstimateAsTenantSystemResponse = ReserveEstimateAsTenantSystemResponses[keyof ReserveEstimateAsTenantSystemResponses];
+
+export type EstimateAsTenantSystemData = {
+    /**
+     * The expected usage to price.
+     */
+    body: EstimateRequest;
+    path?: never;
+    query?: never;
+    url: '/system/v1/pricing/estimates';
+};
+
+export type EstimateAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type EstimateAsTenantSystemError = EstimateAsTenantSystemErrors[keyof EstimateAsTenantSystemErrors];
+
+export type EstimateAsTenantSystemResponses = {
+    /**
+     * The estimated cost.
+     */
+    200: EstimateResponse;
+};
+
+export type EstimateAsTenantSystemResponse = EstimateAsTenantSystemResponses[keyof EstimateAsTenantSystemResponses];
+
+export type RequestRefundAsTenantSystemData = {
+    /**
+     * The refund to request.
+     */
+    body: RefundRequest;
+    headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
+        'Idempotency-Key': string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path: {
+        /**
+         * The id of the payment.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/payments/{id}/refunds';
+};
+
+export type RequestRefundAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type RequestRefundAsTenantSystemError = RequestRefundAsTenantSystemErrors[keyof RequestRefundAsTenantSystemErrors];
+
+export type RequestRefundAsTenantSystemResponses = {
+    /**
+     * An earlier identical request already created it; that resource is returned
+     */
+    200: RefundResponse;
+    /**
+     * A refund of a payment.
+     */
+    201: RefundResponse;
+};
+
+export type RequestRefundAsTenantSystemResponse = RequestRefundAsTenantSystemResponses[keyof RequestRefundAsTenantSystemResponses];
+
+export type CreateTopUpAsTenantSystemData = {
+    /**
+     * The top-up to start.
+     */
+    body: TopUpRequest;
+    headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
+        'Idempotency-Key': string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/system/v1/payments/top-ups';
+};
+
+export type CreateTopUpAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type CreateTopUpAsTenantSystemError = CreateTopUpAsTenantSystemErrors[keyof CreateTopUpAsTenantSystemErrors];
+
+export type CreateTopUpAsTenantSystemResponses = {
+    /**
+     * An earlier identical request already created it; that resource is returned
+     */
+    200: PaymentResponse;
+    /**
+     * A payment of a top-up or an invoice.
+     */
+    201: PaymentResponse;
+};
+
+export type CreateTopUpAsTenantSystemResponse = CreateTopUpAsTenantSystemResponses[keyof CreateTopUpAsTenantSystemResponses];
+
+export type InvoicesAsTenantSystemData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `created_at` eq the value.
+         */
+        'filter[created_at][eq]'?: string;
+        /**
+         * `created_at` gt the value.
+         */
+        'filter[created_at][gt]'?: string;
+        /**
+         * `created_at` gte the value.
+         */
+        'filter[created_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `created_at`.
+         */
+        'filter[created_at][in]'?: string;
+        /**
+         * `created_at` lt the value.
+         */
+        'filter[created_at][lt]'?: string;
+        /**
+         * `created_at` lte the value.
+         */
+        'filter[created_at][lte]'?: string;
+        /**
+         * `created_at` neq the value.
+         */
+        'filter[created_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `created_at`.
+         */
+        'filter[created_at][nin]'?: string;
+        /**
+         * `currency` eq the value.
+         */
+        'filter[currency][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `currency`.
+         */
+        'filter[currency][in]'?: string;
+        /**
+         * `currency` neq the value.
+         */
+        'filter[currency][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `currency`.
+         */
+        'filter[currency][nin]'?: string;
+        /**
+         * `customer_id` eq the value.
+         */
+        'filter[customer_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `customer_id`.
+         */
+        'filter[customer_id][in]'?: string;
+        /**
+         * `customer_id` neq the value.
+         */
+        'filter[customer_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `customer_id`.
+         */
+        'filter[customer_id][nin]'?: string;
+        /**
+         * `id` eq the value.
+         */
+        'filter[id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `id`.
+         */
+        'filter[id][in]'?: string;
+        /**
+         * `id` neq the value.
+         */
+        'filter[id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `id`.
+         */
+        'filter[id][nin]'?: string;
+        /**
+         * `issued_at` eq the value.
+         */
+        'filter[issued_at][eq]'?: string;
+        /**
+         * `issued_at` gt the value.
+         */
+        'filter[issued_at][gt]'?: string;
+        /**
+         * `issued_at` gte the value.
+         */
+        'filter[issued_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `issued_at`.
+         */
+        'filter[issued_at][in]'?: string;
+        /**
+         * `true` for rows where `issued_at` is null, `false` for rows where it is set.
+         */
+        'filter[issued_at][is_null]'?: boolean;
+        /**
+         * `issued_at` lt the value.
+         */
+        'filter[issued_at][lt]'?: string;
+        /**
+         * `issued_at` lte the value.
+         */
+        'filter[issued_at][lte]'?: string;
+        /**
+         * `issued_at` neq the value.
+         */
+        'filter[issued_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `issued_at`.
+         */
+        'filter[issued_at][nin]'?: string;
+        /**
+         * `number` eq the value.
+         */
+        'filter[number][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `number`.
+         */
+        'filter[number][in]'?: string;
+        /**
+         * `true` for rows where `number` is null, `false` for rows where it is set.
+         */
+        'filter[number][is_null]'?: boolean;
+        /**
+         * `number` neq the value.
+         */
+        'filter[number][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `number`.
+         */
+        'filter[number][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `number`.
+         */
+        'filter[number][starts_with]'?: string;
+        /**
+         * `origin` eq the value.
+         */
+        'filter[origin][eq]'?: 'CHARGE' | 'POSTPAID_CYCLE';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `origin`.
+         */
+        'filter[origin][in]'?: string;
+        /**
+         * `origin` neq the value.
+         */
+        'filter[origin][neq]'?: 'CHARGE' | 'POSTPAID_CYCLE';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `origin`.
+         */
+        'filter[origin][nin]'?: string;
+        /**
+         * `paid_at` eq the value.
+         */
+        'filter[paid_at][eq]'?: string;
+        /**
+         * `paid_at` gt the value.
+         */
+        'filter[paid_at][gt]'?: string;
+        /**
+         * `paid_at` gte the value.
+         */
+        'filter[paid_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `paid_at`.
+         */
+        'filter[paid_at][in]'?: string;
+        /**
+         * `true` for rows where `paid_at` is null, `false` for rows where it is set.
+         */
+        'filter[paid_at][is_null]'?: boolean;
+        /**
+         * `paid_at` lt the value.
+         */
+        'filter[paid_at][lt]'?: string;
+        /**
+         * `paid_at` lte the value.
+         */
+        'filter[paid_at][lte]'?: string;
+        /**
+         * `paid_at` neq the value.
+         */
+        'filter[paid_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `paid_at`.
+         */
+        'filter[paid_at][nin]'?: string;
+        /**
+         * `period_end` eq the value.
+         */
+        'filter[period_end][eq]'?: string;
+        /**
+         * `period_end` gt the value.
+         */
+        'filter[period_end][gt]'?: string;
+        /**
+         * `period_end` gte the value.
+         */
+        'filter[period_end][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `period_end`.
+         */
+        'filter[period_end][in]'?: string;
+        /**
+         * `true` for rows where `period_end` is null, `false` for rows where it is set.
+         */
+        'filter[period_end][is_null]'?: boolean;
+        /**
+         * `period_end` lt the value.
+         */
+        'filter[period_end][lt]'?: string;
+        /**
+         * `period_end` lte the value.
+         */
+        'filter[period_end][lte]'?: string;
+        /**
+         * `period_end` neq the value.
+         */
+        'filter[period_end][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `period_end`.
+         */
+        'filter[period_end][nin]'?: string;
+        /**
+         * `period_start` eq the value.
+         */
+        'filter[period_start][eq]'?: string;
+        /**
+         * `period_start` gt the value.
+         */
+        'filter[period_start][gt]'?: string;
+        /**
+         * `period_start` gte the value.
+         */
+        'filter[period_start][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `period_start`.
+         */
+        'filter[period_start][in]'?: string;
+        /**
+         * `true` for rows where `period_start` is null, `false` for rows where it is set.
+         */
+        'filter[period_start][is_null]'?: boolean;
+        /**
+         * `period_start` lt the value.
+         */
+        'filter[period_start][lt]'?: string;
+        /**
+         * `period_start` lte the value.
+         */
+        'filter[period_start][lte]'?: string;
+        /**
+         * `period_start` neq the value.
+         */
+        'filter[period_start][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `period_start`.
+         */
+        'filter[period_start][nin]'?: string;
+        /**
+         * `settlement` eq the value.
+         */
+        'filter[settlement][eq]'?: 'PAYMENT' | 'WALLET';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `settlement`.
+         */
+        'filter[settlement][in]'?: string;
+        /**
+         * `true` for rows where `settlement` is null, `false` for rows where it is set.
+         */
+        'filter[settlement][is_null]'?: boolean;
+        /**
+         * `settlement` neq the value.
+         */
+        'filter[settlement][neq]'?: 'PAYMENT' | 'WALLET';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `settlement`.
+         */
+        'filter[settlement][nin]'?: string;
+        /**
+         * `status` eq the value.
+         */
+        'filter[status][eq]'?: 'DRAFT' | 'OPEN' | 'PAID' | 'UNCOLLECTIBLE' | 'VOID';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `status`.
+         */
+        'filter[status][in]'?: string;
+        /**
+         * `status` neq the value.
+         */
+        'filter[status][neq]'?: 'DRAFT' | 'OPEN' | 'PAID' | 'UNCOLLECTIBLE' | 'VOID';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `status`.
+         */
+        'filter[status][nin]'?: string;
+        /**
+         * `total` eq the value.
+         */
+        'filter[total][eq]'?: number;
+        /**
+         * `total` gt the value.
+         */
+        'filter[total][gt]'?: number;
+        /**
+         * `total` gte the value.
+         */
+        'filter[total][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `total`.
+         */
+        'filter[total][in]'?: string;
+        /**
+         * `total` lt the value.
+         */
+        'filter[total][lt]'?: number;
+        /**
+         * `total` lte the value.
+         */
+        'filter[total][lte]'?: number;
+        /**
+         * `total` neq the value.
+         */
+        'filter[total][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `total`.
+         */
+        'filter[total][nin]'?: string;
+        /**
+         * `voided_at` eq the value.
+         */
+        'filter[voided_at][eq]'?: string;
+        /**
+         * `voided_at` gt the value.
+         */
+        'filter[voided_at][gt]'?: string;
+        /**
+         * `voided_at` gte the value.
+         */
+        'filter[voided_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `voided_at`.
+         */
+        'filter[voided_at][in]'?: string;
+        /**
+         * `true` for rows where `voided_at` is null, `false` for rows where it is set.
+         */
+        'filter[voided_at][is_null]'?: boolean;
+        /**
+         * `voided_at` lt the value.
+         */
+        'filter[voided_at][lt]'?: string;
+        /**
+         * `voided_at` lte the value.
+         */
+        'filter[voided_at][lte]'?: string;
+        /**
+         * `voided_at` neq the value.
+         */
+        'filter[voided_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `voided_at`.
+         */
+        'filter[voided_at][nin]'?: string;
+        /**
+         * `wallet_id` eq the value.
+         */
+        'filter[wallet_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `wallet_id`.
+         */
+        'filter[wallet_id][in]'?: string;
+        /**
+         * `wallet_id` neq the value.
+         */
+        'filter[wallet_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `wallet_id`.
+         */
+        'filter[wallet_id][nin]'?: string;
+        /**
+         * Comma-separated sortable fields, each optionally prefixed with `-` for descending: created_at, id, total. At most 4 fields; `id` is appended to make the order total. Default: `-id`.
+         */
+        sort?: string;
+        /**
+         * Page size, 1 to 200.
+         */
+        limit?: number;
+        /**
+         * Rows to skip, at most 10000. Not combinable with `cursor`.
+         */
+        offset?: number;
+        /**
+         * The `next_cursor` of the previous page. Valid only with the same filter and sort.
+         */
+        cursor?: string;
+        /**
+         * `full` fills `page` with the limit, offset, total and next cursor; `cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; omit it for the rows alone.
+         */
+        page_info?: 'full' | 'cursor';
+    };
+    url: '/system/v1/invoices';
+};
+
+export type InvoicesAsTenantSystemErrors = {
+    /**
+     * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type InvoicesAsTenantSystemError = InvoicesAsTenantSystemErrors[keyof InvoicesAsTenantSystemErrors];
+
+export type InvoicesAsTenantSystemResponses = {
+    /**
+     * A page of invoice response rows, with the paging facts when the request asked for them.
+     */
+    200: PageInvoiceResponse;
+};
+
+export type InvoicesAsTenantSystemResponse = InvoicesAsTenantSystemResponses[keyof InvoicesAsTenantSystemResponses];
+
+export type InvoiceChargeAsTenantSystemData = {
+    /**
+     * The charge to invoice.
+     */
+    body: InvoiceChargeRequest;
+    headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/system/v1/invoices';
+};
+
+export type InvoiceChargeAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type InvoiceChargeAsTenantSystemError = InvoiceChargeAsTenantSystemErrors[keyof InvoiceChargeAsTenantSystemErrors];
+
+export type InvoiceChargeAsTenantSystemResponses = {
+    /**
+     * The charge already had an invoice; that invoice is returned
+     */
+    200: InvoiceDetailResponse;
+    /**
+     * An invoice with its items and payments.
+     */
+    201: InvoiceDetailResponse;
+};
+
+export type InvoiceChargeAsTenantSystemResponse = InvoiceChargeAsTenantSystemResponses[keyof InvoiceChargeAsTenantSystemResponses];
+
+export type PayAsTenantSystemData = {
+    body?: never;
+    headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
+        'Idempotency-Key': string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path: {
+        /**
+         * The id of the invoice.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/invoices/{id}/payments';
+};
+
+export type PayAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type PayAsTenantSystemError = PayAsTenantSystemErrors[keyof PayAsTenantSystemErrors];
+
+export type PayAsTenantSystemResponses = {
+    /**
+     * An earlier identical request already created it; that resource is returned
+     */
+    200: PayInvoiceResponse;
+    /**
+     * The invoice and the payment that was started.
+     */
+    201: PayInvoiceResponse;
+};
+
+export type PayAsTenantSystemResponse = PayAsTenantSystemResponses[keyof PayAsTenantSystemResponses];
+
+export type ListAsTenantSystemData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `created_at` eq the value.
+         */
+        'filter[created_at][eq]'?: string;
+        /**
+         * `created_at` gt the value.
+         */
+        'filter[created_at][gt]'?: string;
+        /**
+         * `created_at` gte the value.
+         */
+        'filter[created_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `created_at`.
+         */
+        'filter[created_at][in]'?: string;
+        /**
+         * `created_at` lt the value.
+         */
+        'filter[created_at][lt]'?: string;
+        /**
+         * `created_at` lte the value.
+         */
+        'filter[created_at][lte]'?: string;
+        /**
+         * `created_at` neq the value.
+         */
+        'filter[created_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `created_at`.
+         */
+        'filter[created_at][nin]'?: string;
+        /**
+         * `display_name` eq the value.
+         */
+        'filter[display_name][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `display_name`.
+         */
+        'filter[display_name][in]'?: string;
+        /**
+         * `display_name` neq the value.
+         */
+        'filter[display_name][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `display_name`.
+         */
+        'filter[display_name][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `display_name`.
+         */
+        'filter[display_name][starts_with]'?: string;
+        /**
+         * `email` eq the value.
+         */
+        'filter[email][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `email`.
+         */
+        'filter[email][in]'?: string;
+        /**
+         * `true` for rows where `email` is null, `false` for rows where it is set.
+         */
+        'filter[email][is_null]'?: boolean;
+        /**
+         * `email` neq the value.
+         */
+        'filter[email][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `email`.
+         */
+        'filter[email][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `email`.
+         */
+        'filter[email][starts_with]'?: string;
+        /**
+         * `id` eq the value.
+         */
+        'filter[id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `id`.
+         */
+        'filter[id][in]'?: string;
+        /**
+         * `id` neq the value.
+         */
+        'filter[id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `id`.
+         */
+        'filter[id][nin]'?: string;
+        /**
+         * `status` eq the value.
+         */
+        'filter[status][eq]'?: 'ACTIVE' | 'DEACTIVATED';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `status`.
+         */
+        'filter[status][in]'?: string;
+        /**
+         * `status` neq the value.
+         */
+        'filter[status][neq]'?: 'ACTIVE' | 'DEACTIVATED';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `status`.
+         */
+        'filter[status][nin]'?: string;
+        /**
+         * Comma-separated sortable fields, each optionally prefixed with `-` for descending: created_at, display_name, id. At most 4 fields; `id` is appended to make the order total. Default: `created_at,id`.
+         */
+        sort?: string;
+        /**
+         * Page size, 1 to 200.
+         */
+        limit?: number;
+        /**
+         * Rows to skip, at most 10000. Not combinable with `cursor`.
+         */
+        offset?: number;
+        /**
+         * The `next_cursor` of the previous page. Valid only with the same filter and sort.
+         */
+        cursor?: string;
+        /**
+         * `full` fills `page` with the limit, offset, total and next cursor; `cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; omit it for the rows alone.
+         */
+        page_info?: 'full' | 'cursor';
+    };
+    url: '/system/v1/customers';
+};
+
+export type ListAsTenantSystemErrors = {
+    /**
+     * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type ListAsTenantSystemError = ListAsTenantSystemErrors[keyof ListAsTenantSystemErrors];
+
+export type ListAsTenantSystemResponses = {
+    /**
+     * A page of customer response rows, with the paging facts when the request asked for them.
+     */
+    200: PageCustomerResponse;
+};
+
+export type ListAsTenantSystemResponse = ListAsTenantSystemResponses[keyof ListAsTenantSystemResponses];
+
+export type CreateAsTenantSystemData = {
+    /**
+     * The customer to create.
+     */
+    body: CreateCustomerRequest;
+    headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
+        'Idempotency-Key': string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/system/v1/customers';
+};
+
+export type CreateAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type CreateAsTenantSystemError = CreateAsTenantSystemErrors[keyof CreateAsTenantSystemErrors];
+
+export type CreateAsTenantSystemResponses = {
+    /**
+     * An earlier identical request already created it; that resource is returned
+     */
+    200: CustomerResponse;
+    /**
+     * A billing customer.
+     */
+    201: CustomerResponse;
+};
+
+export type CreateAsTenantSystemResponse = CreateAsTenantSystemResponses[keyof CreateAsTenantSystemResponses];
+
+export type DeactivateAsTenantSystemData = {
+    body?: never;
+    headers?: {
+        /**
+         * The `ETag` of the version the caller last read. The change is refused with `412` when the resource has moved on since.
+         */
+        'If-Match'?: string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path: {
+        /**
+         * The id of the customer.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/customers/{id}/deactivate';
+};
+
+export type DeactivateAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The resource changed since the caller read it; the current ETag is returned in the header
+     */
+    412: ProblemDetail;
+};
+
+export type DeactivateAsTenantSystemError = DeactivateAsTenantSystemErrors[keyof DeactivateAsTenantSystemErrors];
+
+export type DeactivateAsTenantSystemResponses = {
+    /**
+     * A billing customer.
+     */
+    200: CustomerResponse;
+};
+
+export type DeactivateAsTenantSystemResponse = DeactivateAsTenantSystemResponses[keyof DeactivateAsTenantSystemResponses];
+
+export type CouponsAsTenantSystemData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `benefit_type` eq the value.
+         */
+        'filter[benefit_type][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `benefit_type`.
+         */
+        'filter[benefit_type][in]'?: string;
+        /**
+         * `benefit_type` neq the value.
+         */
+        'filter[benefit_type][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `benefit_type`.
+         */
+        'filter[benefit_type][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `benefit_type`.
+         */
+        'filter[benefit_type][starts_with]'?: string;
+        /**
+         * `budget` eq the value.
+         */
+        'filter[budget][eq]'?: number;
+        /**
+         * `budget` gt the value.
+         */
+        'filter[budget][gt]'?: number;
+        /**
+         * `budget` gte the value.
+         */
+        'filter[budget][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `budget`.
+         */
+        'filter[budget][in]'?: string;
+        /**
+         * `true` for rows where `budget` is null, `false` for rows where it is set.
+         */
+        'filter[budget][is_null]'?: boolean;
+        /**
+         * `budget` lt the value.
+         */
+        'filter[budget][lt]'?: number;
+        /**
+         * `budget` lte the value.
+         */
+        'filter[budget][lte]'?: number;
+        /**
+         * `budget` neq the value.
+         */
+        'filter[budget][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `budget`.
+         */
+        'filter[budget][nin]'?: string;
+        /**
+         * `budget_used` eq the value.
+         */
+        'filter[budget_used][eq]'?: number;
+        /**
+         * `budget_used` gt the value.
+         */
+        'filter[budget_used][gt]'?: number;
+        /**
+         * `budget_used` gte the value.
+         */
+        'filter[budget_used][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `budget_used`.
+         */
+        'filter[budget_used][in]'?: string;
+        /**
+         * `budget_used` lt the value.
+         */
+        'filter[budget_used][lt]'?: number;
+        /**
+         * `budget_used` lte the value.
+         */
+        'filter[budget_used][lte]'?: number;
+        /**
+         * `budget_used` neq the value.
+         */
+        'filter[budget_used][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `budget_used`.
+         */
+        'filter[budget_used][nin]'?: string;
+        /**
+         * `created_at` eq the value.
+         */
+        'filter[created_at][eq]'?: string;
+        /**
+         * `created_at` gt the value.
+         */
+        'filter[created_at][gt]'?: string;
+        /**
+         * `created_at` gte the value.
+         */
+        'filter[created_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `created_at`.
+         */
+        'filter[created_at][in]'?: string;
+        /**
+         * `created_at` lt the value.
+         */
+        'filter[created_at][lt]'?: string;
+        /**
+         * `created_at` lte the value.
+         */
+        'filter[created_at][lte]'?: string;
+        /**
+         * `created_at` neq the value.
+         */
+        'filter[created_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `created_at`.
+         */
+        'filter[created_at][nin]'?: string;
+        /**
+         * `created_by` eq the value.
+         */
+        'filter[created_by][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `created_by`.
+         */
+        'filter[created_by][in]'?: string;
+        /**
+         * `created_by` neq the value.
+         */
+        'filter[created_by][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `created_by`.
+         */
+        'filter[created_by][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `created_by`.
+         */
+        'filter[created_by][starts_with]'?: string;
+        /**
+         * `currency` eq the value.
+         */
+        'filter[currency][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `currency`.
+         */
+        'filter[currency][in]'?: string;
+        /**
+         * `currency` neq the value.
+         */
+        'filter[currency][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `currency`.
+         */
+        'filter[currency][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `currency`.
+         */
+        'filter[currency][starts_with]'?: string;
+        /**
+         * `deactivated_at` eq the value.
+         */
+        'filter[deactivated_at][eq]'?: string;
+        /**
+         * `deactivated_at` gt the value.
+         */
+        'filter[deactivated_at][gt]'?: string;
+        /**
+         * `deactivated_at` gte the value.
+         */
+        'filter[deactivated_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `deactivated_at`.
+         */
+        'filter[deactivated_at][in]'?: string;
+        /**
+         * `true` for rows where `deactivated_at` is null, `false` for rows where it is set.
+         */
+        'filter[deactivated_at][is_null]'?: boolean;
+        /**
+         * `deactivated_at` lt the value.
+         */
+        'filter[deactivated_at][lt]'?: string;
+        /**
+         * `deactivated_at` lte the value.
+         */
+        'filter[deactivated_at][lte]'?: string;
+        /**
+         * `deactivated_at` neq the value.
+         */
+        'filter[deactivated_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `deactivated_at`.
+         */
+        'filter[deactivated_at][nin]'?: string;
+        /**
+         * `id` eq the value.
+         */
+        'filter[id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `id`.
+         */
+        'filter[id][in]'?: string;
+        /**
+         * `id` neq the value.
+         */
+        'filter[id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `id`.
+         */
+        'filter[id][nin]'?: string;
+        /**
+         * `name` eq the value.
+         */
+        'filter[name][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `name`.
+         */
+        'filter[name][in]'?: string;
+        /**
+         * `name` neq the value.
+         */
+        'filter[name][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `name`.
+         */
+        'filter[name][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `name`.
+         */
+        'filter[name][starts_with]'?: string;
+        /**
+         * `redeem_by` eq the value.
+         */
+        'filter[redeem_by][eq]'?: string;
+        /**
+         * `redeem_by` gt the value.
+         */
+        'filter[redeem_by][gt]'?: string;
+        /**
+         * `redeem_by` gte the value.
+         */
+        'filter[redeem_by][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `redeem_by`.
+         */
+        'filter[redeem_by][in]'?: string;
+        /**
+         * `true` for rows where `redeem_by` is null, `false` for rows where it is set.
+         */
+        'filter[redeem_by][is_null]'?: boolean;
+        /**
+         * `redeem_by` lt the value.
+         */
+        'filter[redeem_by][lt]'?: string;
+        /**
+         * `redeem_by` lte the value.
+         */
+        'filter[redeem_by][lte]'?: string;
+        /**
+         * `redeem_by` neq the value.
+         */
+        'filter[redeem_by][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `redeem_by`.
+         */
+        'filter[redeem_by][nin]'?: string;
+        /**
+         * `redemptions_count` eq the value.
+         */
+        'filter[redemptions_count][eq]'?: number;
+        /**
+         * `redemptions_count` gt the value.
+         */
+        'filter[redemptions_count][gt]'?: number;
+        /**
+         * `redemptions_count` gte the value.
+         */
+        'filter[redemptions_count][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `redemptions_count`.
+         */
+        'filter[redemptions_count][in]'?: string;
+        /**
+         * `redemptions_count` lt the value.
+         */
+        'filter[redemptions_count][lt]'?: number;
+        /**
+         * `redemptions_count` lte the value.
+         */
+        'filter[redemptions_count][lte]'?: number;
+        /**
+         * `redemptions_count` neq the value.
+         */
+        'filter[redemptions_count][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `redemptions_count`.
+         */
+        'filter[redemptions_count][nin]'?: string;
+        /**
+         * `stackable` eq the value.
+         */
+        'filter[stackable][eq]'?: boolean;
+        /**
+         * `stackable` neq the value.
+         */
+        'filter[stackable][neq]'?: boolean;
+        /**
+         * `status` eq the value.
+         */
+        'filter[status][eq]'?: 'ACTIVE' | 'INACTIVE';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `status`.
+         */
+        'filter[status][in]'?: string;
+        /**
+         * `status` neq the value.
+         */
+        'filter[status][neq]'?: 'ACTIVE' | 'INACTIVE';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `status`.
+         */
+        'filter[status][nin]'?: string;
+        /**
+         * Comma-separated sortable fields, each optionally prefixed with `-` for descending: created_at, id, name. At most 4 fields; `id` is appended to make the order total. Default: `-created_at,id`.
+         */
+        sort?: string;
+        /**
+         * Page size, 1 to 200.
+         */
+        limit?: number;
+        /**
+         * Rows to skip, at most 10000. Not combinable with `cursor`.
+         */
+        offset?: number;
+        /**
+         * The `next_cursor` of the previous page. Valid only with the same filter and sort.
+         */
+        cursor?: string;
+        /**
+         * `full` fills `page` with the limit, offset, total and next cursor; `cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; omit it for the rows alone.
+         */
+        page_info?: 'full' | 'cursor';
+    };
+    url: '/system/v1/coupons';
+};
+
+export type CouponsAsTenantSystemErrors = {
+    /**
+     * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type CouponsAsTenantSystemError = CouponsAsTenantSystemErrors[keyof CouponsAsTenantSystemErrors];
+
+export type CouponsAsTenantSystemResponses = {
+    /**
+     * A page of coupon response rows, with the paging facts when the request asked for them.
+     */
+    200: PageCouponResponse;
+};
+
+export type CouponsAsTenantSystemResponse = CouponsAsTenantSystemResponses[keyof CouponsAsTenantSystemResponses];
+
+export type CreateCouponAsTenantSystemData = {
+    /**
+     * The coupon to create. Its terms are immutable.
+     */
+    body: CreateCouponRequest;
+    headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/system/v1/coupons';
+};
+
+export type CreateCouponAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type CreateCouponAsTenantSystemError = CreateCouponAsTenantSystemErrors[keyof CreateCouponAsTenantSystemErrors];
+
+export type CreateCouponAsTenantSystemResponses = {
+    /**
+     * The coupon and its first promotion code.
+     */
+    201: CreateCouponResponse;
+};
+
+export type CreateCouponAsTenantSystemResponse = CreateCouponAsTenantSystemResponses[keyof CreateCouponAsTenantSystemResponses];
+
+export type DeactivateCouponAsTenantSystemData = {
+    /**
+     * How to deactivate the coupon.
+     */
+    body?: DeactivateCouponRequest;
+    headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path: {
+        /**
+         * The id of the coupon.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/coupons/{id}/deactivate';
+};
+
+export type DeactivateCouponAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type DeactivateCouponAsTenantSystemError = DeactivateCouponAsTenantSystemErrors[keyof DeactivateCouponAsTenantSystemErrors];
+
+export type DeactivateCouponAsTenantSystemResponses = {
+    /**
+     * A coupon.
+     */
+    200: CouponResponse;
+};
+
+export type DeactivateCouponAsTenantSystemResponse = DeactivateCouponAsTenantSystemResponses[keyof DeactivateCouponAsTenantSystemResponses];
+
+export type CodesAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the coupon.
+         */
+        id: string;
+    };
+    query?: {
+        /**
+         * `active` eq the value.
+         */
+        'filter[active][eq]'?: boolean;
+        /**
+         * `active` neq the value.
+         */
+        'filter[active][neq]'?: boolean;
+        /**
+         * `code` eq the value.
+         */
+        'filter[code][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `code`.
+         */
+        'filter[code][in]'?: string;
+        /**
+         * `code` neq the value.
+         */
+        'filter[code][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `code`.
+         */
+        'filter[code][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `code`.
+         */
+        'filter[code][starts_with]'?: string;
+        /**
+         * `coupon_id` eq the value.
+         */
+        'filter[coupon_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `coupon_id`.
+         */
+        'filter[coupon_id][in]'?: string;
+        /**
+         * `coupon_id` neq the value.
+         */
+        'filter[coupon_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `coupon_id`.
+         */
+        'filter[coupon_id][nin]'?: string;
+        /**
+         * `created_at` eq the value.
+         */
+        'filter[created_at][eq]'?: string;
+        /**
+         * `created_at` gt the value.
+         */
+        'filter[created_at][gt]'?: string;
+        /**
+         * `created_at` gte the value.
+         */
+        'filter[created_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `created_at`.
+         */
+        'filter[created_at][in]'?: string;
+        /**
+         * `created_at` lt the value.
+         */
+        'filter[created_at][lt]'?: string;
+        /**
+         * `created_at` lte the value.
+         */
+        'filter[created_at][lte]'?: string;
+        /**
+         * `created_at` neq the value.
+         */
+        'filter[created_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `created_at`.
+         */
+        'filter[created_at][nin]'?: string;
+        /**
+         * `id` eq the value.
+         */
+        'filter[id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `id`.
+         */
+        'filter[id][in]'?: string;
+        /**
+         * `id` neq the value.
+         */
+        'filter[id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `id`.
+         */
+        'filter[id][nin]'?: string;
+        /**
+         * `max_redemptions` eq the value.
+         */
+        'filter[max_redemptions][eq]'?: number;
+        /**
+         * `max_redemptions` gt the value.
+         */
+        'filter[max_redemptions][gt]'?: number;
+        /**
+         * `max_redemptions` gte the value.
+         */
+        'filter[max_redemptions][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `max_redemptions`.
+         */
+        'filter[max_redemptions][in]'?: string;
+        /**
+         * `true` for rows where `max_redemptions` is null, `false` for rows where it is set.
+         */
+        'filter[max_redemptions][is_null]'?: boolean;
+        /**
+         * `max_redemptions` lt the value.
+         */
+        'filter[max_redemptions][lt]'?: number;
+        /**
+         * `max_redemptions` lte the value.
+         */
+        'filter[max_redemptions][lte]'?: number;
+        /**
+         * `max_redemptions` neq the value.
+         */
+        'filter[max_redemptions][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `max_redemptions`.
+         */
+        'filter[max_redemptions][nin]'?: string;
+        /**
+         * `redeem_by` eq the value.
+         */
+        'filter[redeem_by][eq]'?: string;
+        /**
+         * `redeem_by` gt the value.
+         */
+        'filter[redeem_by][gt]'?: string;
+        /**
+         * `redeem_by` gte the value.
+         */
+        'filter[redeem_by][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `redeem_by`.
+         */
+        'filter[redeem_by][in]'?: string;
+        /**
+         * `true` for rows where `redeem_by` is null, `false` for rows where it is set.
+         */
+        'filter[redeem_by][is_null]'?: boolean;
+        /**
+         * `redeem_by` lt the value.
+         */
+        'filter[redeem_by][lt]'?: string;
+        /**
+         * `redeem_by` lte the value.
+         */
+        'filter[redeem_by][lte]'?: string;
+        /**
+         * `redeem_by` neq the value.
+         */
+        'filter[redeem_by][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `redeem_by`.
+         */
+        'filter[redeem_by][nin]'?: string;
+        /**
+         * `redeemed_count` eq the value.
+         */
+        'filter[redeemed_count][eq]'?: number;
+        /**
+         * `redeemed_count` gt the value.
+         */
+        'filter[redeemed_count][gt]'?: number;
+        /**
+         * `redeemed_count` gte the value.
+         */
+        'filter[redeemed_count][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `redeemed_count`.
+         */
+        'filter[redeemed_count][in]'?: string;
+        /**
+         * `redeemed_count` lt the value.
+         */
+        'filter[redeemed_count][lt]'?: number;
+        /**
+         * `redeemed_count` lte the value.
+         */
+        'filter[redeemed_count][lte]'?: number;
+        /**
+         * `redeemed_count` neq the value.
+         */
+        'filter[redeemed_count][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `redeemed_count`.
+         */
+        'filter[redeemed_count][nin]'?: string;
+        /**
+         * Comma-separated sortable fields, each optionally prefixed with `-` for descending: code, created_at, id. At most 4 fields; `id` is appended to make the order total. Default: `created_at,id`.
+         */
+        sort?: string;
+        /**
+         * Page size, 1 to 200.
+         */
+        limit?: number;
+        /**
+         * Rows to skip, at most 10000. Not combinable with `cursor`.
+         */
+        offset?: number;
+        /**
+         * The `next_cursor` of the previous page. Valid only with the same filter and sort.
+         */
+        cursor?: string;
+        /**
+         * `full` fills `page` with the limit, offset, total and next cursor; `cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; omit it for the rows alone.
+         */
+        page_info?: 'full' | 'cursor';
+    };
+    url: '/system/v1/coupons/{id}/codes';
+};
+
+export type CodesAsTenantSystemErrors = {
+    /**
+     * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type CodesAsTenantSystemError = CodesAsTenantSystemErrors[keyof CodesAsTenantSystemErrors];
+
+export type CodesAsTenantSystemResponses = {
+    /**
+     * A page of promotion code response rows, with the paging facts when the request asked for them.
+     */
+    200: PagePromotionCodeResponse;
+};
+
+export type CodesAsTenantSystemResponse = CodesAsTenantSystemResponses[keyof CodesAsTenantSystemResponses];
+
+export type AddCodeAsTenantSystemData = {
+    /**
+     * The promotion code to add.
+     */
+    body: AddCodeRequest;
+    headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path: {
+        /**
+         * The id of the coupon.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/coupons/{id}/codes';
+};
+
+export type AddCodeAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type AddCodeAsTenantSystemError = AddCodeAsTenantSystemErrors[keyof AddCodeAsTenantSystemErrors];
+
+export type AddCodeAsTenantSystemResponses = {
+    /**
+     * A promotion code.
+     */
+    201: PromotionCodeResponse;
+};
+
+export type AddCodeAsTenantSystemResponse = AddCodeAsTenantSystemResponses[keyof AddCodeAsTenantSystemResponses];
+
+export type RevokeAsTenantSystemData = {
+    body?: never;
+    headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path: {
+        /**
+         * The id of the coupon redemption.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/coupon-redemptions/{id}/revoke';
+};
+
+export type RevokeAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type RevokeAsTenantSystemError = RevokeAsTenantSystemErrors[keyof RevokeAsTenantSystemErrors];
+
+export type RevokeAsTenantSystemResponses = {
+    /**
+     * A coupon redeemed onto a wallet.
+     */
+    200: RedemptionResponse;
+};
+
+export type RevokeAsTenantSystemResponse = RevokeAsTenantSystemResponses[keyof RevokeAsTenantSystemResponses];
+
+export type ChargesAsTenantSystemData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `amount` eq the value.
+         */
+        'filter[amount][eq]'?: number;
+        /**
+         * `amount` gt the value.
+         */
+        'filter[amount][gt]'?: number;
+        /**
+         * `amount` gte the value.
+         */
+        'filter[amount][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `amount`.
+         */
+        'filter[amount][in]'?: string;
+        /**
+         * `amount` lt the value.
+         */
+        'filter[amount][lt]'?: number;
+        /**
+         * `amount` lte the value.
+         */
+        'filter[amount][lte]'?: number;
+        /**
+         * `amount` neq the value.
+         */
+        'filter[amount][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `amount`.
+         */
+        'filter[amount][nin]'?: string;
+        /**
+         * `created_at` eq the value.
+         */
+        'filter[created_at][eq]'?: string;
+        /**
+         * `created_at` gt the value.
+         */
+        'filter[created_at][gt]'?: string;
+        /**
+         * `created_at` gte the value.
+         */
+        'filter[created_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `created_at`.
+         */
+        'filter[created_at][in]'?: string;
+        /**
+         * `created_at` lt the value.
+         */
+        'filter[created_at][lt]'?: string;
+        /**
+         * `created_at` lte the value.
+         */
+        'filter[created_at][lte]'?: string;
+        /**
+         * `created_at` neq the value.
+         */
+        'filter[created_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `created_at`.
+         */
+        'filter[created_at][nin]'?: string;
+        /**
+         * `currency` eq the value.
+         */
+        'filter[currency][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `currency`.
+         */
+        'filter[currency][in]'?: string;
+        /**
+         * `currency` neq the value.
+         */
+        'filter[currency][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `currency`.
+         */
+        'filter[currency][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `currency`.
+         */
+        'filter[currency][starts_with]'?: string;
+        /**
+         * `id` eq the value.
+         */
+        'filter[id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `id`.
+         */
+        'filter[id][in]'?: string;
+        /**
+         * `id` neq the value.
+         */
+        'filter[id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `id`.
+         */
+        'filter[id][nin]'?: string;
+        /**
+         * `reference` eq the value.
+         */
+        'filter[reference][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `reference`.
+         */
+        'filter[reference][in]'?: string;
+        /**
+         * `true` for rows where `reference` is null, `false` for rows where it is set.
+         */
+        'filter[reference][is_null]'?: boolean;
+        /**
+         * `reference` neq the value.
+         */
+        'filter[reference][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `reference`.
+         */
+        'filter[reference][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `reference`.
+         */
+        'filter[reference][starts_with]'?: string;
+        /**
+         * `reservation_id` eq the value.
+         */
+        'filter[reservation_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `reservation_id`.
+         */
+        'filter[reservation_id][in]'?: string;
+        /**
+         * `true` for rows where `reservation_id` is null, `false` for rows where it is set.
+         */
+        'filter[reservation_id][is_null]'?: boolean;
+        /**
+         * `reservation_id` neq the value.
+         */
+        'filter[reservation_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `reservation_id`.
+         */
+        'filter[reservation_id][nin]'?: string;
+        /**
+         * `source` eq the value.
+         */
+        'filter[source][eq]'?: 'RESERVATION' | 'STANDALONE' | 'USAGE';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `source`.
+         */
+        'filter[source][in]'?: string;
+        /**
+         * `source` neq the value.
+         */
+        'filter[source][neq]'?: 'RESERVATION' | 'STANDALONE' | 'USAGE';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `source`.
+         */
+        'filter[source][nin]'?: string;
+        /**
+         * `status` eq the value.
+         */
+        'filter[status][eq]'?: 'FAILED' | 'SUCCEEDED';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `status`.
+         */
+        'filter[status][in]'?: string;
+        /**
+         * `status` neq the value.
+         */
+        'filter[status][neq]'?: 'FAILED' | 'SUCCEEDED';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `status`.
+         */
+        'filter[status][nin]'?: string;
+        /**
+         * `usage_ref` eq the value.
+         */
+        'filter[usage_ref][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `usage_ref`.
+         */
+        'filter[usage_ref][in]'?: string;
+        /**
+         * `true` for rows where `usage_ref` is null, `false` for rows where it is set.
+         */
+        'filter[usage_ref][is_null]'?: boolean;
+        /**
+         * `usage_ref` neq the value.
+         */
+        'filter[usage_ref][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `usage_ref`.
+         */
+        'filter[usage_ref][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `usage_ref`.
+         */
+        'filter[usage_ref][starts_with]'?: string;
+        /**
+         * `wallet.customer_id` eq the value.
+         */
+        'filter[wallet.customer_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `wallet.customer_id`.
+         */
+        'filter[wallet.customer_id][in]'?: string;
+        /**
+         * `wallet.customer_id` neq the value.
+         */
+        'filter[wallet.customer_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `wallet.customer_id`.
+         */
+        'filter[wallet.customer_id][nin]'?: string;
+        /**
+         * `wallet_id` eq the value.
+         */
+        'filter[wallet_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `wallet_id`.
+         */
+        'filter[wallet_id][in]'?: string;
+        /**
+         * `wallet_id` neq the value.
+         */
+        'filter[wallet_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `wallet_id`.
+         */
+        'filter[wallet_id][nin]'?: string;
+        /**
+         * Comma-separated sortable fields, each optionally prefixed with `-` for descending: amount, created_at, id. At most 4 fields; `id` is appended to make the order total. Default: `-created_at,id`.
+         */
+        sort?: string;
+        /**
+         * Page size, 1 to 200.
+         */
+        limit?: number;
+        /**
+         * Rows to skip, at most 10000. Not combinable with `cursor`.
+         */
+        offset?: number;
+        /**
+         * The `next_cursor` of the previous page. Valid only with the same filter and sort.
+         */
+        cursor?: string;
+        /**
+         * `full` fills `page` with the limit, offset, total and next cursor; `cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; omit it for the rows alone.
+         */
+        page_info?: 'full' | 'cursor';
+    };
+    url: '/system/v1/charges';
+};
+
+export type ChargesAsTenantSystemErrors = {
+    /**
+     * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type ChargesAsTenantSystemError = ChargesAsTenantSystemErrors[keyof ChargesAsTenantSystemErrors];
+
+export type ChargesAsTenantSystemResponses = {
+    /**
+     * A page of charge response rows, with the paging facts when the request asked for them.
+     */
+    200: PageChargeResponse;
+};
+
+export type ChargesAsTenantSystemResponse = ChargesAsTenantSystemResponses[keyof ChargesAsTenantSystemResponses];
+
+export type ChargeAsTenantSystemData = {
+    /**
+     * The cost to charge to a wallet.
+     */
+    body: ChargeRequest;
+    headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
+        'Idempotency-Key': string;
+    };
+    path?: never;
+    query?: never;
+    url: '/system/v1/charges';
+};
+
+export type ChargeAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type ChargeAsTenantSystemError = ChargeAsTenantSystemErrors[keyof ChargeAsTenantSystemErrors];
+
+export type ChargeAsTenantSystemResponses = {
+    /**
+     * An earlier identical request already created it; that resource is returned
+     */
+    200: ChargeResponse;
+    /**
+     * A charge made against a wallet.
+     */
+    201: ChargeResponse;
+};
+
+export type ChargeAsTenantSystemResponse = ChargeAsTenantSystemResponses[keyof ChargeAsTenantSystemResponses];
+
+export type CreateAsTenantSystem1Data = {
+    /**
+     * The billing session to create.
+     */
+    body: CreateRequest;
+    headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/system/v1/billing-sessions';
+};
+
+export type CreateAsTenantSystem1Errors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type CreateAsTenantSystem1Error = CreateAsTenantSystem1Errors[keyof CreateAsTenantSystem1Errors];
+
+export type CreateAsTenantSystem1Responses = {
+    /**
+     * The billing session that was created.
+     */
+    201: CreateResponse;
+};
+
+export type CreateAsTenantSystem1Response = CreateAsTenantSystem1Responses[keyof CreateAsTenantSystem1Responses];
+
+export type RevokeAsTenantSystem1Data = {
+    body?: never;
+    headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path: {
+        /**
+         * The id of the billing session.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/billing-sessions/{id}/revoke';
+};
+
+export type RevokeAsTenantSystem1Errors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type RevokeAsTenantSystem1Error = RevokeAsTenantSystem1Errors[keyof RevokeAsTenantSystem1Errors];
+
+export type RevokeAsTenantSystem1Responses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type DirectData = {
     body?: never;
     headers?: {
@@ -3167,18 +8210,6 @@ export type DirectErrors = {
      * The signature of the raw body could not be verified. The answer says nothing about why.
      */
     400: ProblemDetail;
-    /**
-     * The request carries no valid token.
-     */
-    401: ProblemDetail;
-    /**
-     * The tenant has not enabled this app, or the caller may not act here.
-     */
-    403: ProblemDetail;
-    /**
-     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
-     */
-    404: ProblemDetail;
 };
 
 export type DirectError = DirectErrors[keyof DirectErrors];
@@ -3212,14 +8243,6 @@ export type ConnectErrors = {
      * The signature of the raw body could not be verified. The answer says nothing about why.
      */
     400: ProblemDetail;
-    /**
-     * The request carries no valid token.
-     */
-    401: ProblemDetail;
-    /**
-     * The tenant has not enabled this app, or the caller may not act here.
-     */
-    403: ProblemDetail;
 };
 
 export type ConnectError = ConnectErrors[keyof ConnectErrors];
@@ -3322,10 +8345,6 @@ export type ExchangeErrors = {
      * The token is unknown, already used, revoked or expired. The answer does not say which.
      */
     401: ProblemDetail;
-    /**
-     * The tenant has not enabled this app, or the caller may not act here.
-     */
-    403: ProblemDetail;
 };
 
 export type ExchangeError = ExchangeErrors[keyof ExchangeErrors];
@@ -9128,6 +14147,103 @@ export type Revoke1Responses = {
 
 export type Revoke1Response = Revoke1Responses[keyof Revoke1Responses];
 
+export type GetEndpointAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the webhook endpoint.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/webhook-endpoints/{id}';
+};
+
+export type GetEndpointAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type GetEndpointAsTenantSystemError = GetEndpointAsTenantSystemErrors[keyof GetEndpointAsTenantSystemErrors];
+
+export type GetEndpointAsTenantSystemResponses = {
+    /**
+     * A webhook endpoint. The signing secret is not part of it.
+     */
+    200: EndpointResponse;
+};
+
+export type GetEndpointAsTenantSystemResponse = GetEndpointAsTenantSystemResponses[keyof GetEndpointAsTenantSystemResponses];
+
+export type UpdateEndpointAsTenantSystemData = {
+    /**
+     * The fields to change. A field that is left out keeps its value.
+     */
+    body: UpdateEndpointRequest;
+    headers?: {
+        /**
+         * The `ETag` of the version the caller last read. The change is refused with `412` when the resource has moved on since.
+         */
+        'If-Match'?: string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
+        'X-Request-Id'?: string;
+    };
+    path: {
+        /**
+         * The id of the webhook endpoint.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/webhook-endpoints/{id}';
+};
+
+export type UpdateEndpointAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The resource changed since the caller read it; the current ETag is returned in the header
+     */
+    412: ProblemDetail;
+};
+
+export type UpdateEndpointAsTenantSystemError = UpdateEndpointAsTenantSystemErrors[keyof UpdateEndpointAsTenantSystemErrors];
+
+export type UpdateEndpointAsTenantSystemResponses = {
+    /**
+     * A webhook endpoint. The signing secret is not part of it.
+     */
+    200: EndpointResponse;
+};
+
+export type UpdateEndpointAsTenantSystemResponse = UpdateEndpointAsTenantSystemResponses[keyof UpdateEndpointAsTenantSystemResponses];
+
 export type GetEndpointData = {
     body?: never;
     path: {
@@ -9232,19 +14348,6 @@ export type JwksData = {
     url: '/test-jwks';
 };
 
-export type JwksErrors = {
-    /**
-     * The request carries no valid token.
-     */
-    401: ProblemDetail;
-    /**
-     * The tenant has not enabled this app, or the caller may not act here.
-     */
-    403: ProblemDetail;
-};
-
-export type JwksError = JwksErrors[keyof JwksErrors];
-
 export type JwksResponses = {
     /**
      * OK
@@ -9255,6 +14358,2050 @@ export type JwksResponses = {
 };
 
 export type JwksResponse = JwksResponses[keyof JwksResponses];
+
+export type ListDeliveriesAsTenantSystemData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `attempts` eq the value.
+         */
+        'filter[attempts][eq]'?: number;
+        /**
+         * `attempts` gt the value.
+         */
+        'filter[attempts][gt]'?: number;
+        /**
+         * `attempts` gte the value.
+         */
+        'filter[attempts][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `attempts`.
+         */
+        'filter[attempts][in]'?: string;
+        /**
+         * `attempts` lt the value.
+         */
+        'filter[attempts][lt]'?: number;
+        /**
+         * `attempts` lte the value.
+         */
+        'filter[attempts][lte]'?: number;
+        /**
+         * `attempts` neq the value.
+         */
+        'filter[attempts][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `attempts`.
+         */
+        'filter[attempts][nin]'?: string;
+        /**
+         * `completed_at` eq the value.
+         */
+        'filter[completed_at][eq]'?: string;
+        /**
+         * `completed_at` gt the value.
+         */
+        'filter[completed_at][gt]'?: string;
+        /**
+         * `completed_at` gte the value.
+         */
+        'filter[completed_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `completed_at`.
+         */
+        'filter[completed_at][in]'?: string;
+        /**
+         * `true` for rows where `completed_at` is null, `false` for rows where it is set.
+         */
+        'filter[completed_at][is_null]'?: boolean;
+        /**
+         * `completed_at` lt the value.
+         */
+        'filter[completed_at][lt]'?: string;
+        /**
+         * `completed_at` lte the value.
+         */
+        'filter[completed_at][lte]'?: string;
+        /**
+         * `completed_at` neq the value.
+         */
+        'filter[completed_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `completed_at`.
+         */
+        'filter[completed_at][nin]'?: string;
+        /**
+         * `created_at` eq the value.
+         */
+        'filter[created_at][eq]'?: string;
+        /**
+         * `created_at` gt the value.
+         */
+        'filter[created_at][gt]'?: string;
+        /**
+         * `created_at` gte the value.
+         */
+        'filter[created_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `created_at`.
+         */
+        'filter[created_at][in]'?: string;
+        /**
+         * `created_at` lt the value.
+         */
+        'filter[created_at][lt]'?: string;
+        /**
+         * `created_at` lte the value.
+         */
+        'filter[created_at][lte]'?: string;
+        /**
+         * `created_at` neq the value.
+         */
+        'filter[created_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `created_at`.
+         */
+        'filter[created_at][nin]'?: string;
+        /**
+         * `endpoint_id` eq the value.
+         */
+        'filter[endpoint_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `endpoint_id`.
+         */
+        'filter[endpoint_id][in]'?: string;
+        /**
+         * `endpoint_id` neq the value.
+         */
+        'filter[endpoint_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `endpoint_id`.
+         */
+        'filter[endpoint_id][nin]'?: string;
+        /**
+         * `event_id` eq the value.
+         */
+        'filter[event_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `event_id`.
+         */
+        'filter[event_id][in]'?: string;
+        /**
+         * `event_id` neq the value.
+         */
+        'filter[event_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `event_id`.
+         */
+        'filter[event_id][nin]'?: string;
+        /**
+         * `event_type` eq the value.
+         */
+        'filter[event_type][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `event_type`.
+         */
+        'filter[event_type][in]'?: string;
+        /**
+         * `event_type` neq the value.
+         */
+        'filter[event_type][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `event_type`.
+         */
+        'filter[event_type][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `event_type`.
+         */
+        'filter[event_type][starts_with]'?: string;
+        /**
+         * `id` eq the value.
+         */
+        'filter[id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `id`.
+         */
+        'filter[id][in]'?: string;
+        /**
+         * `id` neq the value.
+         */
+        'filter[id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `id`.
+         */
+        'filter[id][nin]'?: string;
+        /**
+         * `last_error` eq the value.
+         */
+        'filter[last_error][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `last_error`.
+         */
+        'filter[last_error][in]'?: string;
+        /**
+         * `true` for rows where `last_error` is null, `false` for rows where it is set.
+         */
+        'filter[last_error][is_null]'?: boolean;
+        /**
+         * `last_error` neq the value.
+         */
+        'filter[last_error][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `last_error`.
+         */
+        'filter[last_error][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `last_error`.
+         */
+        'filter[last_error][starts_with]'?: string;
+        /**
+         * `last_status_code` eq the value.
+         */
+        'filter[last_status_code][eq]'?: number;
+        /**
+         * `last_status_code` gt the value.
+         */
+        'filter[last_status_code][gt]'?: number;
+        /**
+         * `last_status_code` gte the value.
+         */
+        'filter[last_status_code][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `last_status_code`.
+         */
+        'filter[last_status_code][in]'?: string;
+        /**
+         * `true` for rows where `last_status_code` is null, `false` for rows where it is set.
+         */
+        'filter[last_status_code][is_null]'?: boolean;
+        /**
+         * `last_status_code` lt the value.
+         */
+        'filter[last_status_code][lt]'?: number;
+        /**
+         * `last_status_code` lte the value.
+         */
+        'filter[last_status_code][lte]'?: number;
+        /**
+         * `last_status_code` neq the value.
+         */
+        'filter[last_status_code][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `last_status_code`.
+         */
+        'filter[last_status_code][nin]'?: string;
+        /**
+         * `next_attempt_at` eq the value.
+         */
+        'filter[next_attempt_at][eq]'?: string;
+        /**
+         * `next_attempt_at` gt the value.
+         */
+        'filter[next_attempt_at][gt]'?: string;
+        /**
+         * `next_attempt_at` gte the value.
+         */
+        'filter[next_attempt_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `next_attempt_at`.
+         */
+        'filter[next_attempt_at][in]'?: string;
+        /**
+         * `next_attempt_at` lt the value.
+         */
+        'filter[next_attempt_at][lt]'?: string;
+        /**
+         * `next_attempt_at` lte the value.
+         */
+        'filter[next_attempt_at][lte]'?: string;
+        /**
+         * `next_attempt_at` neq the value.
+         */
+        'filter[next_attempt_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `next_attempt_at`.
+         */
+        'filter[next_attempt_at][nin]'?: string;
+        /**
+         * `resend_of` eq the value.
+         */
+        'filter[resend_of][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `resend_of`.
+         */
+        'filter[resend_of][in]'?: string;
+        /**
+         * `true` for rows where `resend_of` is null, `false` for rows where it is set.
+         */
+        'filter[resend_of][is_null]'?: boolean;
+        /**
+         * `resend_of` neq the value.
+         */
+        'filter[resend_of][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `resend_of`.
+         */
+        'filter[resend_of][nin]'?: string;
+        /**
+         * `status` eq the value.
+         */
+        'filter[status][eq]'?: 'DEAD' | 'IN_PROGRESS' | 'PENDING' | 'SUCCEEDED';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `status`.
+         */
+        'filter[status][in]'?: string;
+        /**
+         * `status` neq the value.
+         */
+        'filter[status][neq]'?: 'DEAD' | 'IN_PROGRESS' | 'PENDING' | 'SUCCEEDED';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `status`.
+         */
+        'filter[status][nin]'?: string;
+        /**
+         * Comma-separated sortable fields, each optionally prefixed with `-` for descending: created_at, id. At most 4 fields; `id` is appended to make the order total. Default: `-created_at,id`.
+         */
+        sort?: string;
+        /**
+         * Page size, 1 to 200.
+         */
+        limit?: number;
+        /**
+         * Rows to skip, at most 10000. Not combinable with `cursor`.
+         */
+        offset?: number;
+        /**
+         * The `next_cursor` of the previous page. Valid only with the same filter and sort.
+         */
+        cursor?: string;
+        /**
+         * `full` fills `page` with the limit, offset, total and next cursor; `cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; omit it for the rows alone.
+         */
+        page_info?: 'full' | 'cursor';
+    };
+    url: '/system/v1/webhook-deliveries';
+};
+
+export type ListDeliveriesAsTenantSystemErrors = {
+    /**
+     * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type ListDeliveriesAsTenantSystemError = ListDeliveriesAsTenantSystemErrors[keyof ListDeliveriesAsTenantSystemErrors];
+
+export type ListDeliveriesAsTenantSystemResponses = {
+    /**
+     * A page of delivery response rows, with the paging facts when the request asked for them.
+     */
+    200: PageDeliveryResponse;
+};
+
+export type ListDeliveriesAsTenantSystemResponse = ListDeliveriesAsTenantSystemResponses[keyof ListDeliveriesAsTenantSystemResponses];
+
+export type GetDeliveryAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the webhook delivery.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/webhook-deliveries/{id}';
+};
+
+export type GetDeliveryAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type GetDeliveryAsTenantSystemError = GetDeliveryAsTenantSystemErrors[keyof GetDeliveryAsTenantSystemErrors];
+
+export type GetDeliveryAsTenantSystemResponses = {
+    /**
+     * A delivery with the body that was sent and every attempt.
+     */
+    200: DeliveryDetailResponse;
+};
+
+export type GetDeliveryAsTenantSystemResponse = GetDeliveryAsTenantSystemResponses[keyof GetDeliveryAsTenantSystemResponses];
+
+export type WalletAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the wallet.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/wallets/{id}';
+};
+
+export type WalletAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type WalletAsTenantSystemError = WalletAsTenantSystemErrors[keyof WalletAsTenantSystemErrors];
+
+export type WalletAsTenantSystemResponses = {
+    /**
+     * A customer's wallet in one currency.
+     */
+    200: WalletResponse;
+};
+
+export type WalletAsTenantSystemResponse = WalletAsTenantSystemResponses[keyof WalletAsTenantSystemResponses];
+
+export type LedgerAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the wallet.
+         */
+        id: string;
+    };
+    query?: {
+        /**
+         * `actor` eq the value.
+         */
+        'filter[actor][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `actor`.
+         */
+        'filter[actor][in]'?: string;
+        /**
+         * `actor` neq the value.
+         */
+        'filter[actor][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `actor`.
+         */
+        'filter[actor][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `actor`.
+         */
+        'filter[actor][starts_with]'?: string;
+        /**
+         * `amount` eq the value.
+         */
+        'filter[amount][eq]'?: number;
+        /**
+         * `amount` gt the value.
+         */
+        'filter[amount][gt]'?: number;
+        /**
+         * `amount` gte the value.
+         */
+        'filter[amount][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `amount`.
+         */
+        'filter[amount][in]'?: string;
+        /**
+         * `amount` lt the value.
+         */
+        'filter[amount][lt]'?: number;
+        /**
+         * `amount` lte the value.
+         */
+        'filter[amount][lte]'?: number;
+        /**
+         * `amount` neq the value.
+         */
+        'filter[amount][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `amount`.
+         */
+        'filter[amount][nin]'?: string;
+        /**
+         * `charge_id` eq the value.
+         */
+        'filter[charge_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `charge_id`.
+         */
+        'filter[charge_id][in]'?: string;
+        /**
+         * `true` for rows where `charge_id` is null, `false` for rows where it is set.
+         */
+        'filter[charge_id][is_null]'?: boolean;
+        /**
+         * `charge_id` neq the value.
+         */
+        'filter[charge_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `charge_id`.
+         */
+        'filter[charge_id][nin]'?: string;
+        /**
+         * `created_at` eq the value.
+         */
+        'filter[created_at][eq]'?: string;
+        /**
+         * `created_at` gt the value.
+         */
+        'filter[created_at][gt]'?: string;
+        /**
+         * `created_at` gte the value.
+         */
+        'filter[created_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `created_at`.
+         */
+        'filter[created_at][in]'?: string;
+        /**
+         * `created_at` lt the value.
+         */
+        'filter[created_at][lt]'?: string;
+        /**
+         * `created_at` lte the value.
+         */
+        'filter[created_at][lte]'?: string;
+        /**
+         * `created_at` neq the value.
+         */
+        'filter[created_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `created_at`.
+         */
+        'filter[created_at][nin]'?: string;
+        /**
+         * `id` eq the value.
+         */
+        'filter[id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `id`.
+         */
+        'filter[id][in]'?: string;
+        /**
+         * `id` neq the value.
+         */
+        'filter[id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `id`.
+         */
+        'filter[id][nin]'?: string;
+        /**
+         * `reason` eq the value.
+         */
+        'filter[reason][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `reason`.
+         */
+        'filter[reason][in]'?: string;
+        /**
+         * `true` for rows where `reason` is null, `false` for rows where it is set.
+         */
+        'filter[reason][is_null]'?: boolean;
+        /**
+         * `reason` neq the value.
+         */
+        'filter[reason][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `reason`.
+         */
+        'filter[reason][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `reason`.
+         */
+        'filter[reason][starts_with]'?: string;
+        /**
+         * `reference` eq the value.
+         */
+        'filter[reference][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `reference`.
+         */
+        'filter[reference][in]'?: string;
+        /**
+         * `reference` neq the value.
+         */
+        'filter[reference][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `reference`.
+         */
+        'filter[reference][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `reference`.
+         */
+        'filter[reference][starts_with]'?: string;
+        /**
+         * `reservation_id` eq the value.
+         */
+        'filter[reservation_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `reservation_id`.
+         */
+        'filter[reservation_id][in]'?: string;
+        /**
+         * `true` for rows where `reservation_id` is null, `false` for rows where it is set.
+         */
+        'filter[reservation_id][is_null]'?: boolean;
+        /**
+         * `reservation_id` neq the value.
+         */
+        'filter[reservation_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `reservation_id`.
+         */
+        'filter[reservation_id][nin]'?: string;
+        /**
+         * `reversal_of` eq the value.
+         */
+        'filter[reversal_of][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `reversal_of`.
+         */
+        'filter[reversal_of][in]'?: string;
+        /**
+         * `true` for rows where `reversal_of` is null, `false` for rows where it is set.
+         */
+        'filter[reversal_of][is_null]'?: boolean;
+        /**
+         * `reversal_of` neq the value.
+         */
+        'filter[reversal_of][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `reversal_of`.
+         */
+        'filter[reversal_of][nin]'?: string;
+        /**
+         * `seq` eq the value.
+         */
+        'filter[seq][eq]'?: number;
+        /**
+         * `seq` gt the value.
+         */
+        'filter[seq][gt]'?: number;
+        /**
+         * `seq` gte the value.
+         */
+        'filter[seq][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `seq`.
+         */
+        'filter[seq][in]'?: string;
+        /**
+         * `seq` lt the value.
+         */
+        'filter[seq][lt]'?: number;
+        /**
+         * `seq` lte the value.
+         */
+        'filter[seq][lte]'?: number;
+        /**
+         * `seq` neq the value.
+         */
+        'filter[seq][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `seq`.
+         */
+        'filter[seq][nin]'?: string;
+        /**
+         * `type` eq the value.
+         */
+        'filter[type][eq]'?: 'CREDIT' | 'DEBIT' | 'REVERSAL';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `type`.
+         */
+        'filter[type][in]'?: string;
+        /**
+         * `type` neq the value.
+         */
+        'filter[type][neq]'?: 'CREDIT' | 'DEBIT' | 'REVERSAL';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `type`.
+         */
+        'filter[type][nin]'?: string;
+        /**
+         * Comma-separated sortable fields, each optionally prefixed with `-` for descending: created_at, seq. At most 4 fields; `seq` is appended to make the order total. Default: `seq`.
+         */
+        sort?: string;
+        /**
+         * Page size, 1 to 200.
+         */
+        limit?: number;
+        /**
+         * Rows to skip, at most 10000. Not combinable with `cursor`.
+         */
+        offset?: number;
+        /**
+         * The `next_cursor` of the previous page. Valid only with the same filter and sort.
+         */
+        cursor?: string;
+        /**
+         * `full` fills `page` with the limit, offset, total and next cursor; `cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; omit it for the rows alone.
+         */
+        page_info?: 'full' | 'cursor';
+    };
+    url: '/system/v1/wallets/{id}/ledger';
+};
+
+export type LedgerAsTenantSystemErrors = {
+    /**
+     * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type LedgerAsTenantSystemError = LedgerAsTenantSystemErrors[keyof LedgerAsTenantSystemErrors];
+
+export type LedgerAsTenantSystemResponses = {
+    /**
+     * A page of ledger entry response rows, with the paging facts when the request asked for them.
+     */
+    200: PageLedgerEntryResponse;
+};
+
+export type LedgerAsTenantSystemResponse = LedgerAsTenantSystemResponses[keyof LedgerAsTenantSystemResponses];
+
+export type AggregatesAsTenantSystemData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * The id of the customer.
+         */
+        customerId: string;
+        /**
+         * Only this metric. Repeat the parameter for several.
+         */
+        metric?: Array<string>;
+        /**
+         * The start of the period, inclusive.
+         */
+        from: string;
+        /**
+         * The end of the period, exclusive.
+         */
+        to: string;
+    };
+    url: '/system/v1/usage-aggregates';
+};
+
+export type AggregatesAsTenantSystemErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type AggregatesAsTenantSystemError = AggregatesAsTenantSystemErrors[keyof AggregatesAsTenantSystemErrors];
+
+export type AggregatesAsTenantSystemResponses = {
+    /**
+     * OK
+     */
+    200: Array<TotalResponse>;
+};
+
+export type AggregatesAsTenantSystemResponse = AggregatesAsTenantSystemResponses[keyof AggregatesAsTenantSystemResponses];
+
+export type SubscriptionAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the subscription.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/subscriptions/{id}';
+};
+
+export type SubscriptionAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type SubscriptionAsTenantSystemError = SubscriptionAsTenantSystemErrors[keyof SubscriptionAsTenantSystemErrors];
+
+export type SubscriptionAsTenantSystemResponses = {
+    /**
+     * A subscription with its history.
+     */
+    200: SubscriptionDetailResponse;
+};
+
+export type SubscriptionAsTenantSystemResponse = SubscriptionAsTenantSystemResponses[keyof SubscriptionAsTenantSystemResponses];
+
+export type ReservationAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the reservation.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/reservations/{id}';
+};
+
+export type ReservationAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type ReservationAsTenantSystemError = ReservationAsTenantSystemErrors[keyof ReservationAsTenantSystemErrors];
+
+export type ReservationAsTenantSystemResponses = {
+    /**
+     * A hold on part of a wallet's balance.
+     */
+    200: ReservationResponse;
+};
+
+export type ReservationAsTenantSystemResponse = ReservationAsTenantSystemResponses[keyof ReservationAsTenantSystemResponses];
+
+export type RefundsAsTenantSystemData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `amount` eq the value.
+         */
+        'filter[amount][eq]'?: number;
+        /**
+         * `amount` gt the value.
+         */
+        'filter[amount][gt]'?: number;
+        /**
+         * `amount` gte the value.
+         */
+        'filter[amount][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `amount`.
+         */
+        'filter[amount][in]'?: string;
+        /**
+         * `amount` lt the value.
+         */
+        'filter[amount][lt]'?: number;
+        /**
+         * `amount` lte the value.
+         */
+        'filter[amount][lte]'?: number;
+        /**
+         * `amount` neq the value.
+         */
+        'filter[amount][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `amount`.
+         */
+        'filter[amount][nin]'?: string;
+        /**
+         * `completed_at` eq the value.
+         */
+        'filter[completed_at][eq]'?: string;
+        /**
+         * `completed_at` gt the value.
+         */
+        'filter[completed_at][gt]'?: string;
+        /**
+         * `completed_at` gte the value.
+         */
+        'filter[completed_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `completed_at`.
+         */
+        'filter[completed_at][in]'?: string;
+        /**
+         * `true` for rows where `completed_at` is null, `false` for rows where it is set.
+         */
+        'filter[completed_at][is_null]'?: boolean;
+        /**
+         * `completed_at` lt the value.
+         */
+        'filter[completed_at][lt]'?: string;
+        /**
+         * `completed_at` lte the value.
+         */
+        'filter[completed_at][lte]'?: string;
+        /**
+         * `completed_at` neq the value.
+         */
+        'filter[completed_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `completed_at`.
+         */
+        'filter[completed_at][nin]'?: string;
+        /**
+         * `created_at` eq the value.
+         */
+        'filter[created_at][eq]'?: string;
+        /**
+         * `created_at` gt the value.
+         */
+        'filter[created_at][gt]'?: string;
+        /**
+         * `created_at` gte the value.
+         */
+        'filter[created_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `created_at`.
+         */
+        'filter[created_at][in]'?: string;
+        /**
+         * `created_at` lt the value.
+         */
+        'filter[created_at][lt]'?: string;
+        /**
+         * `created_at` lte the value.
+         */
+        'filter[created_at][lte]'?: string;
+        /**
+         * `created_at` neq the value.
+         */
+        'filter[created_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `created_at`.
+         */
+        'filter[created_at][nin]'?: string;
+        /**
+         * `currency` eq the value.
+         */
+        'filter[currency][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `currency`.
+         */
+        'filter[currency][in]'?: string;
+        /**
+         * `currency` neq the value.
+         */
+        'filter[currency][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `currency`.
+         */
+        'filter[currency][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `currency`.
+         */
+        'filter[currency][starts_with]'?: string;
+        /**
+         * `id` eq the value.
+         */
+        'filter[id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `id`.
+         */
+        'filter[id][in]'?: string;
+        /**
+         * `id` neq the value.
+         */
+        'filter[id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `id`.
+         */
+        'filter[id][nin]'?: string;
+        /**
+         * `payment.customer_id` eq the value.
+         */
+        'filter[payment.customer_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `payment.customer_id`.
+         */
+        'filter[payment.customer_id][in]'?: string;
+        /**
+         * `payment.customer_id` neq the value.
+         */
+        'filter[payment.customer_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `payment.customer_id`.
+         */
+        'filter[payment.customer_id][nin]'?: string;
+        /**
+         * `payment_id` eq the value.
+         */
+        'filter[payment_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `payment_id`.
+         */
+        'filter[payment_id][in]'?: string;
+        /**
+         * `payment_id` neq the value.
+         */
+        'filter[payment_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `payment_id`.
+         */
+        'filter[payment_id][nin]'?: string;
+        /**
+         * `reason` eq the value.
+         */
+        'filter[reason][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `reason`.
+         */
+        'filter[reason][in]'?: string;
+        /**
+         * `true` for rows where `reason` is null, `false` for rows where it is set.
+         */
+        'filter[reason][is_null]'?: boolean;
+        /**
+         * `reason` neq the value.
+         */
+        'filter[reason][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `reason`.
+         */
+        'filter[reason][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `reason`.
+         */
+        'filter[reason][starts_with]'?: string;
+        /**
+         * `status` eq the value.
+         */
+        'filter[status][eq]'?: 'FAILED' | 'PENDING' | 'SUCCEEDED';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `status`.
+         */
+        'filter[status][in]'?: string;
+        /**
+         * `status` neq the value.
+         */
+        'filter[status][neq]'?: 'FAILED' | 'PENDING' | 'SUCCEEDED';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `status`.
+         */
+        'filter[status][nin]'?: string;
+        /**
+         * Comma-separated sortable fields, each optionally prefixed with `-` for descending: amount, created_at, id. At most 4 fields; `id` is appended to make the order total. Default: `-created_at,id`.
+         */
+        sort?: string;
+        /**
+         * Page size, 1 to 200.
+         */
+        limit?: number;
+        /**
+         * Rows to skip, at most 10000. Not combinable with `cursor`.
+         */
+        offset?: number;
+        /**
+         * The `next_cursor` of the previous page. Valid only with the same filter and sort.
+         */
+        cursor?: string;
+        /**
+         * `full` fills `page` with the limit, offset, total and next cursor; `cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; omit it for the rows alone.
+         */
+        page_info?: 'full' | 'cursor';
+    };
+    url: '/system/v1/refunds';
+};
+
+export type RefundsAsTenantSystemErrors = {
+    /**
+     * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type RefundsAsTenantSystemError = RefundsAsTenantSystemErrors[keyof RefundsAsTenantSystemErrors];
+
+export type RefundsAsTenantSystemResponses = {
+    /**
+     * A page of refund response rows, with the paging facts when the request asked for them.
+     */
+    200: PageRefundResponse;
+};
+
+export type RefundsAsTenantSystemResponse = RefundsAsTenantSystemResponses[keyof RefundsAsTenantSystemResponses];
+
+export type GetRefundAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the refund.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/refunds/{id}';
+};
+
+export type GetRefundAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type GetRefundAsTenantSystemError = GetRefundAsTenantSystemErrors[keyof GetRefundAsTenantSystemErrors];
+
+export type GetRefundAsTenantSystemResponses = {
+    /**
+     * A refund of a payment.
+     */
+    200: RefundResponse;
+};
+
+export type GetRefundAsTenantSystemResponse = GetRefundAsTenantSystemResponses[keyof GetRefundAsTenantSystemResponses];
+
+export type GetRatingAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the usage charge.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/pricing/usage-charges/{id}';
+};
+
+export type GetRatingAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type GetRatingAsTenantSystemError = GetRatingAsTenantSystemErrors[keyof GetRatingAsTenantSystemErrors];
+
+export type GetRatingAsTenantSystemResponses = {
+    /**
+     * The result of rating a period's usage.
+     */
+    200: RatingResponse;
+};
+
+export type GetRatingAsTenantSystemResponse = GetRatingAsTenantSystemResponses[keyof GetRatingAsTenantSystemResponses];
+
+export type ListPlansAsTenantSystemData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `code` eq the value.
+         */
+        'filter[code][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `code`.
+         */
+        'filter[code][in]'?: string;
+        /**
+         * `code` neq the value.
+         */
+        'filter[code][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `code`.
+         */
+        'filter[code][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `code`.
+         */
+        'filter[code][starts_with]'?: string;
+        /**
+         * `created_at` eq the value.
+         */
+        'filter[created_at][eq]'?: string;
+        /**
+         * `created_at` gt the value.
+         */
+        'filter[created_at][gt]'?: string;
+        /**
+         * `created_at` gte the value.
+         */
+        'filter[created_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `created_at`.
+         */
+        'filter[created_at][in]'?: string;
+        /**
+         * `created_at` lt the value.
+         */
+        'filter[created_at][lt]'?: string;
+        /**
+         * `created_at` lte the value.
+         */
+        'filter[created_at][lte]'?: string;
+        /**
+         * `created_at` neq the value.
+         */
+        'filter[created_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `created_at`.
+         */
+        'filter[created_at][nin]'?: string;
+        /**
+         * `currency` eq the value.
+         */
+        'filter[currency][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `currency`.
+         */
+        'filter[currency][in]'?: string;
+        /**
+         * `currency` neq the value.
+         */
+        'filter[currency][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `currency`.
+         */
+        'filter[currency][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `currency`.
+         */
+        'filter[currency][starts_with]'?: string;
+        /**
+         * `id` eq the value.
+         */
+        'filter[id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `id`.
+         */
+        'filter[id][in]'?: string;
+        /**
+         * `id` neq the value.
+         */
+        'filter[id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `id`.
+         */
+        'filter[id][nin]'?: string;
+        /**
+         * `model` eq the value.
+         */
+        'filter[model][eq]'?: 'EVENT_BASED' | 'HYBRID' | 'SUBSCRIPTION' | 'TIME_BASED' | 'USAGE_BASED' | 'WORKLOAD_BASED';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `model`.
+         */
+        'filter[model][in]'?: string;
+        /**
+         * `model` neq the value.
+         */
+        'filter[model][neq]'?: 'EVENT_BASED' | 'HYBRID' | 'SUBSCRIPTION' | 'TIME_BASED' | 'USAGE_BASED' | 'WORKLOAD_BASED';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `model`.
+         */
+        'filter[model][nin]'?: string;
+        /**
+         * `name` eq the value.
+         */
+        'filter[name][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `name`.
+         */
+        'filter[name][in]'?: string;
+        /**
+         * `name` neq the value.
+         */
+        'filter[name][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `name`.
+         */
+        'filter[name][nin]'?: string;
+        /**
+         * Case-insensitive prefix match on `name`.
+         */
+        'filter[name][starts_with]'?: string;
+        /**
+         * `retired_at` eq the value.
+         */
+        'filter[retired_at][eq]'?: string;
+        /**
+         * `retired_at` gt the value.
+         */
+        'filter[retired_at][gt]'?: string;
+        /**
+         * `retired_at` gte the value.
+         */
+        'filter[retired_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `retired_at`.
+         */
+        'filter[retired_at][in]'?: string;
+        /**
+         * `true` for rows where `retired_at` is null, `false` for rows where it is set.
+         */
+        'filter[retired_at][is_null]'?: boolean;
+        /**
+         * `retired_at` lt the value.
+         */
+        'filter[retired_at][lt]'?: string;
+        /**
+         * `retired_at` lte the value.
+         */
+        'filter[retired_at][lte]'?: string;
+        /**
+         * `retired_at` neq the value.
+         */
+        'filter[retired_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `retired_at`.
+         */
+        'filter[retired_at][nin]'?: string;
+        /**
+         * `status` eq the value.
+         */
+        'filter[status][eq]'?: 'ACTIVE' | 'RETIRED';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `status`.
+         */
+        'filter[status][in]'?: string;
+        /**
+         * `status` neq the value.
+         */
+        'filter[status][neq]'?: 'ACTIVE' | 'RETIRED';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `status`.
+         */
+        'filter[status][nin]'?: string;
+        /**
+         * Comma-separated sortable fields, each optionally prefixed with `-` for descending: code, created_at, id, name. At most 4 fields; `id` is appended to make the order total. Default: `-created_at,id`.
+         */
+        sort?: string;
+        /**
+         * Page size, 1 to 200.
+         */
+        limit?: number;
+        /**
+         * Rows to skip, at most 10000. Not combinable with `cursor`.
+         */
+        offset?: number;
+        /**
+         * The `next_cursor` of the previous page. Valid only with the same filter and sort.
+         */
+        cursor?: string;
+        /**
+         * `full` fills `page` with the limit, offset, total and next cursor; `cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; omit it for the rows alone.
+         */
+        page_info?: 'full' | 'cursor';
+    };
+    url: '/system/v1/pricing-plans';
+};
+
+export type ListPlansAsTenantSystemErrors = {
+    /**
+     * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type ListPlansAsTenantSystemError = ListPlansAsTenantSystemErrors[keyof ListPlansAsTenantSystemErrors];
+
+export type ListPlansAsTenantSystemResponses = {
+    /**
+     * A page of plan response rows, with the paging facts when the request asked for them.
+     */
+    200: PagePlanResponse;
+};
+
+export type ListPlansAsTenantSystemResponse = ListPlansAsTenantSystemResponses[keyof ListPlansAsTenantSystemResponses];
+
+export type GetPlanAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the pricing plan.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/pricing-plans/{id}';
+};
+
+export type GetPlanAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type GetPlanAsTenantSystemError = GetPlanAsTenantSystemErrors[keyof GetPlanAsTenantSystemErrors];
+
+export type GetPlanAsTenantSystemResponses = {
+    /**
+     * A pricing plan and its versions.
+     */
+    200: PlanResponse;
+};
+
+export type GetPlanAsTenantSystemResponse = GetPlanAsTenantSystemResponses[keyof GetPlanAsTenantSystemResponses];
+
+export type PaymentsAsTenantSystemData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * `amount` eq the value.
+         */
+        'filter[amount][eq]'?: number;
+        /**
+         * `amount` gt the value.
+         */
+        'filter[amount][gt]'?: number;
+        /**
+         * `amount` gte the value.
+         */
+        'filter[amount][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `amount`.
+         */
+        'filter[amount][in]'?: string;
+        /**
+         * `amount` lt the value.
+         */
+        'filter[amount][lt]'?: number;
+        /**
+         * `amount` lte the value.
+         */
+        'filter[amount][lte]'?: number;
+        /**
+         * `amount` neq the value.
+         */
+        'filter[amount][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `amount`.
+         */
+        'filter[amount][nin]'?: string;
+        /**
+         * `completed_at` eq the value.
+         */
+        'filter[completed_at][eq]'?: string;
+        /**
+         * `completed_at` gt the value.
+         */
+        'filter[completed_at][gt]'?: string;
+        /**
+         * `completed_at` gte the value.
+         */
+        'filter[completed_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `completed_at`.
+         */
+        'filter[completed_at][in]'?: string;
+        /**
+         * `true` for rows where `completed_at` is null, `false` for rows where it is set.
+         */
+        'filter[completed_at][is_null]'?: boolean;
+        /**
+         * `completed_at` lt the value.
+         */
+        'filter[completed_at][lt]'?: string;
+        /**
+         * `completed_at` lte the value.
+         */
+        'filter[completed_at][lte]'?: string;
+        /**
+         * `completed_at` neq the value.
+         */
+        'filter[completed_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `completed_at`.
+         */
+        'filter[completed_at][nin]'?: string;
+        /**
+         * `created_at` eq the value.
+         */
+        'filter[created_at][eq]'?: string;
+        /**
+         * `created_at` gt the value.
+         */
+        'filter[created_at][gt]'?: string;
+        /**
+         * `created_at` gte the value.
+         */
+        'filter[created_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `created_at`.
+         */
+        'filter[created_at][in]'?: string;
+        /**
+         * `created_at` lt the value.
+         */
+        'filter[created_at][lt]'?: string;
+        /**
+         * `created_at` lte the value.
+         */
+        'filter[created_at][lte]'?: string;
+        /**
+         * `created_at` neq the value.
+         */
+        'filter[created_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `created_at`.
+         */
+        'filter[created_at][nin]'?: string;
+        /**
+         * `currency` eq the value.
+         */
+        'filter[currency][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `currency`.
+         */
+        'filter[currency][in]'?: string;
+        /**
+         * `currency` neq the value.
+         */
+        'filter[currency][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `currency`.
+         */
+        'filter[currency][nin]'?: string;
+        /**
+         * `customer_id` eq the value.
+         */
+        'filter[customer_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `customer_id`.
+         */
+        'filter[customer_id][in]'?: string;
+        /**
+         * `customer_id` neq the value.
+         */
+        'filter[customer_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `customer_id`.
+         */
+        'filter[customer_id][nin]'?: string;
+        /**
+         * `id` eq the value.
+         */
+        'filter[id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `id`.
+         */
+        'filter[id][in]'?: string;
+        /**
+         * `id` neq the value.
+         */
+        'filter[id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `id`.
+         */
+        'filter[id][nin]'?: string;
+        /**
+         * `invoice_id` eq the value.
+         */
+        'filter[invoice_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `invoice_id`.
+         */
+        'filter[invoice_id][in]'?: string;
+        /**
+         * `true` for rows where `invoice_id` is null, `false` for rows where it is set.
+         */
+        'filter[invoice_id][is_null]'?: boolean;
+        /**
+         * `invoice_id` neq the value.
+         */
+        'filter[invoice_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `invoice_id`.
+         */
+        'filter[invoice_id][nin]'?: string;
+        /**
+         * `ledger_entry_id` eq the value.
+         */
+        'filter[ledger_entry_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `ledger_entry_id`.
+         */
+        'filter[ledger_entry_id][in]'?: string;
+        /**
+         * `true` for rows where `ledger_entry_id` is null, `false` for rows where it is set.
+         */
+        'filter[ledger_entry_id][is_null]'?: boolean;
+        /**
+         * `ledger_entry_id` neq the value.
+         */
+        'filter[ledger_entry_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `ledger_entry_id`.
+         */
+        'filter[ledger_entry_id][nin]'?: string;
+        /**
+         * `refunded_amount` eq the value.
+         */
+        'filter[refunded_amount][eq]'?: number;
+        /**
+         * `refunded_amount` gt the value.
+         */
+        'filter[refunded_amount][gt]'?: number;
+        /**
+         * `refunded_amount` gte the value.
+         */
+        'filter[refunded_amount][gte]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `refunded_amount`.
+         */
+        'filter[refunded_amount][in]'?: string;
+        /**
+         * `refunded_amount` lt the value.
+         */
+        'filter[refunded_amount][lt]'?: number;
+        /**
+         * `refunded_amount` lte the value.
+         */
+        'filter[refunded_amount][lte]'?: number;
+        /**
+         * `refunded_amount` neq the value.
+         */
+        'filter[refunded_amount][neq]'?: number;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `refunded_amount`.
+         */
+        'filter[refunded_amount][nin]'?: string;
+        /**
+         * `status` eq the value.
+         */
+        'filter[status][eq]'?: 'CANCELED' | 'FAILED' | 'PROCESSING' | 'REQUIRES_ACTION' | 'SUCCEEDED';
+        /**
+         * Comma-separated list of up to 100 values; `in` of `status`.
+         */
+        'filter[status][in]'?: string;
+        /**
+         * `status` neq the value.
+         */
+        'filter[status][neq]'?: 'CANCELED' | 'FAILED' | 'PROCESSING' | 'REQUIRES_ACTION' | 'SUCCEEDED';
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `status`.
+         */
+        'filter[status][nin]'?: string;
+        /**
+         * `updated_at` eq the value.
+         */
+        'filter[updated_at][eq]'?: string;
+        /**
+         * `updated_at` gt the value.
+         */
+        'filter[updated_at][gt]'?: string;
+        /**
+         * `updated_at` gte the value.
+         */
+        'filter[updated_at][gte]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `updated_at`.
+         */
+        'filter[updated_at][in]'?: string;
+        /**
+         * `updated_at` lt the value.
+         */
+        'filter[updated_at][lt]'?: string;
+        /**
+         * `updated_at` lte the value.
+         */
+        'filter[updated_at][lte]'?: string;
+        /**
+         * `updated_at` neq the value.
+         */
+        'filter[updated_at][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `updated_at`.
+         */
+        'filter[updated_at][nin]'?: string;
+        /**
+         * `wallet_id` eq the value.
+         */
+        'filter[wallet_id][eq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `in` of `wallet_id`.
+         */
+        'filter[wallet_id][in]'?: string;
+        /**
+         * `wallet_id` neq the value.
+         */
+        'filter[wallet_id][neq]'?: string;
+        /**
+         * Comma-separated list of up to 100 values; `nin` of `wallet_id`.
+         */
+        'filter[wallet_id][nin]'?: string;
+        /**
+         * Comma-separated sortable fields, each optionally prefixed with `-` for descending: amount, created_at, id. At most 4 fields; `id` is appended to make the order total. Default: `-id`.
+         */
+        sort?: string;
+        /**
+         * Page size, 1 to 200.
+         */
+        limit?: number;
+        /**
+         * Rows to skip, at most 10000. Not combinable with `cursor`.
+         */
+        offset?: number;
+        /**
+         * The `next_cursor` of the previous page. Valid only with the same filter and sort.
+         */
+        cursor?: string;
+        /**
+         * `full` fills `page` with the limit, offset, total and next cursor; `cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; omit it for the rows alone.
+         */
+        page_info?: 'full' | 'cursor';
+    };
+    url: '/system/v1/payments';
+};
+
+export type PaymentsAsTenantSystemErrors = {
+    /**
+     * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type PaymentsAsTenantSystemError = PaymentsAsTenantSystemErrors[keyof PaymentsAsTenantSystemErrors];
+
+export type PaymentsAsTenantSystemResponses = {
+    /**
+     * A page of payment response rows, with the paging facts when the request asked for them.
+     */
+    200: PagePaymentResponse;
+};
+
+export type PaymentsAsTenantSystemResponse = PaymentsAsTenantSystemResponses[keyof PaymentsAsTenantSystemResponses];
+
+export type PaymentAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the payment.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/payments/{id}';
+};
+
+export type PaymentAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type PaymentAsTenantSystemError = PaymentAsTenantSystemErrors[keyof PaymentAsTenantSystemErrors];
+
+export type PaymentAsTenantSystemResponses = {
+    /**
+     * A payment with its refunds and failed attempts.
+     */
+    200: PaymentDetailResponse;
+};
+
+export type PaymentAsTenantSystemResponse = PaymentAsTenantSystemResponses[keyof PaymentAsTenantSystemResponses];
+
+export type InvoiceAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the invoice.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/invoices/{id}';
+};
+
+export type InvoiceAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type InvoiceAsTenantSystemError = InvoiceAsTenantSystemErrors[keyof InvoiceAsTenantSystemErrors];
+
+export type InvoiceAsTenantSystemResponses = {
+    /**
+     * An invoice with its items and payments.
+     */
+    200: InvoiceDetailResponse;
+};
+
+export type InvoiceAsTenantSystemResponse = InvoiceAsTenantSystemResponses[keyof InvoiceAsTenantSystemResponses];
+
+export type ByExternalUserAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The Tenant System's own id of the user the customer is mapped to.
+         */
+        externalUserId: string;
+    };
+    query?: {
+        /**
+         * The id of the tenant system the user belongs to. A Tenant System caller omits it.
+         */
+        tenantSystemId?: string;
+    };
+    url: '/system/v1/customers/by-external-user/{externalUserId}';
+};
+
+export type ByExternalUserAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type ByExternalUserAsTenantSystemError = ByExternalUserAsTenantSystemErrors[keyof ByExternalUserAsTenantSystemErrors];
+
+export type ByExternalUserAsTenantSystemResponses = {
+    /**
+     * A billing customer.
+     */
+    200: CustomerResponse;
+};
+
+export type ByExternalUserAsTenantSystemResponse = ByExternalUserAsTenantSystemResponses[keyof ByExternalUserAsTenantSystemResponses];
+
+export type CouponAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the coupon.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/coupons/{id}';
+};
+
+export type CouponAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type CouponAsTenantSystemError = CouponAsTenantSystemErrors[keyof CouponAsTenantSystemErrors];
+
+export type CouponAsTenantSystemResponses = {
+    /**
+     * A coupon.
+     */
+    200: CouponResponse;
+};
+
+export type CouponAsTenantSystemResponse = CouponAsTenantSystemResponses[keyof CouponAsTenantSystemResponses];
+
+export type RedemptionAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the coupon redemption.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/coupon-redemptions/{id}';
+};
+
+export type RedemptionAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type RedemptionAsTenantSystemError = RedemptionAsTenantSystemErrors[keyof RedemptionAsTenantSystemErrors];
+
+export type RedemptionAsTenantSystemResponses = {
+    /**
+     * A coupon redeemed onto a wallet.
+     */
+    200: RedemptionResponse;
+};
+
+export type RedemptionAsTenantSystemResponse = RedemptionAsTenantSystemResponses[keyof RedemptionAsTenantSystemResponses];
+
+export type GetChargeAsTenantSystemData = {
+    body?: never;
+    path: {
+        /**
+         * The id of the charge.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/system/v1/charges/{id}';
+};
+
+export type GetChargeAsTenantSystemErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type GetChargeAsTenantSystemError = GetChargeAsTenantSystemErrors[keyof GetChargeAsTenantSystemErrors];
+
+export type GetChargeAsTenantSystemResponses = {
+    /**
+     * A charge made against a wallet.
+     */
+    200: ChargeResponse;
+};
+
+export type GetChargeAsTenantSystemResponse = GetChargeAsTenantSystemResponses[keyof GetChargeAsTenantSystemResponses];
 
 export type Wallets1Data = {
     body?: never;

@@ -140,6 +140,51 @@ paths:
       - "public"
 components:
   schemas:
+    UpdateCustomerRequest:
+      type: "object"
+      description: "The customer properties to store."
+      properties:
+        displayName:
+          type: "string"
+          description: "The name shown for the customer."
+        email:
+          type: "string"
+          description: "The customer's email address."
+    CustomerResponse:
+      type: "object"
+      description: "A billing customer."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        displayName:
+          type: "string"
+          description: "The name shown for the customer."
+        email:
+          type: "string"
+          description: "The customer's email address."
+        status:
+          type: "string"
+          description: "`ACTIVE` or `DEACTIVATED`."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        identities:
+          type: "array"
+          description: "The Tenant System users the customer is mapped to."
+          items:
+            $ref: "#/components/schemas/IdentityResponse"
+    IdentityResponse:
+      type: "object"
+      description: "A Tenant System user a customer is mapped to."
+      properties:
+        tenantSystemId:
+          type: "string"
+          description: "The tenant system."
+        externalUserId:
+          type: "string"
+          description: "The tenant system's own id of the user."
     WebhookSecretRequest:
       type: "object"
       description: "The webhook signing secret."
@@ -220,139 +265,6 @@ components:
             \ the stored list."
           items:
             type: "string"
-    UpdateCustomerRequest:
-      type: "object"
-      description: "The customer properties to store."
-      properties:
-        displayName:
-          type: "string"
-          description: "The name shown for the customer."
-        email:
-          type: "string"
-          description: "The customer's email address."
-    CustomerResponse:
-      type: "object"
-      description: "A billing customer."
-      properties:
-        id:
-          type: "string"
-          description: "The id."
-        displayName:
-          type: "string"
-          description: "The name shown for the customer."
-        email:
-          type: "string"
-          description: "The customer's email address."
-        status:
-          type: "string"
-          description: "`ACTIVE` or `DEACTIVATED`."
-        createdAt:
-          type: "string"
-          format: "date-time"
-          description: "When the record was created."
-        identities:
-          type: "array"
-          description: "The Tenant System users the customer is mapped to."
-          items:
-            $ref: "#/components/schemas/IdentityResponse"
-    IdentityResponse:
-      type: "object"
-      description: "A Tenant System user a customer is mapped to."
-      properties:
-        tenantSystemId:
-          type: "string"
-          description: "The tenant system."
-        externalUserId:
-          type: "string"
-          description: "The tenant system's own id of the user."
-    TopUpRequest:
-      type: "object"
-      description: "The top-up to start."
-      properties:
-        walletId:
-          type: "string"
-          description: "The wallet to top up."
-        amount:
-          type: "integer"
-          format: "int64"
-          description: "The amount to add, in minor units."
-        currency:
-          type: "string"
-          description: "The ISO 4217 currency code of the amounts."
-    MoneyDto:
-      type: "object"
-      description: "An amount of money."
-      properties:
-        amount:
-          type: "integer"
-          format: "int64"
-          description: "The amount in minor units of the currency."
-        currency:
-          type: "string"
-          description: "The ISO 4217 currency code."
-    TopUpResponse:
-      type: "object"
-      description: "A top-up that was started."
-      properties:
-        id:
-          type: "string"
-          description: "The id."
-        status:
-          type: "string"
-          description: "The payment's status."
-        amount:
-          $ref: "#/components/schemas/MoneyDto"
-          description: "The amount to be paid."
-        checkoutUrl:
-          type: "string"
-          description: "The Stripe-hosted page where the customer pays. Present only\
-            \ while the customer can still pay."
-    ExchangeRequest:
-      type: "object"
-      description: "The token to exchange."
-      properties:
-        token:
-          type: "string"
-          description: "The single-use token from the portal URL's fragment."
-    ExchangeResponse:
-      type: "object"
-      description: "The portal session the exchange opened."
-      properties:
-        session:
-          $ref: "#/components/schemas/SessionResponse"
-          description: "The session."
-        csrfToken:
-          type: "string"
-          description: "The CSRF token the portal sends back with writes."
-        returnUrl:
-          type: "string"
-          description: "Where the portal sends the customer back to."
-    SessionResponse:
-      type: "object"
-      description: "A portal session."
-      properties:
-        sessionId:
-          type: "string"
-          description: "The session's id."
-        customerId:
-          type: "string"
-          description: "The id of the customer."
-        permissions:
-          type: "array"
-          description: "What the session may do in the portal."
-          items:
-            type: "string"
-        expiresAt:
-          type: "string"
-          format: "date-time"
-          description: "When the session expires."
-    HostedPageResponse:
-      type: "object"
-      description: "A Stripe-hosted page."
-      properties:
-        url:
-          type: "string"
-          description: "The URL of the page to open."
     CreateEndpointRequest:
       type: "object"
       description: "The endpoint to register."
@@ -482,6 +394,17 @@ components:
           type: "integer"
           format: "int64"
           description: "For a postpaid wallet, how much it may owe at most."
+    MoneyDto:
+      type: "object"
+      description: "An amount of money."
+      properties:
+        amount:
+          type: "integer"
+          format: "int64"
+          description: "The amount in minor units of the currency."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code."
     WalletResponse:
       type: "object"
       description: "A customer's wallet in one currency."
@@ -813,108 +736,6 @@ components:
           type: "string"
           format: "date-time"
           description: "When the record was created."
-    ReconcileResponse:
-      type: "object"
-      description: "What a reconciliation found."
-      properties:
-        checked:
-          type: "integer"
-          format: "int32"
-          description: "How many payments and refunds were compared."
-        corrected:
-          type: "integer"
-          format: "int32"
-          description: "How many were corrected from Stripe."
-        mismatches:
-          type: "integer"
-          format: "int32"
-          description: "How many disagreements were recorded as incidents."
-    EventAttemptResponse:
-      type: "object"
-      description: "One attempt to process a Stripe event."
-      properties:
-        attempt:
-          type: "integer"
-          format: "int32"
-          description: "The attempt's number, starting at 1."
-        outcome:
-          type: "string"
-          description: "How the attempt ended."
-        detail:
-          type: "string"
-          description: "Details of what happened."
-        attemptedAt:
-          type: "string"
-          format: "date-time"
-          description: "When the attempt was made."
-    EventDetailResponse:
-      type: "object"
-      description: "A Stripe event with how its processing went."
-      properties:
-        event:
-          $ref: "#/components/schemas/EventResponse"
-          description: "The event."
-        history:
-          type: "array"
-          description: "Every processing attempt."
-          items:
-            $ref: "#/components/schemas/EventAttemptResponse"
-    EventResponse:
-      type: "object"
-      description: "A Stripe event that was received."
-      properties:
-        id:
-          type: "string"
-          description: "The id."
-        stripeEventId:
-          type: "string"
-          description: "Stripe's id of the event."
-        type:
-          type: "string"
-          description: "The Stripe event type."
-        status:
-          type: "string"
-          description: "`RECEIVED`, `PROCESSED` or `IGNORED`."
-        attempts:
-          type: "integer"
-          format: "int32"
-          description: "How many times processing was tried."
-        nextAttemptAt:
-          type: "string"
-          format: "date-time"
-          description: "When the next try is due, or null."
-        lastError:
-          type: "string"
-          description: "The last error, or null."
-        receivedAt:
-          type: "string"
-          format: "date-time"
-          description: "When the event was received."
-        processedAt:
-          type: "string"
-          format: "date-time"
-          description: "When it was processed, or null."
-    ConnectRequest:
-      type: "object"
-      description: "The tenant's details for Stripe Connect onboarding."
-      properties:
-        displayName:
-          type: "string"
-          description: "The name Stripe shows for the account."
-        contactEmail:
-          type: "string"
-          description: "The contact email of the account."
-    ConnectionResponse:
-      type: "object"
-      description: "The Stripe connection and the onboarding page."
-      properties:
-        configuration:
-          $ref: "#/components/schemas/ConfigurationResponse"
-          description: "The configuration."
-        onboardingUrl:
-          type: "string"
-          description: "A Stripe-hosted page, present while the tenant still has onboarding\
-            \ to finish."
     ReserveRequest:
       type: "object"
       description: "The hold to place on a wallet."
@@ -1286,198 +1107,6 @@ components:
         walletId:
           type: "string"
           description: "A wallet whose coupons the estimate also applies, or null."
-    CreatePlanRequest:
-      type: "object"
-      description: "The plan to create, with its first version."
-      properties:
-        code:
-          type: "string"
-          description: "The plan's code, unique per tenant."
-        name:
-          type: "string"
-          description: "The name."
-        currency:
-          type: "string"
-          description: "The ISO 4217 currency code of the amounts."
-        model:
-          type: "string"
-          description: "The pricing model: `TIME_BASED`, `USAGE_BASED`, `WORKLOAD_BASED`,\
-            \ `EVENT_BASED`, `SUBSCRIPTION` or `HYBRID`."
-        version:
-          $ref: "#/components/schemas/VersionRequest"
-          description: "The plan's first version."
-    RuleDto:
-      type: "object"
-      description: "A pricing strategy: how a quantity of usage becomes an amount.\
-        \ Prices are decimals in minor units, and rounding to whole minor units happens\
-        \ once, on the total."
-      properties:
-        model:
-          type: "string"
-          description: "The pricing model: `TIME_BASED` (price per unit of time),\
-            \ `USAGE_BASED` (by quantity consumed, with tiers), `WORKLOAD_BASED` (a\
-            \ start fee per execution plus a rate for the work), `EVENT_BASED` (per\
-            \ discrete event), `SUBSCRIPTION` (a fixed amount per cycle) or `HYBRID`\
-            \ (a base amount plus usage components)."
-        metric:
-          type: "string"
-          description: "The metric the rule prices. Not used by a fixed price."
-        unit:
-          type: "string"
-          description: "The unit the metric is measured in. Not used by a fixed price."
-        unitPrice:
-          type: "string"
-          description: "The price of one unit, as a decimal string. Used by time-based,\
-            \ workload-based and event-based rules."
-        increment:
-          type: "string"
-          description: "For a time-based rule, the duration is first rounded up to\
-            \ a whole number of increments, such as per started minute. Zero or null\
-            \ means no rounding."
-        mode:
-          type: "string"
-          description: "For a usage-based rule: `GRADUATED` prices each band of the\
-            \ quantity at its own tier's rate, `VOLUME` prices the whole quantity\
-            \ at the rate of the tier it falls in."
-        tiers:
-          type: "array"
-          description: "For a usage-based rule, the price bands. One tier is a flat\
-            \ rate; a first tier priced at zero is an included allowance."
-          items:
-            $ref: "#/components/schemas/TierDto"
-        executionFee:
-          type: "string"
-          description: "For a workload-based rule, the start fee of every execution,\
-            \ as a decimal string."
-        fixedPrice:
-          type: "string"
-          description: "The amount for one billing cycle whatever is used, as a decimal\
-            \ string. Used by a subscription rule and as the base of a hybrid."
-        components:
-          type: "array"
-          description: "For a hybrid rule, the usage rules added to the base amount.\
-            \ Each metric appears once."
-          items:
-            $ref: "#/components/schemas/RuleDto"
-    TierDto:
-      type: "object"
-      description: "One price tier."
-      properties:
-        upTo:
-          type: "string"
-          description: "The quantity the band runs up to, as a decimal string, or\
-            \ null when it is unbounded."
-        unitPrice:
-          type: "string"
-          description: "The price of one unit in the band, as a decimal string."
-    VersionRequest:
-      type: "object"
-      description: "A version of a plan."
-      properties:
-        rule:
-          $ref: "#/components/schemas/RuleDto"
-          description: "The price rule."
-        billingCycle:
-          type: "string"
-          description: "For a subscription: `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY`\
-            \ or `YEARLY`."
-        minCharge:
-          type: "integer"
-          format: "int64"
-          description: "The least a charge is rounded up to, in minor units, or null."
-        maxCharge:
-          type: "integer"
-          format: "int64"
-          description: "The most a charge is capped at, in minor units, or null."
-        rounding:
-          type: "string"
-          description: "How a fractional amount is rounded: `HALF_UP`, `HALF_EVEN`,\
-            \ `UP` or `DOWN`."
-        validFrom:
-          type: "string"
-          format: "date-time"
-          description: "When the version takes effect."
-        validUntil:
-          type: "string"
-          format: "date-time"
-          description: "When the version stops applying, or null."
-    PlanResponse:
-      type: "object"
-      description: "A pricing plan and its versions."
-      properties:
-        id:
-          type: "string"
-          description: "The id."
-        code:
-          type: "string"
-          description: "The code, unique per tenant."
-        name:
-          type: "string"
-          description: "The name."
-        model:
-          type: "string"
-          description: "The pricing model."
-        currency:
-          type: "string"
-          description: "The ISO 4217 currency code of the amounts."
-        status:
-          type: "string"
-          description: "`ACTIVE` or `RETIRED`."
-        createdAt:
-          type: "string"
-          format: "date-time"
-          description: "When the record was created."
-        retiredAt:
-          type: "string"
-          format: "date-time"
-          description: "When the plan was retired, or null."
-        versions:
-          type: "array"
-          description: "Every version, earlier ones unchanged."
-          items:
-            $ref: "#/components/schemas/VersionResponse"
-    VersionResponse:
-      type: "object"
-      description: "One version of a pricing plan. Earlier versions, and every charge\
-        \ that used them, are unchanged."
-      properties:
-        version:
-          type: "integer"
-          format: "int32"
-          description: "The version of the plan."
-        rule:
-          $ref: "#/components/schemas/RuleDto"
-          description: "The price rule."
-        billingCycle:
-          type: "string"
-          description: "For a subscription: `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY`\
-            \ or `YEARLY`."
-        minCharge:
-          type: "integer"
-          format: "int64"
-          description: "The least a charge is rounded up to, in minor units, or null."
-        maxCharge:
-          type: "integer"
-          format: "int64"
-          description: "The most a charge is capped at, in minor units, or null."
-        rounding:
-          type: "string"
-          description: "How a fractional amount is rounded."
-        validFrom:
-          type: "string"
-          format: "date-time"
-          description: "When the version takes effect."
-        validUntil:
-          type: "string"
-          format: "date-time"
-          description: "When the version stops applying, or null."
-        createdAt:
-          type: "string"
-          format: "date-time"
-          description: "When the record was created."
-        createdBy:
-          type: "string"
-          description: "Who published the version."
     RefundRequest:
       type: "object"
       description: "The refund to request."
@@ -1527,6 +1156,20 @@ components:
           type: "string"
           format: "date-time"
           description: "When it completed, or null."
+    TopUpRequest:
+      type: "object"
+      description: "The top-up to start."
+      properties:
+        walletId:
+          type: "string"
+          description: "The wallet to top up."
+        amount:
+          type: "integer"
+          format: "int64"
+          description: "The amount to add, in minor units."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code of the amounts."
     PaymentResponse:
       type: "object"
       description: "A payment of a top-up or an invoice."
@@ -1572,87 +1215,6 @@ components:
           type: "string"
           format: "date-time"
           description: "When it completed, or null."
-    ReplacementRequest:
-      type: "object"
-      description: "The entry that replaces a reversed one."
-      properties:
-        type:
-          type: "string"
-          description: "`CREDIT` or `DEBIT`."
-        amount:
-          type: "integer"
-          format: "int64"
-          description: "The amount of the replacement, in minor units."
-        currency:
-          type: "string"
-          description: "The ISO 4217 currency code of the amounts."
-        reference:
-          type: "string"
-          description: "A reference the caller chose, recorded with the record."
-    ReverseRequest:
-      type: "object"
-      description: "The correction to post."
-      properties:
-        reason:
-          type: "string"
-          description: "Why the entry is reversed."
-        replacement:
-          $ref: "#/components/schemas/ReplacementRequest"
-          description: "An entry to post in its place with the right amount, or null\
-            \ for none."
-    LedgerEntryResponse:
-      type: "object"
-      description: "One entry of a wallet's append-only ledger."
-      properties:
-        id:
-          type: "string"
-          description: "The id."
-        sequence:
-          type: "integer"
-          format: "int64"
-          description: "The entry's position in the wallet's ledger."
-        type:
-          type: "string"
-          description: "`CREDIT` or `DEBIT`."
-        amount:
-          $ref: "#/components/schemas/MoneyDto"
-          description: "The amount of the entry."
-        reference:
-          type: "string"
-          description: "A reference the caller chose, recorded with the record."
-        reservationId:
-          type: "string"
-          description: "The reservation the entry belongs to, or null."
-        chargeId:
-          type: "string"
-          description: "The id of the charge."
-        reversalOf:
-          type: "string"
-          description: "The id of the entry this one reverses, or null."
-        actor:
-          type: "string"
-          description: "Who caused the entry."
-        reason:
-          type: "string"
-          description: "The reason given."
-        createdAt:
-          type: "string"
-          format: "date-time"
-          description: "When the record was created."
-    ReversalResponse:
-      type: "object"
-      description: "The entries a reversal posted."
-      properties:
-        reversal:
-          $ref: "#/components/schemas/LedgerEntryResponse"
-          description: "The entry that negates the original."
-        replacement:
-          $ref: "#/components/schemas/LedgerEntryResponse"
-          description: "The replacement entry, or null."
-        replayed:
-          type: "boolean"
-          description: "Whether the answer is the earlier result of the same request,\
-            \ not a new one."
     InvoiceChargeRequest:
       type: "object"
       description: "The charge to invoice."
@@ -1795,13 +1357,6 @@ components:
           type: "string"
           format: "date-time"
           description: "When the cost was incurred."
-    VoidRequest:
-      type: "object"
-      description: "Why the invoice is voided."
-      properties:
-        reason:
-          type: "string"
-          description: "Why the request for payment is cancelled."
     PayInvoiceResponse:
       type: "object"
       description: "The invoice and the payment that was started."
@@ -2168,6 +1723,451 @@ components:
           type: "string"
           format: "date-time"
           description: "When the session expires."
+    TopUpResponse:
+      type: "object"
+      description: "A top-up that was started."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        status:
+          type: "string"
+          description: "The payment's status."
+        amount:
+          $ref: "#/components/schemas/MoneyDto"
+          description: "The amount to be paid."
+        checkoutUrl:
+          type: "string"
+          description: "The Stripe-hosted page where the customer pays. Present only\
+            \ while the customer can still pay."
+    ExchangeRequest:
+      type: "object"
+      description: "The token to exchange."
+      properties:
+        token:
+          type: "string"
+          description: "The single-use token from the portal URL's fragment."
+    ExchangeResponse:
+      type: "object"
+      description: "The portal session the exchange opened."
+      properties:
+        session:
+          $ref: "#/components/schemas/SessionResponse"
+          description: "The session."
+        csrfToken:
+          type: "string"
+          description: "The CSRF token the portal sends back with writes."
+        returnUrl:
+          type: "string"
+          description: "Where the portal sends the customer back to."
+    SessionResponse:
+      type: "object"
+      description: "A portal session."
+      properties:
+        sessionId:
+          type: "string"
+          description: "The session's id."
+        customerId:
+          type: "string"
+          description: "The id of the customer."
+        permissions:
+          type: "array"
+          description: "What the session may do in the portal."
+          items:
+            type: "string"
+        expiresAt:
+          type: "string"
+          format: "date-time"
+          description: "When the session expires."
+    HostedPageResponse:
+      type: "object"
+      description: "A Stripe-hosted page."
+      properties:
+        url:
+          type: "string"
+          description: "The URL of the page to open."
+    ReconcileResponse:
+      type: "object"
+      description: "What a reconciliation found."
+      properties:
+        checked:
+          type: "integer"
+          format: "int32"
+          description: "How many payments and refunds were compared."
+        corrected:
+          type: "integer"
+          format: "int32"
+          description: "How many were corrected from Stripe."
+        mismatches:
+          type: "integer"
+          format: "int32"
+          description: "How many disagreements were recorded as incidents."
+    EventAttemptResponse:
+      type: "object"
+      description: "One attempt to process a Stripe event."
+      properties:
+        attempt:
+          type: "integer"
+          format: "int32"
+          description: "The attempt's number, starting at 1."
+        outcome:
+          type: "string"
+          description: "How the attempt ended."
+        detail:
+          type: "string"
+          description: "Details of what happened."
+        attemptedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the attempt was made."
+    EventDetailResponse:
+      type: "object"
+      description: "A Stripe event with how its processing went."
+      properties:
+        event:
+          $ref: "#/components/schemas/EventResponse"
+          description: "The event."
+        history:
+          type: "array"
+          description: "Every processing attempt."
+          items:
+            $ref: "#/components/schemas/EventAttemptResponse"
+    EventResponse:
+      type: "object"
+      description: "A Stripe event that was received."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        stripeEventId:
+          type: "string"
+          description: "Stripe's id of the event."
+        type:
+          type: "string"
+          description: "The Stripe event type."
+        status:
+          type: "string"
+          description: "`RECEIVED`, `PROCESSED` or `IGNORED`."
+        attempts:
+          type: "integer"
+          format: "int32"
+          description: "How many times processing was tried."
+        nextAttemptAt:
+          type: "string"
+          format: "date-time"
+          description: "When the next try is due, or null."
+        lastError:
+          type: "string"
+          description: "The last error, or null."
+        receivedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the event was received."
+        processedAt:
+          type: "string"
+          format: "date-time"
+          description: "When it was processed, or null."
+    ConnectRequest:
+      type: "object"
+      description: "The tenant's details for Stripe Connect onboarding."
+      properties:
+        displayName:
+          type: "string"
+          description: "The name Stripe shows for the account."
+        contactEmail:
+          type: "string"
+          description: "The contact email of the account."
+    ConnectionResponse:
+      type: "object"
+      description: "The Stripe connection and the onboarding page."
+      properties:
+        configuration:
+          $ref: "#/components/schemas/ConfigurationResponse"
+          description: "The configuration."
+        onboardingUrl:
+          type: "string"
+          description: "A Stripe-hosted page, present while the tenant still has onboarding\
+            \ to finish."
+    CreatePlanRequest:
+      type: "object"
+      description: "The plan to create, with its first version."
+      properties:
+        code:
+          type: "string"
+          description: "The plan's code, unique per tenant."
+        name:
+          type: "string"
+          description: "The name."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code of the amounts."
+        model:
+          type: "string"
+          description: "The pricing model: `TIME_BASED`, `USAGE_BASED`, `WORKLOAD_BASED`,\
+            \ `EVENT_BASED`, `SUBSCRIPTION` or `HYBRID`."
+        version:
+          $ref: "#/components/schemas/VersionRequest"
+          description: "The plan's first version."
+    RuleDto:
+      type: "object"
+      description: "A pricing strategy: how a quantity of usage becomes an amount.\
+        \ Prices are decimals in minor units, and rounding to whole minor units happens\
+        \ once, on the total."
+      properties:
+        model:
+          type: "string"
+          description: "The pricing model: `TIME_BASED` (price per unit of time),\
+            \ `USAGE_BASED` (by quantity consumed, with tiers), `WORKLOAD_BASED` (a\
+            \ start fee per execution plus a rate for the work), `EVENT_BASED` (per\
+            \ discrete event), `SUBSCRIPTION` (a fixed amount per cycle) or `HYBRID`\
+            \ (a base amount plus usage components)."
+        metric:
+          type: "string"
+          description: "The metric the rule prices. Not used by a fixed price."
+        unit:
+          type: "string"
+          description: "The unit the metric is measured in. Not used by a fixed price."
+        unitPrice:
+          type: "string"
+          description: "The price of one unit, as a decimal string. Used by time-based,\
+            \ workload-based and event-based rules."
+        increment:
+          type: "string"
+          description: "For a time-based rule, the duration is first rounded up to\
+            \ a whole number of increments, such as per started minute. Zero or null\
+            \ means no rounding."
+        mode:
+          type: "string"
+          description: "For a usage-based rule: `GRADUATED` prices each band of the\
+            \ quantity at its own tier's rate, `VOLUME` prices the whole quantity\
+            \ at the rate of the tier it falls in."
+        tiers:
+          type: "array"
+          description: "For a usage-based rule, the price bands. One tier is a flat\
+            \ rate; a first tier priced at zero is an included allowance."
+          items:
+            $ref: "#/components/schemas/TierDto"
+        executionFee:
+          type: "string"
+          description: "For a workload-based rule, the start fee of every execution,\
+            \ as a decimal string."
+        fixedPrice:
+          type: "string"
+          description: "The amount for one billing cycle whatever is used, as a decimal\
+            \ string. Used by a subscription rule and as the base of a hybrid."
+        components:
+          type: "array"
+          description: "For a hybrid rule, the usage rules added to the base amount.\
+            \ Each metric appears once."
+          items:
+            $ref: "#/components/schemas/RuleDto"
+    TierDto:
+      type: "object"
+      description: "One price tier."
+      properties:
+        upTo:
+          type: "string"
+          description: "The quantity the band runs up to, as a decimal string, or\
+            \ null when it is unbounded."
+        unitPrice:
+          type: "string"
+          description: "The price of one unit in the band, as a decimal string."
+    VersionRequest:
+      type: "object"
+      description: "A version of a plan."
+      properties:
+        rule:
+          $ref: "#/components/schemas/RuleDto"
+          description: "The price rule."
+        billingCycle:
+          type: "string"
+          description: "For a subscription: `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY`\
+            \ or `YEARLY`."
+        minCharge:
+          type: "integer"
+          format: "int64"
+          description: "The least a charge is rounded up to, in minor units, or null."
+        maxCharge:
+          type: "integer"
+          format: "int64"
+          description: "The most a charge is capped at, in minor units, or null."
+        rounding:
+          type: "string"
+          description: "How a fractional amount is rounded: `HALF_UP`, `HALF_EVEN`,\
+            \ `UP` or `DOWN`."
+        validFrom:
+          type: "string"
+          format: "date-time"
+          description: "When the version takes effect."
+        validUntil:
+          type: "string"
+          format: "date-time"
+          description: "When the version stops applying, or null."
+    PlanResponse:
+      type: "object"
+      description: "A pricing plan and its versions."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        code:
+          type: "string"
+          description: "The code, unique per tenant."
+        name:
+          type: "string"
+          description: "The name."
+        model:
+          type: "string"
+          description: "The pricing model."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code of the amounts."
+        status:
+          type: "string"
+          description: "`ACTIVE` or `RETIRED`."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        retiredAt:
+          type: "string"
+          format: "date-time"
+          description: "When the plan was retired, or null."
+        versions:
+          type: "array"
+          description: "Every version, earlier ones unchanged."
+          items:
+            $ref: "#/components/schemas/VersionResponse"
+    VersionResponse:
+      type: "object"
+      description: "One version of a pricing plan. Earlier versions, and every charge\
+        \ that used them, are unchanged."
+      properties:
+        version:
+          type: "integer"
+          format: "int32"
+          description: "The version of the plan."
+        rule:
+          $ref: "#/components/schemas/RuleDto"
+          description: "The price rule."
+        billingCycle:
+          type: "string"
+          description: "For a subscription: `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY`\
+            \ or `YEARLY`."
+        minCharge:
+          type: "integer"
+          format: "int64"
+          description: "The least a charge is rounded up to, in minor units, or null."
+        maxCharge:
+          type: "integer"
+          format: "int64"
+          description: "The most a charge is capped at, in minor units, or null."
+        rounding:
+          type: "string"
+          description: "How a fractional amount is rounded."
+        validFrom:
+          type: "string"
+          format: "date-time"
+          description: "When the version takes effect."
+        validUntil:
+          type: "string"
+          format: "date-time"
+          description: "When the version stops applying, or null."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        createdBy:
+          type: "string"
+          description: "Who published the version."
+    ReplacementRequest:
+      type: "object"
+      description: "The entry that replaces a reversed one."
+      properties:
+        type:
+          type: "string"
+          description: "`CREDIT` or `DEBIT`."
+        amount:
+          type: "integer"
+          format: "int64"
+          description: "The amount of the replacement, in minor units."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code of the amounts."
+        reference:
+          type: "string"
+          description: "A reference the caller chose, recorded with the record."
+    ReverseRequest:
+      type: "object"
+      description: "The correction to post."
+      properties:
+        reason:
+          type: "string"
+          description: "Why the entry is reversed."
+        replacement:
+          $ref: "#/components/schemas/ReplacementRequest"
+          description: "An entry to post in its place with the right amount, or null\
+            \ for none."
+    LedgerEntryResponse:
+      type: "object"
+      description: "One entry of a wallet's append-only ledger."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        sequence:
+          type: "integer"
+          format: "int64"
+          description: "The entry's position in the wallet's ledger."
+        type:
+          type: "string"
+          description: "`CREDIT` or `DEBIT`."
+        amount:
+          $ref: "#/components/schemas/MoneyDto"
+          description: "The amount of the entry."
+        reference:
+          type: "string"
+          description: "A reference the caller chose, recorded with the record."
+        reservationId:
+          type: "string"
+          description: "The reservation the entry belongs to, or null."
+        chargeId:
+          type: "string"
+          description: "The id of the charge."
+        reversalOf:
+          type: "string"
+          description: "The id of the entry this one reverses, or null."
+        actor:
+          type: "string"
+          description: "Who caused the entry."
+        reason:
+          type: "string"
+          description: "The reason given."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+    ReversalResponse:
+      type: "object"
+      description: "The entries a reversal posted."
+      properties:
+        reversal:
+          $ref: "#/components/schemas/LedgerEntryResponse"
+          description: "The entry that negates the original."
+        replacement:
+          $ref: "#/components/schemas/LedgerEntryResponse"
+          description: "The replacement entry, or null."
+        replayed:
+          type: "boolean"
+          description: "Whether the answer is the earlier result of the same request,\
+            \ not a new one."
+    VoidRequest:
+      type: "object"
+      description: "Why the invoice is voided."
+      properties:
+        reason:
+          type: "string"
+          description: "Why the request for payment is cancelled."
     UpdateEndpointRequest:
       type: "object"
       description: "The fields to change. A field that is left out keeps its value."
@@ -2187,6 +2187,22 @@ components:
           type: "string"
           description: "`ACTIVE`, or `DISABLED` to pause delivery without losing queued\
             \ events."
+    PageEndpointResponse:
+      type: "object"
+      description: "A page of endpoint response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/EndpointResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageInfo:
       type: "object"
       description: "The paging facts of a list answer, present when the request asked\
@@ -2216,6 +2232,58 @@ components:
           - "null"
           description: "The cursor of the following page, or null on the last page.\
             \ Pass it as `cursor` with the same filter and sort."
+    PageDeliveryResponse:
+      type: "object"
+      description: "A page of delivery response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/DeliveryResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    AttemptResponse:
+      type: "object"
+      description: "One attempt: a failed attempt to pay, or an attempt to deliver\
+        \ a webhook event."
+      properties:
+        attemptNo:
+          type: "integer"
+          format: "int32"
+        statusCode:
+          type: "integer"
+          format: "int32"
+        error:
+          type: "string"
+        responseExcerpt:
+          type: "string"
+        latencyMs:
+          type: "integer"
+          format: "int64"
+        attemptedAt:
+          type: "string"
+          format: "date-time"
+    DeliveryDetailResponse:
+      type: "object"
+      description: "A delivery with the body that was sent and every attempt."
+      properties:
+        delivery:
+          $ref: "#/components/schemas/DeliveryResponse"
+          description: "The delivery."
+        body:
+          type: "string"
+          description: "The event body that is sent."
+        attempts:
+          type: "array"
+          description: "Every attempt, oldest first."
+          items:
+            $ref: "#/components/schemas/AttemptResponse"
     PageWalletResponse:
       type: "object"
       description: "A page of wallet response rows, with the paging facts when the\
@@ -2226,6 +2294,22 @@ components:
           description: "The rows of this page."
           items:
             $ref: "#/components/schemas/WalletResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageRedemptionResponse:
+      type: "object"
+      description: "A page of redemption response rows, with the paging facts when\
+        \ the request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/RedemptionResponse"
         page:
           description: "The paging facts, or null when the request did not ask for\
             \ them with `page_info`."
@@ -2248,23 +2332,6 @@ components:
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
-    UsageTotalResponse:
-      type: "object"
-      description: "The usage of one metric over a period."
-      properties:
-        metric:
-          type: "string"
-          description: "The name of the metric."
-        unit:
-          type: "string"
-          description: "The unit the metric is measured in."
-        quantity:
-          type: "string"
-          description: "The quantity as a decimal string with up to six decimal places."
-        events:
-          type: "integer"
-          format: "int64"
-          description: "The number of events counted."
     PageUsageEventResponse:
       type: "object"
       description: "A page of usage event response rows, with the paging facts when\
@@ -2281,6 +2348,23 @@ components:
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
+    TotalResponse:
+      type: "object"
+      description: "The usage of one metric over a period."
+      properties:
+        metric:
+          type: "string"
+          description: "The name of the metric."
+        unit:
+          type: "string"
+          description: "The unit the metric is measured in."
+        quantity:
+          type: "string"
+          description: "The quantity as a decimal string with up to six decimal places."
+        events:
+          type: "integer"
+          format: "int64"
+          description: "The number of events counted."
     PageSubscriptionResponse:
       type: "object"
       description: "A page of subscription response rows, with the paging facts when\
@@ -2291,6 +2375,22 @@ components:
           description: "The rows of this page."
           items:
             $ref: "#/components/schemas/SubscriptionResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageReservationResponse:
+      type: "object"
+      description: "A page of reservation response rows, with the paging facts when\
+        \ the request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/ReservationResponse"
         page:
           description: "The paging facts, or null when the request did not ask for\
             \ them with `page_info`."
@@ -2313,6 +2413,22 @@ components:
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
+    PagePlanResponse:
+      type: "object"
+      description: "A page of plan response rows, with the paging facts when the request\
+        \ asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/PlanResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PagePaymentResponse:
       type: "object"
       description: "A page of payment response rows, with the paging facts when the\
@@ -2329,21 +2445,6 @@ components:
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
-    AttemptResponse:
-      type: "object"
-      description: "One attempt: a failed attempt to pay, or an attempt to deliver\
-        \ a webhook event."
-      properties:
-        failureCode:
-          type: "string"
-          description: "The code of the failure."
-        failureMessage:
-          type: "string"
-          description: "What went wrong."
-        occurredAt:
-          type: "string"
-          format: "date-time"
-          description: "When the attempt happened."
     PaymentDetailResponse:
       type: "object"
       description: "A payment with its refunds and failed attempts."
@@ -2377,6 +2478,54 @@ components:
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
+    PageCustomerResponse:
+      type: "object"
+      description: "A page of customer response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/CustomerResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageCouponResponse:
+      type: "object"
+      description: "A page of coupon response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/CouponResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PagePromotionCodeResponse:
+      type: "object"
+      description: "A page of promotion code response rows, with the paging facts\
+        \ when the request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/PromotionCodeResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageChargeResponse:
       type: "object"
       description: "A page of charge response rows, with the paging facts when the\
@@ -2393,70 +2542,7 @@ components:
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
-    PageEndpointResponse:
-      type: "object"
-      description: "A page of endpoint response rows, with the paging facts when the\
-        \ request asked for them."
-      properties:
-        data:
-          type: "array"
-          description: "The rows of this page."
-          items:
-            $ref: "#/components/schemas/EndpointResponse"
-        page:
-          description: "The paging facts, or null when the request did not ask for\
-            \ them with `page_info`."
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    PageDeliveryResponse:
-      type: "object"
-      description: "A page of delivery response rows, with the paging facts when the\
-        \ request asked for them."
-      properties:
-        data:
-          type: "array"
-          description: "The rows of this page."
-          items:
-            $ref: "#/components/schemas/DeliveryResponse"
-        page:
-          description: "The paging facts, or null when the request did not ask for\
-            \ them with `page_info`."
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    DeliveryDetailResponse:
-      type: "object"
-      description: "A delivery with the body that was sent and every attempt."
-      properties:
-        delivery:
-          $ref: "#/components/schemas/DeliveryResponse"
-          description: "The delivery."
-        body:
-          type: "string"
-          description: "The event body that is sent."
-        attempts:
-          type: "array"
-          description: "Every attempt, oldest first."
-          items:
-            $ref: "#/components/schemas/AttemptResponse"
-    PageRedemptionResponse:
-      type: "object"
-      description: "A page of redemption response rows, with the paging facts when\
-        \ the request asked for them."
-      properties:
-        data:
-          type: "array"
-          description: "The rows of this page."
-          items:
-            $ref: "#/components/schemas/RedemptionResponse"
-        page:
-          description: "The paging facts, or null when the request did not ask for\
-            \ them with `page_info`."
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    TotalResponse:
+    UsageTotalResponse:
       type: "object"
       description: "The usage of one metric over a period."
       properties:
@@ -2532,86 +2618,6 @@ components:
           description: "The rows of this page."
           items:
             $ref: "#/components/schemas/EventResponse"
-        page:
-          description: "The paging facts, or null when the request did not ask for\
-            \ them with `page_info`."
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    PageReservationResponse:
-      type: "object"
-      description: "A page of reservation response rows, with the paging facts when\
-        \ the request asked for them."
-      properties:
-        data:
-          type: "array"
-          description: "The rows of this page."
-          items:
-            $ref: "#/components/schemas/ReservationResponse"
-        page:
-          description: "The paging facts, or null when the request did not ask for\
-            \ them with `page_info`."
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    PagePlanResponse:
-      type: "object"
-      description: "A page of plan response rows, with the paging facts when the request\
-        \ asked for them."
-      properties:
-        data:
-          type: "array"
-          description: "The rows of this page."
-          items:
-            $ref: "#/components/schemas/PlanResponse"
-        page:
-          description: "The paging facts, or null when the request did not ask for\
-            \ them with `page_info`."
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    PageCustomerResponse:
-      type: "object"
-      description: "A page of customer response rows, with the paging facts when the\
-        \ request asked for them."
-      properties:
-        data:
-          type: "array"
-          description: "The rows of this page."
-          items:
-            $ref: "#/components/schemas/CustomerResponse"
-        page:
-          description: "The paging facts, or null when the request did not ask for\
-            \ them with `page_info`."
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    PageCouponResponse:
-      type: "object"
-      description: "A page of coupon response rows, with the paging facts when the\
-        \ request asked for them."
-      properties:
-        data:
-          type: "array"
-          description: "The rows of this page."
-          items:
-            $ref: "#/components/schemas/CouponResponse"
-        page:
-          description: "The paging facts, or null when the request did not ask for\
-            \ them with `page_info`."
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    PagePromotionCodeResponse:
-      type: "object"
-      description: "A page of promotion code response rows, with the paging facts\
-        \ when the request asked for them."
-      properties:
-        data:
-          type: "array"
-          description: "The rows of this page."
-          items:
-            $ref: "#/components/schemas/PromotionCodeResponse"
         page:
           description: "The paging facts, or null when the request did not ask for\
             \ them with `page_info`."

@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddCodeData, AddCodeErrors, AddCodeResponses, AggregatesData, AggregatesErrors, AggregatesResponses, AttachData, AttachErrors, AttachResponses, ByExternalUserData, ByExternalUserErrors, ByExternalUserResponses, CancelData, CancelErrors, CancelResponses, CaptureData, CaptureErrors, CaptureResponses, ChargeData, ChargeErrors, ChargeResponses, Charges1Data, Charges1Errors, Charges1Responses, ChargesData, ChargesErrors, ChargesResponses, ChargeUsageData, ChargeUsageErrors, ChargeUsageResponses, CodesData, CodesErrors, CodesResponses, ConnectData, ConnectDirectData, ConnectDirectErrors, ConnectDirectResponses, ConnectErrors, ConnectResponses, CouponData, CouponErrors, CouponResponses, CouponsData, CouponsErrors, CouponsResponses, Create1Data, Create1Errors, Create1Responses, CreateCouponData, CreateCouponErrors, CreateCouponResponses, CreateData, CreateEndpointData, CreateEndpointErrors, CreateEndpointResponses, CreateErrors, CreatePlanData, CreatePlanErrors, CreatePlanResponses, CreateResponses, CreateTopUpData, CreateTopUpErrors, CreateTopUpResponses, CustomerData, CustomerErrors, CustomerResponses, DeactivateCodeData, DeactivateCodeErrors, DeactivateCodeResponses, DeactivateCouponData, DeactivateCouponErrors, DeactivateCouponResponses, DeactivateData, DeactivateErrors, DeactivateResponses, DirectData, DirectErrors, DirectResponses, DisconnectData, DisconnectErrors, DisconnectResponses, EstimateData, EstimateErrors, EstimateResponses, EventData, EventErrors, EventResponses, EventsData, EventsErrors, EventsResponses, ExchangeData, ExchangeErrors, ExchangeResponses, GetChargeData, GetChargeErrors, GetChargeResponses, GetConfigurationData, GetConfigurationErrors, GetConfigurationResponses, GetData, GetDeliveryData, GetDeliveryErrors, GetDeliveryResponses, GetEndpointData, GetEndpointErrors, GetEndpointResponses, GetErrors, GetPlanData, GetPlanErrors, GetPlanResponses, GetRatingData, GetRatingErrors, GetRatingResponses, GetRefundData, GetRefundErrors, GetRefundResponses, GetResponses, History1Data, History1Errors, History1Responses, HistoryData, HistoryErrors, HistoryResponses, IncidentsData, IncidentsErrors, IncidentsResponses, Invoice1Data, Invoice1Errors, Invoice1Responses, InvoiceChargeData, InvoiceChargeErrors, InvoiceChargeResponses, InvoiceData, InvoiceErrors, InvoiceResponses, Invoices1Data, Invoices1Errors, Invoices1Responses, InvoicesData, InvoicesErrors, InvoicesResponses, JwksData, JwksErrors, JwksResponses, Ledger1Data, Ledger1Errors, Ledger1Responses, LedgerData, LedgerErrors, LedgerResponses, List1Data, List1Errors, List1Responses, ListData, ListDeliveriesData, ListDeliveriesErrors, ListDeliveriesResponses, ListEndpointsData, ListEndpointsErrors, ListEndpointsResponses, ListErrors, ListPlansData, ListPlansErrors, ListPlansResponses, ListResponses, MarkUncollectibleData, MarkUncollectibleErrors, MarkUncollectibleResponses, OnboardingLinkData, OnboardingLinkErrors, OnboardingLinkResponses, OpenWalletData, OpenWalletErrors, OpenWalletResponses, PayData, PayErrors, Payment1Data, Payment1Errors, Payment1Responses, PaymentData, PaymentErrors, PaymentMethodsData, PaymentMethodsErrors, PaymentMethodsResponses, PaymentResponses, Payments1Data, Payments1Errors, Payments1Responses, PaymentsData, PaymentsErrors, PaymentsResponses, PayResponses, PublishVersionData, PublishVersionErrors, PublishVersionResponses, ReconcileData, ReconcileErrors, ReconcileResponses, RecordBatchData, RecordBatchErrors, RecordBatchResponses, RecordOneData, RecordOneErrors, RecordOneResponses, RedeemByCodeData, RedeemByCodeErrors, RedeemByCodeResponses, RedemptionData, RedemptionErrors, RedemptionResponses, RedemptionsOfWalletData, RedemptionsOfWalletErrors, RedemptionsOfWalletResponses, RefreshData, RefreshErrors, RefreshResponses, Refunds1Data, Refunds1Errors, Refunds1Responses, RefundsData, RefundsErrors, RefundsResponses, ReleaseData, ReleaseErrors, ReleaseResponses, ReplaceData, ReplaceErrors, ReplaceResponses, RequestRefundData, RequestRefundErrors, RequestRefundResponses, ResendData, ResendErrors, ResendResponses, ReservationData, ReservationErrors, ReservationResponses, ReservationsData, ReservationsErrors, ReservationsResponses, ReserveData, ReserveErrors, ReserveEstimateData, ReserveEstimateErrors, ReserveEstimateResponses, ReserveResponses, ResolveIncidentData, ResolveIncidentErrors, ResolveIncidentResponses, RetireData, RetireErrors, RetireResponses, RetryData, RetryErrors, RetryResponses, ReverseData, ReverseErrors, ReverseResponses, Revoke1Data, Revoke1Errors, Revoke1Responses, RevokeData, RevokeErrors, RevokeResponses, RotateSecretData, RotateSecretErrors, RotateSecretResponses, SessionData, SessionErrors, SessionResponses, SetWebhookSecretData, SetWebhookSecretErrors, SetWebhookSecretResponses, StartConnectData, StartConnectErrors, StartConnectResponses, SubscribeData, SubscribeErrors, SubscribeResponses, Subscription1Data, Subscription1Errors, Subscription1Responses, SubscriptionData, SubscriptionErrors, SubscriptionResponses, Subscriptions1Data, Subscriptions1Errors, Subscriptions1Responses, SubscriptionsData, SubscriptionsErrors, SubscriptionsResponses, TopUpData, TopUpErrors, TopUpResponses, TotalsData, TotalsErrors, TotalsResponses, UpdateData, UpdateEndpointData, UpdateEndpointErrors, UpdateEndpointResponses, UpdateErrors, UpdateResponses, VoidInvoiceData, VoidInvoiceErrors, VoidInvoiceResponses, Wallet1Data, Wallet1Errors, Wallet1Responses, WalletData, WalletErrors, WalletResponses, Wallets1Data, Wallets1Errors, Wallets1Responses, WalletsData, WalletsErrors, WalletsResponses } from './types.gen';
+import type { AddCodeAsTenantSystemData, AddCodeAsTenantSystemErrors, AddCodeAsTenantSystemResponses, AddCodeData, AddCodeErrors, AddCodeResponses, AggregatesAsTenantSystemData, AggregatesAsTenantSystemErrors, AggregatesAsTenantSystemResponses, AggregatesData, AggregatesErrors, AggregatesResponses, AttachAsTenantSystemData, AttachAsTenantSystemErrors, AttachAsTenantSystemResponses, AttachData, AttachErrors, AttachResponses, ByExternalUserAsTenantSystemData, ByExternalUserAsTenantSystemErrors, ByExternalUserAsTenantSystemResponses, ByExternalUserData, ByExternalUserErrors, ByExternalUserResponses, CancelAsTenantSystemData, CancelAsTenantSystemErrors, CancelAsTenantSystemResponses, CancelData, CancelErrors, CancelResponses, CaptureAsTenantSystemData, CaptureAsTenantSystemErrors, CaptureAsTenantSystemResponses, CaptureData, CaptureErrors, CaptureResponses, ChargeAsTenantSystemData, ChargeAsTenantSystemErrors, ChargeAsTenantSystemResponses, ChargeData, ChargeErrors, ChargeResponses, Charges1Data, Charges1Errors, Charges1Responses, ChargesAsTenantSystemData, ChargesAsTenantSystemErrors, ChargesAsTenantSystemResponses, ChargesData, ChargesErrors, ChargesResponses, ChargeUsageAsTenantSystemData, ChargeUsageAsTenantSystemErrors, ChargeUsageAsTenantSystemResponses, ChargeUsageData, ChargeUsageErrors, ChargeUsageResponses, CodesAsTenantSystemData, CodesAsTenantSystemErrors, CodesAsTenantSystemResponses, CodesData, CodesErrors, CodesResponses, ConnectData, ConnectDirectData, ConnectDirectErrors, ConnectDirectResponses, ConnectErrors, ConnectResponses, CouponAsTenantSystemData, CouponAsTenantSystemErrors, CouponAsTenantSystemResponses, CouponData, CouponErrors, CouponResponses, CouponsAsTenantSystemData, CouponsAsTenantSystemErrors, CouponsAsTenantSystemResponses, CouponsData, CouponsErrors, CouponsResponses, Create1Data, Create1Errors, Create1Responses, CreateAsTenantSystem1Data, CreateAsTenantSystem1Errors, CreateAsTenantSystem1Responses, CreateAsTenantSystemData, CreateAsTenantSystemErrors, CreateAsTenantSystemResponses, CreateCouponAsTenantSystemData, CreateCouponAsTenantSystemErrors, CreateCouponAsTenantSystemResponses, CreateCouponData, CreateCouponErrors, CreateCouponResponses, CreateData, CreateEndpointAsTenantSystemData, CreateEndpointAsTenantSystemErrors, CreateEndpointAsTenantSystemResponses, CreateEndpointData, CreateEndpointErrors, CreateEndpointResponses, CreateErrors, CreatePlanData, CreatePlanErrors, CreatePlanResponses, CreateResponses, CreateTopUpAsTenantSystemData, CreateTopUpAsTenantSystemErrors, CreateTopUpAsTenantSystemResponses, CreateTopUpData, CreateTopUpErrors, CreateTopUpResponses, CustomerData, CustomerErrors, CustomerResponses, DeactivateAsTenantSystemData, DeactivateAsTenantSystemErrors, DeactivateAsTenantSystemResponses, DeactivateCodeAsTenantSystemData, DeactivateCodeAsTenantSystemErrors, DeactivateCodeAsTenantSystemResponses, DeactivateCodeData, DeactivateCodeErrors, DeactivateCodeResponses, DeactivateCouponAsTenantSystemData, DeactivateCouponAsTenantSystemErrors, DeactivateCouponAsTenantSystemResponses, DeactivateCouponData, DeactivateCouponErrors, DeactivateCouponResponses, DeactivateData, DeactivateErrors, DeactivateResponses, DirectData, DirectErrors, DirectResponses, DisconnectData, DisconnectErrors, DisconnectResponses, EstimateAsTenantSystemData, EstimateAsTenantSystemErrors, EstimateAsTenantSystemResponses, EstimateData, EstimateErrors, EstimateResponses, EventData, EventErrors, EventResponses, EventsData, EventsErrors, EventsResponses, ExchangeData, ExchangeErrors, ExchangeResponses, GetAsTenantSystemData, GetAsTenantSystemErrors, GetAsTenantSystemResponses, GetChargeAsTenantSystemData, GetChargeAsTenantSystemErrors, GetChargeAsTenantSystemResponses, GetChargeData, GetChargeErrors, GetChargeResponses, GetConfigurationData, GetConfigurationErrors, GetConfigurationResponses, GetData, GetDeliveryAsTenantSystemData, GetDeliveryAsTenantSystemErrors, GetDeliveryAsTenantSystemResponses, GetDeliveryData, GetDeliveryErrors, GetDeliveryResponses, GetEndpointAsTenantSystemData, GetEndpointAsTenantSystemErrors, GetEndpointAsTenantSystemResponses, GetEndpointData, GetEndpointErrors, GetEndpointResponses, GetErrors, GetPlanAsTenantSystemData, GetPlanAsTenantSystemErrors, GetPlanAsTenantSystemResponses, GetPlanData, GetPlanErrors, GetPlanResponses, GetRatingAsTenantSystemData, GetRatingAsTenantSystemErrors, GetRatingAsTenantSystemResponses, GetRatingData, GetRatingErrors, GetRatingResponses, GetRefundAsTenantSystemData, GetRefundAsTenantSystemErrors, GetRefundAsTenantSystemResponses, GetRefundData, GetRefundErrors, GetRefundResponses, GetResponses, History1Data, History1Errors, History1Responses, HistoryAsTenantSystemData, HistoryAsTenantSystemErrors, HistoryAsTenantSystemResponses, HistoryData, HistoryErrors, HistoryResponses, IncidentsData, IncidentsErrors, IncidentsResponses, Invoice1Data, Invoice1Errors, Invoice1Responses, InvoiceAsTenantSystemData, InvoiceAsTenantSystemErrors, InvoiceAsTenantSystemResponses, InvoiceChargeAsTenantSystemData, InvoiceChargeAsTenantSystemErrors, InvoiceChargeAsTenantSystemResponses, InvoiceChargeData, InvoiceChargeErrors, InvoiceChargeResponses, InvoiceData, InvoiceErrors, InvoiceResponses, Invoices1Data, Invoices1Errors, Invoices1Responses, InvoicesAsTenantSystemData, InvoicesAsTenantSystemErrors, InvoicesAsTenantSystemResponses, InvoicesData, InvoicesErrors, InvoicesResponses, JwksData, JwksResponses, Ledger1Data, Ledger1Errors, Ledger1Responses, LedgerAsTenantSystemData, LedgerAsTenantSystemErrors, LedgerAsTenantSystemResponses, LedgerData, LedgerErrors, LedgerResponses, List1Data, List1Errors, List1Responses, ListAsTenantSystemData, ListAsTenantSystemErrors, ListAsTenantSystemResponses, ListData, ListDeliveriesAsTenantSystemData, ListDeliveriesAsTenantSystemErrors, ListDeliveriesAsTenantSystemResponses, ListDeliveriesData, ListDeliveriesErrors, ListDeliveriesResponses, ListEndpointsAsTenantSystemData, ListEndpointsAsTenantSystemErrors, ListEndpointsAsTenantSystemResponses, ListEndpointsData, ListEndpointsErrors, ListEndpointsResponses, ListErrors, ListPlansAsTenantSystemData, ListPlansAsTenantSystemErrors, ListPlansAsTenantSystemResponses, ListPlansData, ListPlansErrors, ListPlansResponses, ListResponses, MarkUncollectibleData, MarkUncollectibleErrors, MarkUncollectibleResponses, OnboardingLinkData, OnboardingLinkErrors, OnboardingLinkResponses, OpenWalletAsTenantSystemData, OpenWalletAsTenantSystemErrors, OpenWalletAsTenantSystemResponses, OpenWalletData, OpenWalletErrors, OpenWalletResponses, PayAsTenantSystemData, PayAsTenantSystemErrors, PayAsTenantSystemResponses, PayData, PayErrors, Payment1Data, Payment1Errors, Payment1Responses, PaymentAsTenantSystemData, PaymentAsTenantSystemErrors, PaymentAsTenantSystemResponses, PaymentData, PaymentErrors, PaymentMethodsData, PaymentMethodsErrors, PaymentMethodsResponses, PaymentResponses, Payments1Data, Payments1Errors, Payments1Responses, PaymentsAsTenantSystemData, PaymentsAsTenantSystemErrors, PaymentsAsTenantSystemResponses, PaymentsData, PaymentsErrors, PaymentsResponses, PayResponses, PublishVersionData, PublishVersionErrors, PublishVersionResponses, ReconcileData, ReconcileErrors, ReconcileResponses, RecordBatchAsTenantSystemData, RecordBatchAsTenantSystemErrors, RecordBatchAsTenantSystemResponses, RecordBatchData, RecordBatchErrors, RecordBatchResponses, RecordOneAsTenantSystemData, RecordOneAsTenantSystemErrors, RecordOneAsTenantSystemResponses, RecordOneData, RecordOneErrors, RecordOneResponses, RedeemByCodeAsTenantSystemData, RedeemByCodeAsTenantSystemErrors, RedeemByCodeAsTenantSystemResponses, RedeemByCodeData, RedeemByCodeErrors, RedeemByCodeResponses, RedemptionAsTenantSystemData, RedemptionAsTenantSystemErrors, RedemptionAsTenantSystemResponses, RedemptionData, RedemptionErrors, RedemptionResponses, RedemptionsOfWalletAsTenantSystemData, RedemptionsOfWalletAsTenantSystemErrors, RedemptionsOfWalletAsTenantSystemResponses, RedemptionsOfWalletData, RedemptionsOfWalletErrors, RedemptionsOfWalletResponses, RefreshData, RefreshErrors, RefreshResponses, Refunds1Data, Refunds1Errors, Refunds1Responses, RefundsAsTenantSystemData, RefundsAsTenantSystemErrors, RefundsAsTenantSystemResponses, RefundsData, RefundsErrors, RefundsResponses, ReleaseAsTenantSystemData, ReleaseAsTenantSystemErrors, ReleaseAsTenantSystemResponses, ReleaseData, ReleaseErrors, ReleaseResponses, ReplaceData, ReplaceErrors, ReplaceResponses, RequestRefundAsTenantSystemData, RequestRefundAsTenantSystemErrors, RequestRefundAsTenantSystemResponses, RequestRefundData, RequestRefundErrors, RequestRefundResponses, ResendAsTenantSystemData, ResendAsTenantSystemErrors, ResendAsTenantSystemResponses, ResendData, ResendErrors, ResendResponses, ReservationAsTenantSystemData, ReservationAsTenantSystemErrors, ReservationAsTenantSystemResponses, ReservationData, ReservationErrors, ReservationResponses, ReservationsAsTenantSystemData, ReservationsAsTenantSystemErrors, ReservationsAsTenantSystemResponses, ReservationsData, ReservationsErrors, ReservationsResponses, ReserveAsTenantSystemData, ReserveAsTenantSystemErrors, ReserveAsTenantSystemResponses, ReserveData, ReserveErrors, ReserveEstimateAsTenantSystemData, ReserveEstimateAsTenantSystemErrors, ReserveEstimateAsTenantSystemResponses, ReserveEstimateData, ReserveEstimateErrors, ReserveEstimateResponses, ReserveResponses, ResolveIncidentData, ResolveIncidentErrors, ResolveIncidentResponses, RetireData, RetireErrors, RetireResponses, RetryData, RetryErrors, RetryResponses, ReverseData, ReverseErrors, ReverseResponses, Revoke1Data, Revoke1Errors, Revoke1Responses, RevokeAsTenantSystem1Data, RevokeAsTenantSystem1Errors, RevokeAsTenantSystem1Responses, RevokeAsTenantSystemData, RevokeAsTenantSystemErrors, RevokeAsTenantSystemResponses, RevokeData, RevokeErrors, RevokeResponses, RotateSecretAsTenantSystemData, RotateSecretAsTenantSystemErrors, RotateSecretAsTenantSystemResponses, RotateSecretData, RotateSecretErrors, RotateSecretResponses, SessionData, SessionErrors, SessionResponses, SetWebhookSecretData, SetWebhookSecretErrors, SetWebhookSecretResponses, StartConnectData, StartConnectErrors, StartConnectResponses, SubscribeAsTenantSystemData, SubscribeAsTenantSystemErrors, SubscribeAsTenantSystemResponses, SubscribeData, SubscribeErrors, SubscribeResponses, Subscription1Data, Subscription1Errors, Subscription1Responses, SubscriptionAsTenantSystemData, SubscriptionAsTenantSystemErrors, SubscriptionAsTenantSystemResponses, SubscriptionData, SubscriptionErrors, SubscriptionResponses, Subscriptions1Data, Subscriptions1Errors, Subscriptions1Responses, SubscriptionsAsTenantSystemData, SubscriptionsAsTenantSystemErrors, SubscriptionsAsTenantSystemResponses, SubscriptionsData, SubscriptionsErrors, SubscriptionsResponses, TopUpData, TopUpErrors, TopUpResponses, TotalsData, TotalsErrors, TotalsResponses, UpdateAsTenantSystemData, UpdateAsTenantSystemErrors, UpdateAsTenantSystemResponses, UpdateData, UpdateEndpointAsTenantSystemData, UpdateEndpointAsTenantSystemErrors, UpdateEndpointAsTenantSystemResponses, UpdateEndpointData, UpdateEndpointErrors, UpdateEndpointResponses, UpdateErrors, UpdateResponses, VoidInvoiceData, VoidInvoiceErrors, VoidInvoiceResponses, Wallet1Data, Wallet1Errors, Wallet1Responses, WalletAsTenantSystemData, WalletAsTenantSystemErrors, WalletAsTenantSystemResponses, WalletData, WalletErrors, WalletResponses, Wallets1Data, Wallets1Errors, Wallets1Responses, WalletsAsTenantSystemData, WalletsAsTenantSystemErrors, WalletsAsTenantSystemResponses, WalletsData, WalletsErrors, WalletsResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -19,9 +19,36 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
+ * Get a customer
+ *
+ * Returns one customer; its version is also the response's `ETag`. An unknown id answers `404`.
+ *
+ * Callers: tenant-system. Requires `billing:customer:read`.
+ */
+export const getAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<GetAsTenantSystemData, ThrowOnError>): RequestResult<GetAsTenantSystemResponses, GetAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<GetAsTenantSystemResponses, GetAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/customers/{id}', ...options });
+
+/**
+ * Update a customer
+ *
+ * Changes the customer's display name and email. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`.
+ *
+ * Callers: tenant-system. Requires `billing:customer:write`.
+ */
+export const updateAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<UpdateAsTenantSystemData, ThrowOnError>): RequestResult<UpdateAsTenantSystemResponses, UpdateAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).put<UpdateAsTenantSystemResponses, UpdateAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/customers/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Set the Stripe webhook signing secret
  *
  * Stores the signing secret of the webhook the tenant created in its own Stripe Dashboard. It is never returned.
+ *
+ * Callers: tenant-user. Requires `billing:stripe:manage`.
  */
 export const setWebhookSecret = <ThrowOnError extends boolean = false>(options: Options<SetWebhookSecretData, ThrowOnError>): RequestResult<SetWebhookSecretResponses, SetWebhookSecretErrors, ThrowOnError> => (options.client ?? client).put<SetWebhookSecretResponses, SetWebhookSecretErrors, ThrowOnError>({
     url: '/api/v1/stripe/configuration/webhook-secret',
@@ -36,6 +63,8 @@ export const setWebhookSecret = <ThrowOnError extends boolean = false>(options: 
  * Connect the tenant's own Stripe account
  *
  * Replaces any current configuration with a Direct one built on the tenant's own Stripe keys (`secretKey`, `publishableKey` and `webhookSecret`). Stripe is asked first and the secrets are stored encrypted; they are never returned, and the configuration only says whether a webhook secret is set.
+ *
+ * Callers: tenant-user. Requires `billing:stripe:manage`.
  */
 export const connectDirect = <ThrowOnError extends boolean = false>(options: Options<ConnectDirectData, ThrowOnError>): RequestResult<ConnectDirectResponses, ConnectDirectErrors, ThrowOnError> => (options.client ?? client).put<ConnectDirectResponses, ConnectDirectErrors, ThrowOnError>({
     url: '/api/v1/stripe/configuration/direct',
@@ -50,6 +79,8 @@ export const connectDirect = <ThrowOnError extends boolean = false>(options: Opt
  * List the portal return URLs
  *
  * Returns the tenant's allowlist of URLs a billing session may send the customer back to.
+ *
+ * Callers: tenant-user. Requires `billing:portal-settings:manage`.
  */
 export const list = <ThrowOnError extends boolean = false>(options?: Options<ListData, ThrowOnError>): RequestResult<ListResponses, ListErrors, ThrowOnError> => (options?.client ?? client).get<ListResponses, ListErrors, ThrowOnError>({ url: '/api/v1/portal/return-urls', ...options });
 
@@ -57,6 +88,8 @@ export const list = <ThrowOnError extends boolean = false>(options?: Options<Lis
  * Replace the portal return URLs
  *
  * Replaces the whole allowlist of return URLs with `urls`.
+ *
+ * Callers: tenant-user. Requires `billing:portal-settings:manage`.
  */
 export const replace = <ThrowOnError extends boolean = false>(options: Options<ReplaceData, ThrowOnError>): RequestResult<ReplaceResponses, ReplaceErrors, ThrowOnError> => (options.client ?? client).put<ReplaceResponses, ReplaceErrors, ThrowOnError>({
     url: '/api/v1/portal/return-urls',
@@ -71,6 +104,8 @@ export const replace = <ThrowOnError extends boolean = false>(options: Options<R
  * Get a customer
  *
  * Returns one customer; its version is also the response's `ETag`. An unknown id answers `404`.
+ *
+ * Callers: tenant-user. Requires `billing:customer:read`.
  */
 export const get = <ThrowOnError extends boolean = false>(options: Options<GetData, ThrowOnError>): RequestResult<GetResponses, GetErrors, ThrowOnError> => (options.client ?? client).get<GetResponses, GetErrors, ThrowOnError>({ url: '/api/v1/customers/{id}', ...options });
 
@@ -78,6 +113,8 @@ export const get = <ThrowOnError extends boolean = false>(options: Options<GetDa
  * Update a customer
  *
  * Changes the customer's display name and email. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`.
+ *
+ * Callers: tenant-user. Requires `billing:customer:write`.
  */
 export const update = <ThrowOnError extends boolean = false>(options: Options<UpdateData, ThrowOnError>): RequestResult<UpdateResponses, UpdateErrors, ThrowOnError> => (options.client ?? client).put<UpdateResponses, UpdateErrors, ThrowOnError>({
     url: '/api/v1/customers/{id}',
@@ -89,9 +126,549 @@ export const update = <ThrowOnError extends boolean = false>(options: Options<Up
 });
 
 /**
+ * List webhook endpoints
+ *
+ * Pages through the tenant's webhook endpoints, with the list-query contract's filtering, sorting and paging.
+ *
+ * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-system. Requires `billing:webhook:read`.
+ */
+export const listEndpointsAsTenantSystem = <ThrowOnError extends boolean = false>(options?: Options<ListEndpointsAsTenantSystemData, ThrowOnError>): RequestResult<ListEndpointsAsTenantSystemResponses, ListEndpointsAsTenantSystemErrors, ThrowOnError> => (options?.client ?? client).get<ListEndpointsAsTenantSystemResponses, ListEndpointsAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/webhook-endpoints', ...options });
+
+/**
+ * Create a webhook endpoint
+ *
+ * Registers an HTTPS endpoint that subscribes to a subset of Billing's event types. The signing secret is returned once, in this response, and never again. Answers `201`.
+ *
+ * Callers: tenant-system. Requires `billing:webhook:manage`.
+ */
+export const createEndpointAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<CreateEndpointAsTenantSystemData, ThrowOnError>): RequestResult<CreateEndpointAsTenantSystemResponses, CreateEndpointAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<CreateEndpointAsTenantSystemResponses, CreateEndpointAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/webhook-endpoints',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Rotate a webhook endpoint's secret
+ *
+ * Replaces the endpoint's signing secret and returns the new one once, never again.
+ *
+ * Callers: tenant-system. Requires `billing:webhook:manage`.
+ */
+export const rotateSecretAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<RotateSecretAsTenantSystemData, ThrowOnError>): RequestResult<RotateSecretAsTenantSystemResponses, RotateSecretAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<RotateSecretAsTenantSystemResponses, RotateSecretAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/webhook-endpoints/{id}/rotate-secret', ...options });
+
+/**
+ * Resend a webhook delivery
+ *
+ * Queues a fresh delivery of the same stored event to the same endpoint and answers `202`: sending happens asynchronously. The original keeps its history.
+ *
+ * Callers: tenant-system. Requires `billing:webhook:manage`.
+ */
+export const resendAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<ResendAsTenantSystemData, ThrowOnError>): RequestResult<ResendAsTenantSystemResponses, ResendAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<ResendAsTenantSystemResponses, ResendAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/webhook-deliveries/{id}/resend', ...options });
+
+/**
+ * List wallets
+ *
+ * Pages through the tenant's wallets, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
+ *
+ * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-system. Requires `billing:wallet:read`.
+ */
+export const walletsAsTenantSystem = <ThrowOnError extends boolean = false>(options?: Options<WalletsAsTenantSystemData, ThrowOnError>): RequestResult<WalletsAsTenantSystemResponses, WalletsAsTenantSystemErrors, ThrowOnError> => (options?.client ?? client).get<WalletsAsTenantSystemResponses, WalletsAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/wallets', ...options });
+
+/**
+ * Open a wallet
+ *
+ * Opens a customer's wallet in one `currency`, as prepaid or postpaid (`mode`, with a `creditLimit` for postpaid). Amounts are integers in minor units. Asking again with the same settings answers the existing wallet; different settings are a conflict, because a wallet's currency and mode never change.
+ *
+ * Callers: tenant-system. Requires `billing:wallet:manage`.
+ */
+export const openWalletAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<OpenWalletAsTenantSystemData, ThrowOnError>): RequestResult<OpenWalletAsTenantSystemResponses, OpenWalletAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<OpenWalletAsTenantSystemResponses, OpenWalletAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/wallets',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List a wallet's coupon redemptions
+ *
+ * Pages through the redemptions on the wallet named by the path, with the list-query contract's filtering, sorting and paging.
+ *
+ * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-system. Requires `billing:coupon:read`.
+ */
+export const redemptionsOfWalletAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<RedemptionsOfWalletAsTenantSystemData, ThrowOnError>): RequestResult<RedemptionsOfWalletAsTenantSystemResponses, RedemptionsOfWalletAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<RedemptionsOfWalletAsTenantSystemResponses, RedemptionsOfWalletAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/wallets/{walletId}/coupon-redemptions', ...options });
+
+/**
+ * Redeem a promotion code
+ *
+ * Redeems the promotion `code` onto a wallet. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`. Every refusal answers `404`, so a caller cannot learn whether a code exists, is inactive, expired or exhausted. Answers `201` for a new redemption.
+ *
+ * Callers: tenant-system. Requires `billing:coupon:redeem`.
+ */
+export const redeemByCodeAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<RedeemByCodeAsTenantSystemData, ThrowOnError>): RequestResult<RedeemByCodeAsTenantSystemResponses, RedeemByCodeAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<RedeemByCodeAsTenantSystemResponses, RedeemByCodeAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/wallets/{walletId}/coupon-redemptions',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Attach a coupon to a wallet
+ *
+ * Attaches a coupon to a wallet by its `couponId`, which skips a code's own limits and so needs the coupon manage permission rather than the redeem one. A Tenant System uses it to grant a coupon it chose itself. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+ *
+ * Callers: tenant-system. Requires `billing:coupon:manage`.
+ */
+export const attachAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<AttachAsTenantSystemData, ThrowOnError>): RequestResult<AttachAsTenantSystemResponses, AttachAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<AttachAsTenantSystemResponses, AttachAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/wallets/{walletId}/coupon-redemptions/attach',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List usage events
+ *
+ * Pages through the recorded usage events, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
+ *
+ * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-system. Requires `billing:usage:read`.
+ */
+export const historyAsTenantSystem = <ThrowOnError extends boolean = false>(options?: Options<HistoryAsTenantSystemData, ThrowOnError>): RequestResult<HistoryAsTenantSystemResponses, HistoryAsTenantSystemErrors, ThrowOnError> => (options?.client ?? client).get<HistoryAsTenantSystemResponses, HistoryAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/usage-events', ...options });
+
+/**
+ * Record a usage event
+ *
+ * Reports one usage event for a customer: the `metric`, a `quantity` with up to six decimal places in the unit the metric's plan defines, and when it `occurredAt`. Each event carries its own `idempotencyKey`, so a retry never records anything twice: `201` for a new event, `200` with the recorded event when it was already recorded, and `409` when the key arrives with different content.
+ *
+ * Callers: tenant-system. Requires `billing:usage:record`.
+ */
+export const recordOneAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<RecordOneAsTenantSystemData, ThrowOnError>): RequestResult<RecordOneAsTenantSystemResponses, RecordOneAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<RecordOneAsTenantSystemResponses, RecordOneAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/usage-events',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Record usage events in a batch
+ *
+ * Reports up to 500 usage events at once, all-or-nothing: if any event is invalid or conflicts, none is stored.
+ *
+ * Callers: tenant-system. Requires `billing:usage:record`.
+ */
+export const recordBatchAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<RecordBatchAsTenantSystemData, ThrowOnError>): RequestResult<RecordBatchAsTenantSystemResponses, RecordBatchAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<RecordBatchAsTenantSystemResponses, RecordBatchAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/usage-events/batch',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List subscriptions
+ *
+ * Pages through the tenant's subscriptions, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
+ *
+ * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-system. Requires `billing:subscription:read`.
+ */
+export const subscriptionsAsTenantSystem = <ThrowOnError extends boolean = false>(options?: Options<SubscriptionsAsTenantSystemData, ThrowOnError>): RequestResult<SubscriptionsAsTenantSystemResponses, SubscriptionsAsTenantSystemErrors, ThrowOnError> => (options?.client ?? client).get<SubscriptionsAsTenantSystemResponses, SubscriptionsAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/subscriptions', ...options });
+
+/**
+ * Subscribe a wallet to a plan
+ *
+ * Subscribes a customer's wallet (`walletId`) to a plan (`planId`) and charges the first period at once. The cycle and currency come from the plan and stay fixed for the life of the subscription. A first period the wallet cannot pay leaves the subscription `PAST_DUE` rather than rejecting it. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+ *
+ * Callers: tenant-system. Requires `billing:subscription:manage`.
+ */
+export const subscribeAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<SubscribeAsTenantSystemData, ThrowOnError>): RequestResult<SubscribeAsTenantSystemResponses, SubscribeAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<SubscribeAsTenantSystemResponses, SubscribeAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/subscriptions',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Cancel a subscription
+ *
+ * Cancels at the end of the period already paid, so the customer keeps what was paid for, or at once when no paid period is running. Repeating it changes nothing. Billing stops no resource: the Tenant System decides what the end means for it.
+ *
+ * Callers: tenant-system. Requires `billing:subscription:manage`.
+ */
+export const cancelAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<CancelAsTenantSystemData, ThrowOnError>): RequestResult<CancelAsTenantSystemResponses, CancelAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<CancelAsTenantSystemResponses, CancelAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/subscriptions/{id}/cancel', ...options });
+
+/**
+ * List reservations
+ *
+ * Pages through the tenant's reservations, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
+ *
+ * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-system. Requires `billing:wallet:read`.
+ */
+export const reservationsAsTenantSystem = <ThrowOnError extends boolean = false>(options?: Options<ReservationsAsTenantSystemData, ThrowOnError>): RequestResult<ReservationsAsTenantSystemResponses, ReservationsAsTenantSystemErrors, ThrowOnError> => (options?.client ?? client).get<ReservationsAsTenantSystemResponses, ReservationsAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/reservations', ...options });
+
+/**
+ * Reserve part of a wallet's balance
+ *
+ * Holds `amount` of the wallet for a bounded time (`ttlSeconds`) for a later charge, after checking the wallet can cover it or its postpaid limit. Nothing is posted to the ledger until the reservation is captured. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+ *
+ * Callers: tenant-system. Requires `billing:reservation:manage`.
+ */
+export const reserveAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<ReserveAsTenantSystemData, ThrowOnError>): RequestResult<ReserveAsTenantSystemResponses, ReserveAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<ReserveAsTenantSystemResponses, ReserveAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/reservations',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Release a reservation
+ *
+ * Gives the held amount back to the wallet. Releasing a reservation that is already released changes nothing.
+ *
+ * Callers: tenant-system. Requires `billing:reservation:manage`.
+ */
+export const releaseAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<ReleaseAsTenantSystemData, ThrowOnError>): RequestResult<ReleaseAsTenantSystemResponses, ReleaseAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<ReleaseAsTenantSystemResponses, ReleaseAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/reservations/{id}/release', ...options });
+
+/**
+ * Capture a reservation
+ *
+ * Charges the actual cost against the reservation and releases whatever was not used. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+ *
+ * Callers: tenant-system. Requires `billing:charge:create`.
+ */
+export const captureAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<CaptureAsTenantSystemData, ThrowOnError>): RequestResult<CaptureAsTenantSystemResponses, CaptureAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<CaptureAsTenantSystemResponses, CaptureAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/reservations/{id}/capture',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Deactivate a promotion code
+ *
+ * Stops a promotion code being redeemed; the coupon and its other codes are unaffected.
+ *
+ * Callers: tenant-system. Requires `billing:coupon:manage`.
+ */
+export const deactivateCodeAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<DeactivateCodeAsTenantSystemData, ThrowOnError>): RequestResult<DeactivateCodeAsTenantSystemResponses, DeactivateCodeAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<DeactivateCodeAsTenantSystemResponses, DeactivateCodeAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/promotion-codes/{id}/deactivate', ...options });
+
+/**
+ * Charge a customer's usage
+ *
+ * Prices the customer's not-yet-rated usage in `[from, to)` against the plan and charges the wallet, exactly once per usage event. Answers `201` when charged, `200` when repeated or when there was nothing to charge, and `402` when the wallet could not pay; the same request succeeds after a top-up.
+ *
+ * Callers: tenant-system. Requires `billing:charge:create`.
+ */
+export const chargeUsageAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<ChargeUsageAsTenantSystemData, ThrowOnError>): RequestResult<ChargeUsageAsTenantSystemResponses, ChargeUsageAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<ChargeUsageAsTenantSystemResponses, ChargeUsageAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/pricing/usage-charges',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Reserve an estimated cost
+ *
+ * Holds the estimated cost of a resource on the wallet before it runs. Answers `201` for a new reservation, `200` when the `Idempotency-Key` replays one, and `402` when the wallet cannot cover it.
+ *
+ * Callers: tenant-system. Requires `billing:reservation:manage`.
+ */
+export const reserveEstimateAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<ReserveEstimateAsTenantSystemData, ThrowOnError>): RequestResult<ReserveEstimateAsTenantSystemResponses, ReserveEstimateAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<ReserveEstimateAsTenantSystemResponses, ReserveEstimateAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/pricing/reservations',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Estimate a cost
+ *
+ * A pure calculation: prices expected `usage` against a plan version with the same rules and the same single rounding as the real charge, and stores nothing. When `walletId` is named, it also shows what that wallet would pay after its coupons.
+ *
+ * Callers: tenant-system. Requires `billing:pricing:read`.
+ */
+export const estimateAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<EstimateAsTenantSystemData, ThrowOnError>): RequestResult<EstimateAsTenantSystemResponses, EstimateAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<EstimateAsTenantSystemResponses, EstimateAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/pricing/estimates',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Refund a payment
+ *
+ * Sends money back to the customer's card, in full when `amount` is omitted. The unspent balance is held at once, Stripe is asked, and the wallet is debited only when Stripe confirms. Answers `409` when the amount exceeds what is left to refund or the wallet has already spent it. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+ *
+ * Callers: tenant-system. Requires `billing:refund:create`.
+ */
+export const requestRefundAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<RequestRefundAsTenantSystemData, ThrowOnError>): RequestResult<RequestRefundAsTenantSystemResponses, RequestRefundAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<RequestRefundAsTenantSystemResponses, RequestRefundAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/payments/{id}/refunds',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Start a wallet top-up
+ *
+ * Starts a top-up of a wallet and answers the Stripe-hosted page where the customer pays. Creating a payment never changes a balance: the wallet is credited only when a verified Stripe event says the money arrived. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+ *
+ * Callers: tenant-system. Requires `billing:payment:create`.
+ */
+export const createTopUpAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<CreateTopUpAsTenantSystemData, ThrowOnError>): RequestResult<CreateTopUpAsTenantSystemResponses, CreateTopUpAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<CreateTopUpAsTenantSystemResponses, CreateTopUpAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/payments/top-ups',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List invoices
+ *
+ * Pages through the tenant's invoices, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
+ *
+ * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-system. Requires `billing:invoice:read`.
+ */
+export const invoicesAsTenantSystem = <ThrowOnError extends boolean = false>(options?: Options<InvoicesAsTenantSystemData, ThrowOnError>): RequestResult<InvoicesAsTenantSystemResponses, InvoicesAsTenantSystemErrors, ThrowOnError> => (options?.client ?? client).get<InvoicesAsTenantSystemResponses, InvoicesAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/invoices', ...options });
+
+/**
+ * Invoice a charge
+ *
+ * Issues an invoice for one succeeded charge, with the same numbering as a cycle invoice. A charge is billed on one line at most, so asking again answers the existing invoice with `200` and needs no key. A postpaid charge opens for payment; a prepaid charge was paid from the wallet, so its invoice is a paid record. Answers `201`.
+ *
+ * Callers: tenant-system. Requires `billing:invoice:create`.
+ */
+export const invoiceChargeAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<InvoiceChargeAsTenantSystemData, ThrowOnError>): RequestResult<InvoiceChargeAsTenantSystemResponses, InvoiceChargeAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<InvoiceChargeAsTenantSystemResponses, InvoiceChargeAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/invoices',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Pay an invoice
+ *
+ * Starts a payment of an open invoice and answers Stripe's hosted page where the customer pays. The invoice is paid, and the debt paid off, only when Stripe's verified result arrives. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+ *
+ * Callers: tenant-system. Requires `billing:payment:create`.
+ */
+export const payAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<PayAsTenantSystemData, ThrowOnError>): RequestResult<PayAsTenantSystemResponses, PayAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<PayAsTenantSystemResponses, PayAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/invoices/{id}/payments', ...options });
+
+/**
+ * List customers
+ *
+ * Pages through the tenant's customers, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
+ *
+ * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-system. Requires `billing:customer:read`.
+ */
+export const listAsTenantSystem = <ThrowOnError extends boolean = false>(options?: Options<ListAsTenantSystemData, ThrowOnError>): RequestResult<ListAsTenantSystemResponses, ListAsTenantSystemErrors, ThrowOnError> => (options?.client ?? client).get<ListAsTenantSystemResponses, ListAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/customers', ...options });
+
+/**
+ * Create a customer
+ *
+ * Creates a billing customer, optionally mapped to a Tenant System user through `tenantSystemId` and `externalUserId`. A Tenant System maps its own users; a Tenant User names the tenant system explicitly. Safe to retry: the same `Idempotency-Key` returns the same customer (`201` for a new one, `200` for a replay), and the same key with a different body answers `409`.
+ *
+ * Callers: tenant-system. Requires `billing:customer:write`.
+ */
+export const createAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<CreateAsTenantSystemData, ThrowOnError>): RequestResult<CreateAsTenantSystemResponses, CreateAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<CreateAsTenantSystemResponses, CreateAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/customers',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Deactivate a customer
+ *
+ * Deactivates the customer. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`.
+ *
+ * Callers: tenant-system. Requires `billing:customer:write`.
+ */
+export const deactivateAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<DeactivateAsTenantSystemData, ThrowOnError>): RequestResult<DeactivateAsTenantSystemResponses, DeactivateAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<DeactivateAsTenantSystemResponses, DeactivateAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/customers/{id}/deactivate', ...options });
+
+/**
+ * List coupons
+ *
+ * Pages through the tenant's coupons, with the list-query contract's filtering, sorting and paging.
+ *
+ * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-system. Requires `billing:coupon:read`.
+ */
+export const couponsAsTenantSystem = <ThrowOnError extends boolean = false>(options?: Options<CouponsAsTenantSystemData, ThrowOnError>): RequestResult<CouponsAsTenantSystemResponses, CouponsAsTenantSystemErrors, ThrowOnError> => (options?.client ?? client).get<CouponsAsTenantSystemResponses, CouponsAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/coupons', ...options });
+
+/**
+ * Create a coupon
+ *
+ * Creates a coupon with immutable terms: a benefit (a percentage in basis points or a fixed amount), an optional window, limits and scope, and optionally its first promotion code. A coupon without a total bound, a benefit out of range or a currency mismatch is refused before anything is stored. An Administrator and a Tenant System both create coupons, and the creating actor is stored on the coupon. Answers `201`.
+ *
+ * Callers: tenant-system. Requires `billing:coupon:manage`.
+ */
+export const createCouponAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<CreateCouponAsTenantSystemData, ThrowOnError>): RequestResult<CreateCouponAsTenantSystemResponses, CreateCouponAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<CreateCouponAsTenantSystemResponses, CreateCouponAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/coupons',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Deactivate a coupon
+ *
+ * Final: stops new redemptions of the coupon and deactivates its codes. A running redemption keeps working unless `revokeRedemptions` is set, which pulls a bad coupon without invalidating a charge that already used it.
+ *
+ * Callers: tenant-system. Requires `billing:coupon:manage`.
+ */
+export const deactivateCouponAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<DeactivateCouponAsTenantSystemData, ThrowOnError>): RequestResult<DeactivateCouponAsTenantSystemResponses, DeactivateCouponAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<DeactivateCouponAsTenantSystemResponses, DeactivateCouponAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/coupons/{id}/deactivate',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List a coupon's promotion codes
+ *
+ * Pages through the promotion codes of the coupon named by the path, with the list-query contract's filtering, sorting and paging.
+ *
+ * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-system. Requires `billing:coupon:read`.
+ */
+export const codesAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<CodesAsTenantSystemData, ThrowOnError>): RequestResult<CodesAsTenantSystemResponses, CodesAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<CodesAsTenantSystemResponses, CodesAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/coupons/{id}/codes', ...options });
+
+/**
+ * Add a promotion code
+ *
+ * Adds a promotion code to a coupon, with an optional redemption limit and `redeemBy` date. A code never outlives its coupon's terms. Answers `201`.
+ *
+ * Callers: tenant-system. Requires `billing:coupon:manage`.
+ */
+export const addCodeAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<AddCodeAsTenantSystemData, ThrowOnError>): RequestResult<AddCodeAsTenantSystemResponses, AddCodeAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<AddCodeAsTenantSystemResponses, AddCodeAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/coupons/{id}/codes',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Revoke a coupon redemption
+ *
+ * Ends the redemption early. Nothing is released or refunded: discounts already given were charged correctly at the time. Idempotent: revoking again changes nothing and announces nothing.
+ *
+ * Callers: tenant-system. Requires `billing:coupon:manage`.
+ */
+export const revokeAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<RevokeAsTenantSystemData, ThrowOnError>): RequestResult<RevokeAsTenantSystemResponses, RevokeAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<RevokeAsTenantSystemResponses, RevokeAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/coupon-redemptions/{id}/revoke', ...options });
+
+/**
+ * List charges
+ *
+ * Pages through the tenant's charges, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
+ *
+ * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-system. Requires `billing:wallet:read`.
+ */
+export const chargesAsTenantSystem = <ThrowOnError extends boolean = false>(options?: Options<ChargesAsTenantSystemData, ThrowOnError>): RequestResult<ChargesAsTenantSystemResponses, ChargesAsTenantSystemErrors, ThrowOnError> => (options?.client ?? client).get<ChargesAsTenantSystemResponses, ChargesAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/charges', ...options });
+
+/**
+ * Charge a wallet
+ *
+ * Records the actual cost incurred against a wallet (`walletId`, `amount` in minor units, `currency`), once per `Idempotency-Key`. A wallet that cannot pay yields a recorded `insufficient_funds` failure rather than an error. A repeat answers the first charge with `200`.
+ *
+ * Callers: tenant-system. Requires `billing:charge:create`.
+ */
+export const chargeAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<ChargeAsTenantSystemData, ThrowOnError>): RequestResult<ChargeAsTenantSystemResponses, ChargeAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).post<ChargeAsTenantSystemResponses, ChargeAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/charges',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Create a billing session
+ *
+ * Issues a portal session for one customer (`customerId`) to the Tenant System that asked, with a `returnUrl` from the tenant's allowlist, the `permissions` it grants and a lifetime. The answer carries the `portalUrl` to open in the customer's browser; its single-use exchange token is shown once there, and only its digest is stored.
+ *
+ * Callers: tenant-system. Requires `billing:billing-session:create`.
+ */
+export const createAsTenantSystem1 = <ThrowOnError extends boolean = false>(options: Options<CreateAsTenantSystem1Data, ThrowOnError>): RequestResult<CreateAsTenantSystem1Responses, CreateAsTenantSystem1Errors, ThrowOnError> => (options.client ?? client).post<CreateAsTenantSystem1Responses, CreateAsTenantSystem1Errors, ThrowOnError>({
+    url: '/system/v1/billing-sessions',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Revoke a billing session
+ *
+ * Revokes the session at once. A Tenant System may revoke only the sessions it issued; a Tenant User may revoke any.
+ *
+ * Callers: tenant-system. Requires `billing:billing-session:create`.
+ */
+export const revokeAsTenantSystem1 = <ThrowOnError extends boolean = false>(options: Options<RevokeAsTenantSystem1Data, ThrowOnError>): RequestResult<RevokeAsTenantSystem1Responses, RevokeAsTenantSystem1Errors, ThrowOnError> => (options.client ?? client).post<RevokeAsTenantSystem1Responses, RevokeAsTenantSystem1Errors, ThrowOnError>({ url: '/system/v1/billing-sessions/{id}/revoke', ...options });
+
+/**
  * Receive a direct Stripe webhook
  *
  * Where Stripe delivers events for a tenant's own Stripe account; the tenant creates this endpoint in its own Stripe Dashboard. The signature of the raw body is the proof and is checked before anything in the body is read. Public: no suite token is needed.
+ *
+ * Callers: provider.
  */
 export const direct = <ThrowOnError extends boolean = false>(options: Options<DirectData, ThrowOnError>): RequestResult<DirectResponses, DirectErrors, ThrowOnError> => (options.client ?? client).post<DirectResponses, DirectErrors, ThrowOnError>({ url: '/stripe/webhooks/direct/{configurationId}', ...options });
 
@@ -99,6 +676,8 @@ export const direct = <ThrowOnError extends boolean = false>(options: Options<Di
  * Receive a Stripe Connect webhook
  *
  * The platform's Connect webhook, one endpoint for every connected account; the tenant comes from Billing's own routing table, never from the request. The signature of the raw body is the proof. Public: no suite token is needed.
+ *
+ * Callers: provider.
  */
 export const connect = <ThrowOnError extends boolean = false>(options?: Options<ConnectData, ThrowOnError>): RequestResult<ConnectResponses, ConnectErrors, ThrowOnError> => (options?.client ?? client).post<ConnectResponses, ConnectErrors, ThrowOnError>({ url: '/stripe/webhooks/connect', ...options });
 
@@ -106,6 +685,8 @@ export const connect = <ThrowOnError extends boolean = false>(options?: Options<
  * Start a wallet top-up
  *
  * Starts a top-up of one of the customer's wallets through the Tenant's Stripe configuration and answers the Stripe-hosted page where the customer pays. The wallet is credited only when a verified Stripe event confirms the money arrived. Requires an `Idempotency-Key`; a repeat answers the first top-up with `200`.
+ *
+ * Callers: customer-session.
  */
 export const topUp = <ThrowOnError extends boolean = false>(options: Options<TopUpData, ThrowOnError>): RequestResult<TopUpResponses, TopUpErrors, ThrowOnError> => (options.client ?? client).post<TopUpResponses, TopUpErrors, ThrowOnError>({
     url: '/portal/api/top-ups',
@@ -120,6 +701,8 @@ export const topUp = <ThrowOnError extends boolean = false>(options: Options<Top
  * Exchange a billing-session token
  *
  * Exchanges the single-use token the portal read from its URL fragment for an HttpOnly session cookie and a readable CSRF cookie. The token cannot be used again; a token for another tenant is unknown on this hostname. Public: the token is the proof, and no suite token is needed.
+ *
+ * Callers: public.
  */
 export const exchange = <ThrowOnError extends boolean = false>(options: Options<ExchangeData, ThrowOnError>): RequestResult<ExchangeResponses, ExchangeErrors, ThrowOnError> => (options.client ?? client).post<ExchangeResponses, ExchangeErrors, ThrowOnError>({
     url: '/portal/api/session/exchange',
@@ -134,6 +717,8 @@ export const exchange = <ThrowOnError extends boolean = false>(options: Options<
  * Open the payment-methods page
  *
  * Opens Stripe's hosted page where the customer manages payment methods, in the Tenant's own Stripe account. The Stripe customer is created once per billing customer and Stripe configuration and reused afterwards.
+ *
+ * Callers: customer-session.
  */
 export const paymentMethods = <ThrowOnError extends boolean = false>(options?: Options<PaymentMethodsData, ThrowOnError>): RequestResult<PaymentMethodsResponses, PaymentMethodsErrors, ThrowOnError> => (options?.client ?? client).post<PaymentMethodsResponses, PaymentMethodsErrors, ThrowOnError>({ url: '/portal/api/payment-methods', ...options });
 
@@ -143,6 +728,8 @@ export const paymentMethods = <ThrowOnError extends boolean = false>(options?: O
  * Pages through the tenant's webhook endpoints, with the list-query contract's filtering, sorting and paging.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:webhook:read`.
  */
 export const listEndpoints = <ThrowOnError extends boolean = false>(options?: Options<ListEndpointsData, ThrowOnError>): RequestResult<ListEndpointsResponses, ListEndpointsErrors, ThrowOnError> => (options?.client ?? client).get<ListEndpointsResponses, ListEndpointsErrors, ThrowOnError>({ url: '/api/v1/webhook-endpoints', ...options });
 
@@ -150,6 +737,8 @@ export const listEndpoints = <ThrowOnError extends boolean = false>(options?: Op
  * Create a webhook endpoint
  *
  * Registers an HTTPS endpoint that subscribes to a subset of Billing's event types. The signing secret is returned once, in this response, and never again. Answers `201`.
+ *
+ * Callers: tenant-user. Requires `billing:webhook:manage`.
  */
 export const createEndpoint = <ThrowOnError extends boolean = false>(options: Options<CreateEndpointData, ThrowOnError>): RequestResult<CreateEndpointResponses, CreateEndpointErrors, ThrowOnError> => (options.client ?? client).post<CreateEndpointResponses, CreateEndpointErrors, ThrowOnError>({
     url: '/api/v1/webhook-endpoints',
@@ -164,6 +753,8 @@ export const createEndpoint = <ThrowOnError extends boolean = false>(options: Op
  * Rotate a webhook endpoint's secret
  *
  * Replaces the endpoint's signing secret and returns the new one once, never again.
+ *
+ * Callers: tenant-user. Requires `billing:webhook:manage`.
  */
 export const rotateSecret = <ThrowOnError extends boolean = false>(options: Options<RotateSecretData, ThrowOnError>): RequestResult<RotateSecretResponses, RotateSecretErrors, ThrowOnError> => (options.client ?? client).post<RotateSecretResponses, RotateSecretErrors, ThrowOnError>({ url: '/api/v1/webhook-endpoints/{id}/rotate-secret', ...options });
 
@@ -171,6 +762,8 @@ export const rotateSecret = <ThrowOnError extends boolean = false>(options: Opti
  * Resend a webhook delivery
  *
  * Queues a fresh delivery of the same stored event to the same endpoint and answers `202`: sending happens asynchronously. The original keeps its history.
+ *
+ * Callers: tenant-user. Requires `billing:webhook:manage`.
  */
 export const resend = <ThrowOnError extends boolean = false>(options: Options<ResendData, ThrowOnError>): RequestResult<ResendResponses, ResendErrors, ThrowOnError> => (options.client ?? client).post<ResendResponses, ResendErrors, ThrowOnError>({ url: '/api/v1/webhook-deliveries/{id}/resend', ...options });
 
@@ -180,6 +773,8 @@ export const resend = <ThrowOnError extends boolean = false>(options: Options<Re
  * Pages through the tenant's wallets, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:wallet:read`.
  */
 export const wallets = <ThrowOnError extends boolean = false>(options?: Options<WalletsData, ThrowOnError>): RequestResult<WalletsResponses, WalletsErrors, ThrowOnError> => (options?.client ?? client).get<WalletsResponses, WalletsErrors, ThrowOnError>({ url: '/api/v1/wallets', ...options });
 
@@ -187,6 +782,8 @@ export const wallets = <ThrowOnError extends boolean = false>(options?: Options<
  * Open a wallet
  *
  * Opens a customer's wallet in one `currency`, as prepaid or postpaid (`mode`, with a `creditLimit` for postpaid). Amounts are integers in minor units. Asking again with the same settings answers the existing wallet; different settings are a conflict, because a wallet's currency and mode never change.
+ *
+ * Callers: tenant-user. Requires `billing:wallet:manage`.
  */
 export const openWallet = <ThrowOnError extends boolean = false>(options: Options<OpenWalletData, ThrowOnError>): RequestResult<OpenWalletResponses, OpenWalletErrors, ThrowOnError> => (options.client ?? client).post<OpenWalletResponses, OpenWalletErrors, ThrowOnError>({
     url: '/api/v1/wallets',
@@ -203,6 +800,8 @@ export const openWallet = <ThrowOnError extends boolean = false>(options: Option
  * Pages through the redemptions on the wallet named by the path, with the list-query contract's filtering, sorting and paging.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:coupon:read`.
  */
 export const redemptionsOfWallet = <ThrowOnError extends boolean = false>(options: Options<RedemptionsOfWalletData, ThrowOnError>): RequestResult<RedemptionsOfWalletResponses, RedemptionsOfWalletErrors, ThrowOnError> => (options.client ?? client).get<RedemptionsOfWalletResponses, RedemptionsOfWalletErrors, ThrowOnError>({ url: '/api/v1/wallets/{walletId}/coupon-redemptions', ...options });
 
@@ -210,6 +809,8 @@ export const redemptionsOfWallet = <ThrowOnError extends boolean = false>(option
  * Redeem a promotion code
  *
  * Redeems the promotion `code` onto a wallet. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`. Every refusal answers `404`, so a caller cannot learn whether a code exists, is inactive, expired or exhausted. Answers `201` for a new redemption.
+ *
+ * Callers: tenant-user. Requires `billing:coupon:redeem`.
  */
 export const redeemByCode = <ThrowOnError extends boolean = false>(options: Options<RedeemByCodeData, ThrowOnError>): RequestResult<RedeemByCodeResponses, RedeemByCodeErrors, ThrowOnError> => (options.client ?? client).post<RedeemByCodeResponses, RedeemByCodeErrors, ThrowOnError>({
     url: '/api/v1/wallets/{walletId}/coupon-redemptions',
@@ -224,6 +825,8 @@ export const redeemByCode = <ThrowOnError extends boolean = false>(options: Opti
  * Attach a coupon to a wallet
  *
  * Attaches a coupon to a wallet by its `couponId`, which skips a code's own limits and so needs the coupon manage permission rather than the redeem one. A Tenant System uses it to grant a coupon it chose itself. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+ *
+ * Callers: tenant-user. Requires `billing:coupon:manage`.
  */
 export const attach = <ThrowOnError extends boolean = false>(options: Options<AttachData, ThrowOnError>): RequestResult<AttachResponses, AttachErrors, ThrowOnError> => (options.client ?? client).post<AttachResponses, AttachErrors, ThrowOnError>({
     url: '/api/v1/wallets/{walletId}/coupon-redemptions/attach',
@@ -240,6 +843,8 @@ export const attach = <ThrowOnError extends boolean = false>(options: Options<At
  * Pages through the recorded usage events, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:usage:read`.
  */
 export const history_ = <ThrowOnError extends boolean = false>(options?: Options<HistoryData, ThrowOnError>): RequestResult<HistoryResponses, HistoryErrors, ThrowOnError> => (options?.client ?? client).get<HistoryResponses, HistoryErrors, ThrowOnError>({ url: '/api/v1/usage-events', ...options });
 
@@ -247,6 +852,8 @@ export const history_ = <ThrowOnError extends boolean = false>(options?: Options
  * Record a usage event
  *
  * Reports one usage event for a customer: the `metric`, a `quantity` with up to six decimal places in the unit the metric's plan defines, and when it `occurredAt`. Each event carries its own `idempotencyKey`, so a retry never records anything twice: `201` for a new event, `200` with the recorded event when it was already recorded, and `409` when the key arrives with different content.
+ *
+ * Callers: tenant-user. Requires `billing:usage:record`.
  */
 export const recordOne = <ThrowOnError extends boolean = false>(options: Options<RecordOneData, ThrowOnError>): RequestResult<RecordOneResponses, RecordOneErrors, ThrowOnError> => (options.client ?? client).post<RecordOneResponses, RecordOneErrors, ThrowOnError>({
     url: '/api/v1/usage-events',
@@ -261,6 +868,8 @@ export const recordOne = <ThrowOnError extends boolean = false>(options: Options
  * Record usage events in a batch
  *
  * Reports up to 500 usage events at once, all-or-nothing: if any event is invalid or conflicts, none is stored.
+ *
+ * Callers: tenant-user. Requires `billing:usage:record`.
  */
 export const recordBatch = <ThrowOnError extends boolean = false>(options: Options<RecordBatchData, ThrowOnError>): RequestResult<RecordBatchResponses, RecordBatchErrors, ThrowOnError> => (options.client ?? client).post<RecordBatchResponses, RecordBatchErrors, ThrowOnError>({
     url: '/api/v1/usage-events/batch',
@@ -277,6 +886,8 @@ export const recordBatch = <ThrowOnError extends boolean = false>(options: Optio
  * Pages through the tenant's subscriptions, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:subscription:read`.
  */
 export const subscriptions = <ThrowOnError extends boolean = false>(options?: Options<SubscriptionsData, ThrowOnError>): RequestResult<SubscriptionsResponses, SubscriptionsErrors, ThrowOnError> => (options?.client ?? client).get<SubscriptionsResponses, SubscriptionsErrors, ThrowOnError>({ url: '/api/v1/subscriptions', ...options });
 
@@ -284,6 +895,8 @@ export const subscriptions = <ThrowOnError extends boolean = false>(options?: Op
  * Subscribe a wallet to a plan
  *
  * Subscribes a customer's wallet (`walletId`) to a plan (`planId`) and charges the first period at once. The cycle and currency come from the plan and stay fixed for the life of the subscription. A first period the wallet cannot pay leaves the subscription `PAST_DUE` rather than rejecting it. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+ *
+ * Callers: tenant-user. Requires `billing:subscription:manage`.
  */
 export const subscribe = <ThrowOnError extends boolean = false>(options: Options<SubscribeData, ThrowOnError>): RequestResult<SubscribeResponses, SubscribeErrors, ThrowOnError> => (options.client ?? client).post<SubscribeResponses, SubscribeErrors, ThrowOnError>({
     url: '/api/v1/subscriptions',
@@ -298,6 +911,8 @@ export const subscribe = <ThrowOnError extends boolean = false>(options: Options
  * Cancel a subscription
  *
  * Cancels at the end of the period already paid, so the customer keeps what was paid for, or at once when no paid period is running. Repeating it changes nothing. Billing stops no resource: the Tenant System decides what the end means for it.
+ *
+ * Callers: tenant-user. Requires `billing:subscription:manage`.
  */
 export const cancel = <ThrowOnError extends boolean = false>(options: Options<CancelData, ThrowOnError>): RequestResult<CancelResponses, CancelErrors, ThrowOnError> => (options.client ?? client).post<CancelResponses, CancelErrors, ThrowOnError>({ url: '/api/v1/subscriptions/{id}/cancel', ...options });
 
@@ -305,6 +920,8 @@ export const cancel = <ThrowOnError extends boolean = false>(options: Options<Ca
  * Reconcile payments with Stripe
  *
  * Compares recent payments and refunds with what Stripe holds now, instead of waiting for the scheduled run. A disagreement is recorded as an incident; where Stripe is authoritative and ahead, the correction goes through the same path as a verified event.
+ *
+ * Callers: tenant-user. Requires `billing:stripe:manage`.
  */
 export const reconcile = <ThrowOnError extends boolean = false>(options?: Options<ReconcileData, ThrowOnError>): RequestResult<ReconcileResponses, ReconcileErrors, ThrowOnError> => (options?.client ?? client).post<ReconcileResponses, ReconcileErrors, ThrowOnError>({ url: '/api/v1/stripe/reconcile', ...options });
 
@@ -312,6 +929,8 @@ export const reconcile = <ThrowOnError extends boolean = false>(options?: Option
  * Resolve a Stripe incident
  *
  * Closes an incident once a person has dealt with it. Answers `204`.
+ *
+ * Callers: tenant-user. Requires `billing:stripe:manage`.
  */
 export const resolveIncident = <ThrowOnError extends boolean = false>(options: Options<ResolveIncidentData, ThrowOnError>): RequestResult<ResolveIncidentResponses, ResolveIncidentErrors, ThrowOnError> => (options.client ?? client).post<ResolveIncidentResponses, ResolveIncidentErrors, ThrowOnError>({ url: '/api/v1/stripe/incidents/{id}/resolve', ...options });
 
@@ -319,6 +938,8 @@ export const resolveIncident = <ThrowOnError extends boolean = false>(options: O
  * Retry a Stripe event
  *
  * Tries an event that failed or gave up again, now.
+ *
+ * Callers: tenant-user. Requires `billing:stripe:manage`.
  */
 export const retry = <ThrowOnError extends boolean = false>(options: Options<RetryData, ThrowOnError>): RequestResult<RetryResponses, RetryErrors, ThrowOnError> => (options.client ?? client).post<RetryResponses, RetryErrors, ThrowOnError>({ url: '/api/v1/stripe/events/{id}/retry', ...options });
 
@@ -326,6 +947,8 @@ export const retry = <ThrowOnError extends boolean = false>(options: Options<Ret
  * Refresh the Stripe account status
  *
  * Asks Stripe what the connected account can do now. Call it when the tenant returns from onboarding.
+ *
+ * Callers: tenant-user. Requires `billing:stripe:manage`.
  */
 export const refresh = <ThrowOnError extends boolean = false>(options?: Options<RefreshData, ThrowOnError>): RequestResult<RefreshResponses, RefreshErrors, ThrowOnError> => (options?.client ?? client).post<RefreshResponses, RefreshErrors, ThrowOnError>({ url: '/api/v1/stripe/configuration/refresh', ...options });
 
@@ -333,6 +956,8 @@ export const refresh = <ThrowOnError extends boolean = false>(options?: Options<
  * Start Stripe Connect onboarding
  *
  * Starts linking a Stripe account through the platform's Connect application and answers the Stripe-hosted onboarding page the tenant finishes. Repeating it while onboarding is open answers a fresh link.
+ *
+ * Callers: tenant-user. Requires `billing:stripe:manage`.
  */
 export const startConnect = <ThrowOnError extends boolean = false>(options: Options<StartConnectData, ThrowOnError>): RequestResult<StartConnectResponses, StartConnectErrors, ThrowOnError> => (options.client ?? client).post<StartConnectResponses, StartConnectErrors, ThrowOnError>({
     url: '/api/v1/stripe/configuration/connect',
@@ -347,6 +972,8 @@ export const startConnect = <ThrowOnError extends boolean = false>(options: Opti
  * Get a new Stripe onboarding link
  *
  * Answers a fresh onboarding link, for when the earlier one has expired.
+ *
+ * Callers: tenant-user. Requires `billing:stripe:manage`.
  */
 export const onboardingLink = <ThrowOnError extends boolean = false>(options?: Options<OnboardingLinkData, ThrowOnError>): RequestResult<OnboardingLinkResponses, OnboardingLinkErrors, ThrowOnError> => (options?.client ?? client).post<OnboardingLinkResponses, OnboardingLinkErrors, ThrowOnError>({ url: '/api/v1/stripe/configuration/connect/link', ...options });
 
@@ -356,6 +983,8 @@ export const onboardingLink = <ThrowOnError extends boolean = false>(options?: O
  * Pages through the tenant's reservations, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:wallet:read`.
  */
 export const reservations = <ThrowOnError extends boolean = false>(options?: Options<ReservationsData, ThrowOnError>): RequestResult<ReservationsResponses, ReservationsErrors, ThrowOnError> => (options?.client ?? client).get<ReservationsResponses, ReservationsErrors, ThrowOnError>({ url: '/api/v1/reservations', ...options });
 
@@ -363,6 +992,8 @@ export const reservations = <ThrowOnError extends boolean = false>(options?: Opt
  * Reserve part of a wallet's balance
  *
  * Holds `amount` of the wallet for a bounded time (`ttlSeconds`) for a later charge, after checking the wallet can cover it or its postpaid limit. Nothing is posted to the ledger until the reservation is captured. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+ *
+ * Callers: tenant-user. Requires `billing:reservation:manage`.
  */
 export const reserve = <ThrowOnError extends boolean = false>(options: Options<ReserveData, ThrowOnError>): RequestResult<ReserveResponses, ReserveErrors, ThrowOnError> => (options.client ?? client).post<ReserveResponses, ReserveErrors, ThrowOnError>({
     url: '/api/v1/reservations',
@@ -377,6 +1008,8 @@ export const reserve = <ThrowOnError extends boolean = false>(options: Options<R
  * Release a reservation
  *
  * Gives the held amount back to the wallet. Releasing a reservation that is already released changes nothing.
+ *
+ * Callers: tenant-user. Requires `billing:reservation:manage`.
  */
 export const release = <ThrowOnError extends boolean = false>(options: Options<ReleaseData, ThrowOnError>): RequestResult<ReleaseResponses, ReleaseErrors, ThrowOnError> => (options.client ?? client).post<ReleaseResponses, ReleaseErrors, ThrowOnError>({ url: '/api/v1/reservations/{id}/release', ...options });
 
@@ -384,6 +1017,8 @@ export const release = <ThrowOnError extends boolean = false>(options: Options<R
  * Capture a reservation
  *
  * Charges the actual cost against the reservation and releases whatever was not used. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+ *
+ * Callers: tenant-user. Requires `billing:charge:create`.
  */
 export const capture = <ThrowOnError extends boolean = false>(options: Options<CaptureData, ThrowOnError>): RequestResult<CaptureResponses, CaptureErrors, ThrowOnError> => (options.client ?? client).post<CaptureResponses, CaptureErrors, ThrowOnError>({
     url: '/api/v1/reservations/{id}/capture',
@@ -398,6 +1033,8 @@ export const capture = <ThrowOnError extends boolean = false>(options: Options<C
  * Deactivate a promotion code
  *
  * Stops a promotion code being redeemed; the coupon and its other codes are unaffected.
+ *
+ * Callers: tenant-user. Requires `billing:coupon:manage`.
  */
 export const deactivateCode = <ThrowOnError extends boolean = false>(options: Options<DeactivateCodeData, ThrowOnError>): RequestResult<DeactivateCodeResponses, DeactivateCodeErrors, ThrowOnError> => (options.client ?? client).post<DeactivateCodeResponses, DeactivateCodeErrors, ThrowOnError>({ url: '/api/v1/promotion-codes/{id}/deactivate', ...options });
 
@@ -405,6 +1042,8 @@ export const deactivateCode = <ThrowOnError extends boolean = false>(options: Op
  * Charge a customer's usage
  *
  * Prices the customer's not-yet-rated usage in `[from, to)` against the plan and charges the wallet, exactly once per usage event. Answers `201` when charged, `200` when repeated or when there was nothing to charge, and `402` when the wallet could not pay; the same request succeeds after a top-up.
+ *
+ * Callers: tenant-user. Requires `billing:charge:create`.
  */
 export const chargeUsage = <ThrowOnError extends boolean = false>(options: Options<ChargeUsageData, ThrowOnError>): RequestResult<ChargeUsageResponses, ChargeUsageErrors, ThrowOnError> => (options.client ?? client).post<ChargeUsageResponses, ChargeUsageErrors, ThrowOnError>({
     url: '/api/v1/pricing/usage-charges',
@@ -419,6 +1058,8 @@ export const chargeUsage = <ThrowOnError extends boolean = false>(options: Optio
  * Reserve an estimated cost
  *
  * Holds the estimated cost of a resource on the wallet before it runs. Answers `201` for a new reservation, `200` when the `Idempotency-Key` replays one, and `402` when the wallet cannot cover it.
+ *
+ * Callers: tenant-user. Requires `billing:reservation:manage`.
  */
 export const reserveEstimate = <ThrowOnError extends boolean = false>(options: Options<ReserveEstimateData, ThrowOnError>): RequestResult<ReserveEstimateResponses, ReserveEstimateErrors, ThrowOnError> => (options.client ?? client).post<ReserveEstimateResponses, ReserveEstimateErrors, ThrowOnError>({
     url: '/api/v1/pricing/reservations',
@@ -433,6 +1074,8 @@ export const reserveEstimate = <ThrowOnError extends boolean = false>(options: O
  * Estimate a cost
  *
  * A pure calculation: prices expected `usage` against a plan version with the same rules and the same single rounding as the real charge, and stores nothing. When `walletId` is named, it also shows what that wallet would pay after its coupons.
+ *
+ * Callers: tenant-user. Requires `billing:pricing:read`.
  */
 export const estimate = <ThrowOnError extends boolean = false>(options: Options<EstimateData, ThrowOnError>): RequestResult<EstimateResponses, EstimateErrors, ThrowOnError> => (options.client ?? client).post<EstimateResponses, EstimateErrors, ThrowOnError>({
     url: '/api/v1/pricing/estimates',
@@ -449,6 +1092,8 @@ export const estimate = <ThrowOnError extends boolean = false>(options: Options<
  * Pages through the plans a tenant system may offer, with the list-query contract's filtering, sorting and paging.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:pricing:read`.
  */
 export const listPlans = <ThrowOnError extends boolean = false>(options?: Options<ListPlansData, ThrowOnError>): RequestResult<ListPlansResponses, ListPlansErrors, ThrowOnError> => (options?.client ?? client).get<ListPlansResponses, ListPlansErrors, ThrowOnError>({ url: '/api/v1/pricing-plans', ...options });
 
@@ -456,6 +1101,8 @@ export const listPlans = <ThrowOnError extends boolean = false>(options?: Option
  * Create a pricing plan
  *
  * Creates a plan with a `code`, a name, a currency, a pricing `model` and its first version. Prices are decimals in minor units of the plan's currency. Creating a plan fixes the unit of each metric it prices; a later plan that measures the same metric in another unit is refused. Answers `201`.
+ *
+ * Callers: tenant-user. Requires `billing:pricing:manage`.
  */
 export const createPlan = <ThrowOnError extends boolean = false>(options: Options<CreatePlanData, ThrowOnError>): RequestResult<CreatePlanResponses, CreatePlanErrors, ThrowOnError> => (options.client ?? client).post<CreatePlanResponses, CreatePlanErrors, ThrowOnError>({
     url: '/api/v1/pricing-plans',
@@ -470,6 +1117,8 @@ export const createPlan = <ThrowOnError extends boolean = false>(options: Option
  * Publish a plan version
  *
  * Adds the next version of the plan. Earlier versions, and every charge that used them, are unchanged. Answers `201`.
+ *
+ * Callers: tenant-user. Requires `billing:pricing:manage`.
  */
 export const publishVersion = <ThrowOnError extends boolean = false>(options: Options<PublishVersionData, ThrowOnError>): RequestResult<PublishVersionResponses, PublishVersionErrors, ThrowOnError> => (options.client ?? client).post<PublishVersionResponses, PublishVersionErrors, ThrowOnError>({
     url: '/api/v1/pricing-plans/{id}/versions',
@@ -484,6 +1133,8 @@ export const publishVersion = <ThrowOnError extends boolean = false>(options: Op
  * Retire a pricing plan
  *
  * Retires the plan so it can no longer be offered; existing versions and the charges that used them stay.
+ *
+ * Callers: tenant-user. Requires `billing:pricing:manage`.
  */
 export const retire = <ThrowOnError extends boolean = false>(options: Options<RetireData, ThrowOnError>): RequestResult<RetireResponses, RetireErrors, ThrowOnError> => (options.client ?? client).post<RetireResponses, RetireErrors, ThrowOnError>({ url: '/api/v1/pricing-plans/{id}/retire', ...options });
 
@@ -491,6 +1142,8 @@ export const retire = <ThrowOnError extends boolean = false>(options: Options<Re
  * Refund a payment
  *
  * Sends money back to the customer's card, in full when `amount` is omitted. The unspent balance is held at once, Stripe is asked, and the wallet is debited only when Stripe confirms. Answers `409` when the amount exceeds what is left to refund or the wallet has already spent it. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+ *
+ * Callers: tenant-user. Requires `billing:refund:create`.
  */
 export const requestRefund = <ThrowOnError extends boolean = false>(options: Options<RequestRefundData, ThrowOnError>): RequestResult<RequestRefundResponses, RequestRefundErrors, ThrowOnError> => (options.client ?? client).post<RequestRefundResponses, RequestRefundErrors, ThrowOnError>({
     url: '/api/v1/payments/{id}/refunds',
@@ -505,6 +1158,8 @@ export const requestRefund = <ThrowOnError extends boolean = false>(options: Opt
  * Start a wallet top-up
  *
  * Starts a top-up of a wallet and answers the Stripe-hosted page where the customer pays. Creating a payment never changes a balance: the wallet is credited only when a verified Stripe event says the money arrived. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+ *
+ * Callers: tenant-user. Requires `billing:payment:create`.
  */
 export const createTopUp = <ThrowOnError extends boolean = false>(options: Options<CreateTopUpData, ThrowOnError>): RequestResult<CreateTopUpResponses, CreateTopUpErrors, ThrowOnError> => (options.client ?? client).post<CreateTopUpResponses, CreateTopUpErrors, ThrowOnError>({
     url: '/api/v1/payments/top-ups',
@@ -519,6 +1174,8 @@ export const createTopUp = <ThrowOnError extends boolean = false>(options: Optio
  * Reverse a ledger entry
  *
  * The only way to correct the ledger: posts an entry that negates an earlier one on the same wallet and, optionally, a `replacement` with the right amount. The original is never touched. Reversing the same entry twice answers the first reversal, with `replayed` set.
+ *
+ * Callers: tenant-user. Requires `billing:ledger:reverse`.
  */
 export const reverse = <ThrowOnError extends boolean = false>(options: Options<ReverseData, ThrowOnError>): RequestResult<ReverseResponses, ReverseErrors, ThrowOnError> => (options.client ?? client).post<ReverseResponses, ReverseErrors, ThrowOnError>({
     url: '/api/v1/ledger-entries/{id}/reverse',
@@ -535,6 +1192,8 @@ export const reverse = <ThrowOnError extends boolean = false>(options: Options<R
  * Pages through the tenant's invoices, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:invoice:read`.
  */
 export const invoices = <ThrowOnError extends boolean = false>(options?: Options<InvoicesData, ThrowOnError>): RequestResult<InvoicesResponses, InvoicesErrors, ThrowOnError> => (options?.client ?? client).get<InvoicesResponses, InvoicesErrors, ThrowOnError>({ url: '/api/v1/invoices', ...options });
 
@@ -542,6 +1201,8 @@ export const invoices = <ThrowOnError extends boolean = false>(options?: Options
  * Invoice a charge
  *
  * Issues an invoice for one succeeded charge, with the same numbering as a cycle invoice. A charge is billed on one line at most, so asking again answers the existing invoice with `200` and needs no key. A postpaid charge opens for payment; a prepaid charge was paid from the wallet, so its invoice is a paid record. Answers `201`.
+ *
+ * Callers: tenant-user. Requires `billing:invoice:create`.
  */
 export const invoiceCharge = <ThrowOnError extends boolean = false>(options: Options<InvoiceChargeData, ThrowOnError>): RequestResult<InvoiceChargeResponses, InvoiceChargeErrors, ThrowOnError> => (options.client ?? client).post<InvoiceChargeResponses, InvoiceChargeErrors, ThrowOnError>({
     url: '/api/v1/invoices',
@@ -556,6 +1217,8 @@ export const invoiceCharge = <ThrowOnError extends boolean = false>(options: Opt
  * Void an invoice
  *
  * Cancels the request for payment, with a `reason`. The wallet is not touched: what was charged stays charged, and correcting the ledger is a reversal, not a void. A paid invoice cannot be voided and answers `409`.
+ *
+ * Callers: tenant-user. Requires `billing:invoice:manage`.
  */
 export const voidInvoice = <ThrowOnError extends boolean = false>(options: Options<VoidInvoiceData, ThrowOnError>): RequestResult<VoidInvoiceResponses, VoidInvoiceErrors, ThrowOnError> => (options.client ?? client).post<VoidInvoiceResponses, VoidInvoiceErrors, ThrowOnError>({
     url: '/api/v1/invoices/{id}/void',
@@ -570,6 +1233,8 @@ export const voidInvoice = <ThrowOnError extends boolean = false>(options: Optio
  * Write an invoice off
  *
  * Writes an open invoice off as unlikely to be paid. It can still be paid later.
+ *
+ * Callers: tenant-user. Requires `billing:invoice:manage`.
  */
 export const markUncollectible = <ThrowOnError extends boolean = false>(options: Options<MarkUncollectibleData, ThrowOnError>): RequestResult<MarkUncollectibleResponses, MarkUncollectibleErrors, ThrowOnError> => (options.client ?? client).post<MarkUncollectibleResponses, MarkUncollectibleErrors, ThrowOnError>({ url: '/api/v1/invoices/{id}/uncollectible', ...options });
 
@@ -577,6 +1242,8 @@ export const markUncollectible = <ThrowOnError extends boolean = false>(options:
  * Pay an invoice
  *
  * Starts a payment of an open invoice and answers Stripe's hosted page where the customer pays. The invoice is paid, and the debt paid off, only when Stripe's verified result arrives. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+ *
+ * Callers: tenant-user. Requires `billing:payment:create`.
  */
 export const pay = <ThrowOnError extends boolean = false>(options: Options<PayData, ThrowOnError>): RequestResult<PayResponses, PayErrors, ThrowOnError> => (options.client ?? client).post<PayResponses, PayErrors, ThrowOnError>({ url: '/api/v1/invoices/{id}/payments', ...options });
 
@@ -586,6 +1253,8 @@ export const pay = <ThrowOnError extends boolean = false>(options: Options<PayDa
  * Pages through the tenant's customers, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:customer:read`.
  */
 export const list1 = <ThrowOnError extends boolean = false>(options?: Options<List1Data, ThrowOnError>): RequestResult<List1Responses, List1Errors, ThrowOnError> => (options?.client ?? client).get<List1Responses, List1Errors, ThrowOnError>({ url: '/api/v1/customers', ...options });
 
@@ -593,6 +1262,8 @@ export const list1 = <ThrowOnError extends boolean = false>(options?: Options<Li
  * Create a customer
  *
  * Creates a billing customer, optionally mapped to a Tenant System user through `tenantSystemId` and `externalUserId`. A Tenant System maps its own users; a Tenant User names the tenant system explicitly. Safe to retry: the same `Idempotency-Key` returns the same customer (`201` for a new one, `200` for a replay), and the same key with a different body answers `409`.
+ *
+ * Callers: tenant-user. Requires `billing:customer:write`.
  */
 export const create = <ThrowOnError extends boolean = false>(options: Options<CreateData, ThrowOnError>): RequestResult<CreateResponses, CreateErrors, ThrowOnError> => (options.client ?? client).post<CreateResponses, CreateErrors, ThrowOnError>({
     url: '/api/v1/customers',
@@ -607,6 +1278,8 @@ export const create = <ThrowOnError extends boolean = false>(options: Options<Cr
  * Deactivate a customer
  *
  * Deactivates the customer. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`.
+ *
+ * Callers: tenant-user. Requires `billing:customer:write`.
  */
 export const deactivate = <ThrowOnError extends boolean = false>(options: Options<DeactivateData, ThrowOnError>): RequestResult<DeactivateResponses, DeactivateErrors, ThrowOnError> => (options.client ?? client).post<DeactivateResponses, DeactivateErrors, ThrowOnError>({ url: '/api/v1/customers/{id}/deactivate', ...options });
 
@@ -616,6 +1289,8 @@ export const deactivate = <ThrowOnError extends boolean = false>(options: Option
  * Pages through the tenant's coupons, with the list-query contract's filtering, sorting and paging.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:coupon:read`.
  */
 export const coupons = <ThrowOnError extends boolean = false>(options?: Options<CouponsData, ThrowOnError>): RequestResult<CouponsResponses, CouponsErrors, ThrowOnError> => (options?.client ?? client).get<CouponsResponses, CouponsErrors, ThrowOnError>({ url: '/api/v1/coupons', ...options });
 
@@ -623,6 +1298,8 @@ export const coupons = <ThrowOnError extends boolean = false>(options?: Options<
  * Create a coupon
  *
  * Creates a coupon with immutable terms: a benefit (a percentage in basis points or a fixed amount), an optional window, limits and scope, and optionally its first promotion code. A coupon without a total bound, a benefit out of range or a currency mismatch is refused before anything is stored. An Administrator and a Tenant System both create coupons, and the creating actor is stored on the coupon. Answers `201`.
+ *
+ * Callers: tenant-user. Requires `billing:coupon:manage`.
  */
 export const createCoupon = <ThrowOnError extends boolean = false>(options: Options<CreateCouponData, ThrowOnError>): RequestResult<CreateCouponResponses, CreateCouponErrors, ThrowOnError> => (options.client ?? client).post<CreateCouponResponses, CreateCouponErrors, ThrowOnError>({
     url: '/api/v1/coupons',
@@ -637,6 +1314,8 @@ export const createCoupon = <ThrowOnError extends boolean = false>(options: Opti
  * Deactivate a coupon
  *
  * Final: stops new redemptions of the coupon and deactivates its codes. A running redemption keeps working unless `revokeRedemptions` is set, which pulls a bad coupon without invalidating a charge that already used it.
+ *
+ * Callers: tenant-user. Requires `billing:coupon:manage`.
  */
 export const deactivateCoupon = <ThrowOnError extends boolean = false>(options: Options<DeactivateCouponData, ThrowOnError>): RequestResult<DeactivateCouponResponses, DeactivateCouponErrors, ThrowOnError> => (options.client ?? client).post<DeactivateCouponResponses, DeactivateCouponErrors, ThrowOnError>({
     url: '/api/v1/coupons/{id}/deactivate',
@@ -653,6 +1332,8 @@ export const deactivateCoupon = <ThrowOnError extends boolean = false>(options: 
  * Pages through the promotion codes of the coupon named by the path, with the list-query contract's filtering, sorting and paging.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:coupon:read`.
  */
 export const codes = <ThrowOnError extends boolean = false>(options: Options<CodesData, ThrowOnError>): RequestResult<CodesResponses, CodesErrors, ThrowOnError> => (options.client ?? client).get<CodesResponses, CodesErrors, ThrowOnError>({ url: '/api/v1/coupons/{id}/codes', ...options });
 
@@ -660,6 +1341,8 @@ export const codes = <ThrowOnError extends boolean = false>(options: Options<Cod
  * Add a promotion code
  *
  * Adds a promotion code to a coupon, with an optional redemption limit and `redeemBy` date. A code never outlives its coupon's terms. Answers `201`.
+ *
+ * Callers: tenant-user. Requires `billing:coupon:manage`.
  */
 export const addCode = <ThrowOnError extends boolean = false>(options: Options<AddCodeData, ThrowOnError>): RequestResult<AddCodeResponses, AddCodeErrors, ThrowOnError> => (options.client ?? client).post<AddCodeResponses, AddCodeErrors, ThrowOnError>({
     url: '/api/v1/coupons/{id}/codes',
@@ -674,6 +1357,8 @@ export const addCode = <ThrowOnError extends boolean = false>(options: Options<A
  * Revoke a coupon redemption
  *
  * Ends the redemption early. Nothing is released or refunded: discounts already given were charged correctly at the time. Idempotent: revoking again changes nothing and announces nothing.
+ *
+ * Callers: tenant-user. Requires `billing:coupon:manage`.
  */
 export const revoke = <ThrowOnError extends boolean = false>(options: Options<RevokeData, ThrowOnError>): RequestResult<RevokeResponses, RevokeErrors, ThrowOnError> => (options.client ?? client).post<RevokeResponses, RevokeErrors, ThrowOnError>({ url: '/api/v1/coupon-redemptions/{id}/revoke', ...options });
 
@@ -683,6 +1368,8 @@ export const revoke = <ThrowOnError extends boolean = false>(options: Options<Re
  * Pages through the tenant's charges, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:wallet:read`.
  */
 export const charges = <ThrowOnError extends boolean = false>(options?: Options<ChargesData, ThrowOnError>): RequestResult<ChargesResponses, ChargesErrors, ThrowOnError> => (options?.client ?? client).get<ChargesResponses, ChargesErrors, ThrowOnError>({ url: '/api/v1/charges', ...options });
 
@@ -690,6 +1377,8 @@ export const charges = <ThrowOnError extends boolean = false>(options?: Options<
  * Charge a wallet
  *
  * Records the actual cost incurred against a wallet (`walletId`, `amount` in minor units, `currency`), once per `Idempotency-Key`. A wallet that cannot pay yields a recorded `insufficient_funds` failure rather than an error. A repeat answers the first charge with `200`.
+ *
+ * Callers: tenant-user. Requires `billing:charge:create`.
  */
 export const charge = <ThrowOnError extends boolean = false>(options: Options<ChargeData, ThrowOnError>): RequestResult<ChargeResponses, ChargeErrors, ThrowOnError> => (options.client ?? client).post<ChargeResponses, ChargeErrors, ThrowOnError>({
     url: '/api/v1/charges',
@@ -704,6 +1393,8 @@ export const charge = <ThrowOnError extends boolean = false>(options: Options<Ch
  * Create a billing session
  *
  * Issues a portal session for one customer (`customerId`) to the Tenant System that asked, with a `returnUrl` from the tenant's allowlist, the `permissions` it grants and a lifetime. The answer carries the `portalUrl` to open in the customer's browser; its single-use exchange token is shown once there, and only its digest is stored.
+ *
+ * Callers: tenant-user. Requires `billing:billing-session:create`.
  */
 export const create1 = <ThrowOnError extends boolean = false>(options: Options<Create1Data, ThrowOnError>): RequestResult<Create1Responses, Create1Errors, ThrowOnError> => (options.client ?? client).post<Create1Responses, Create1Errors, ThrowOnError>({
     url: '/api/v1/billing-sessions',
@@ -718,6 +1409,8 @@ export const create1 = <ThrowOnError extends boolean = false>(options: Options<C
  * Revoke a billing session
  *
  * Revokes the session at once. A Tenant System may revoke only the sessions it issued; a Tenant User may revoke any.
+ *
+ * Callers: tenant-user. Requires `billing:billing-session:create`.
  */
 export const revoke1 = <ThrowOnError extends boolean = false>(options: Options<Revoke1Data, ThrowOnError>): RequestResult<Revoke1Responses, Revoke1Errors, ThrowOnError> => (options.client ?? client).post<Revoke1Responses, Revoke1Errors, ThrowOnError>({ url: '/api/v1/billing-sessions/{id}/revoke', ...options });
 
@@ -725,6 +1418,33 @@ export const revoke1 = <ThrowOnError extends boolean = false>(options: Options<R
  * Get a webhook endpoint
  *
  * Returns one endpoint; its version is also the response's `ETag`. The secret is not returned. An unknown id answers `404`.
+ *
+ * Callers: tenant-system. Requires `billing:webhook:read`.
+ */
+export const getEndpointAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<GetEndpointAsTenantSystemData, ThrowOnError>): RequestResult<GetEndpointAsTenantSystemResponses, GetEndpointAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<GetEndpointAsTenantSystemResponses, GetEndpointAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/webhook-endpoints/{id}', ...options });
+
+/**
+ * Update a webhook endpoint
+ *
+ * Changes only the fields that are present: url, description, subscribed event types or `status`. Setting `status` to `DISABLED` pauses delivery without losing queued events. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`.
+ *
+ * Callers: tenant-system. Requires `billing:webhook:manage`.
+ */
+export const updateEndpointAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<UpdateEndpointAsTenantSystemData, ThrowOnError>): RequestResult<UpdateEndpointAsTenantSystemResponses, UpdateEndpointAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).patch<UpdateEndpointAsTenantSystemResponses, UpdateEndpointAsTenantSystemErrors, ThrowOnError>({
+    url: '/system/v1/webhook-endpoints/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get a webhook endpoint
+ *
+ * Returns one endpoint; its version is also the response's `ETag`. The secret is not returned. An unknown id answers `404`.
+ *
+ * Callers: tenant-user. Requires `billing:webhook:read`.
  */
 export const getEndpoint = <ThrowOnError extends boolean = false>(options: Options<GetEndpointData, ThrowOnError>): RequestResult<GetEndpointResponses, GetEndpointErrors, ThrowOnError> => (options.client ?? client).get<GetEndpointResponses, GetEndpointErrors, ThrowOnError>({ url: '/api/v1/webhook-endpoints/{id}', ...options });
 
@@ -732,6 +1452,8 @@ export const getEndpoint = <ThrowOnError extends boolean = false>(options: Optio
  * Update a webhook endpoint
  *
  * Changes only the fields that are present: url, description, subscribed event types or `status`. Setting `status` to `DISABLED` pauses delivery without losing queued events. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`.
+ *
+ * Callers: tenant-user. Requires `billing:webhook:manage`.
  */
 export const updateEndpoint = <ThrowOnError extends boolean = false>(options: Options<UpdateEndpointData, ThrowOnError>): RequestResult<UpdateEndpointResponses, UpdateEndpointErrors, ThrowOnError> => (options.client ?? client).patch<UpdateEndpointResponses, UpdateEndpointErrors, ThrowOnError>({
     url: '/api/v1/webhook-endpoints/{id}',
@@ -742,7 +1464,191 @@ export const updateEndpoint = <ThrowOnError extends boolean = false>(options: Op
     }
 });
 
-export const jwks = <ThrowOnError extends boolean = false>(options?: Options<JwksData, ThrowOnError>): RequestResult<JwksResponses, JwksErrors, ThrowOnError> => (options?.client ?? client).get<JwksResponses, JwksErrors, ThrowOnError>({ url: '/test-jwks', ...options });
+/**
+ * Callers: public.
+ */
+export const jwks = <ThrowOnError extends boolean = false>(options?: Options<JwksData, ThrowOnError>): RequestResult<JwksResponses, unknown, ThrowOnError> => (options?.client ?? client).get<JwksResponses, unknown, ThrowOnError>({ url: '/test-jwks', ...options });
+
+/**
+ * List webhook deliveries
+ *
+ * Lists the attempts Billing made to report an event to an endpoint, with the list-query contract's filtering, sorting and paging. A delivery that exhausted its attempts is `DEAD` and stays visible here so it can be resent.
+ *
+ * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-system. Requires `billing:webhook:read`.
+ */
+export const listDeliveriesAsTenantSystem = <ThrowOnError extends boolean = false>(options?: Options<ListDeliveriesAsTenantSystemData, ThrowOnError>): RequestResult<ListDeliveriesAsTenantSystemResponses, ListDeliveriesAsTenantSystemErrors, ThrowOnError> => (options?.client ?? client).get<ListDeliveriesAsTenantSystemResponses, ListDeliveriesAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/webhook-deliveries', ...options });
+
+/**
+ * Get a webhook delivery
+ *
+ * Returns one delivery with its state and every attempt: the status code, error, response excerpt and latency. An unknown id answers `404`.
+ *
+ * Callers: tenant-system. Requires `billing:webhook:read`.
+ */
+export const getDeliveryAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<GetDeliveryAsTenantSystemData, ThrowOnError>): RequestResult<GetDeliveryAsTenantSystemResponses, GetDeliveryAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<GetDeliveryAsTenantSystemResponses, GetDeliveryAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/webhook-deliveries/{id}', ...options });
+
+/**
+ * Get a wallet
+ *
+ * Returns one wallet with its balance, the amount held by reservations and the amount available to spend. An unknown id answers `404`.
+ *
+ * Callers: tenant-system. Requires `billing:wallet:read`.
+ */
+export const walletAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<WalletAsTenantSystemData, ThrowOnError>): RequestResult<WalletAsTenantSystemResponses, WalletAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<WalletAsTenantSystemResponses, WalletAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/wallets/{id}', ...options });
+
+/**
+ * List a wallet's ledger
+ *
+ * Pages through the append-only ledger of the wallet named by the path, with the list-query contract's filtering, sorting and paging.
+ *
+ * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-system. Requires `billing:wallet:read`.
+ */
+export const ledgerAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<LedgerAsTenantSystemData, ThrowOnError>): RequestResult<LedgerAsTenantSystemResponses, LedgerAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<LedgerAsTenantSystemResponses, LedgerAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/wallets/{id}/ledger', ...options });
+
+/**
+ * Get usage aggregates
+ *
+ * Returns the quantity and the number of events per metric for a customer over `[from, to)`, optionally for the `metric` values given. Rating and invoices read the same totals.
+ *
+ * Callers: tenant-system. Requires `billing:usage:read`.
+ */
+export const aggregatesAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<AggregatesAsTenantSystemData, ThrowOnError>): RequestResult<AggregatesAsTenantSystemResponses, AggregatesAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<AggregatesAsTenantSystemResponses, AggregatesAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/usage-aggregates', ...options });
+
+/**
+ * Get a subscription
+ *
+ * Returns one subscription with its history of periods. An unknown id answers `404`.
+ *
+ * Callers: tenant-system. Requires `billing:subscription:read`.
+ */
+export const subscriptionAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<SubscriptionAsTenantSystemData, ThrowOnError>): RequestResult<SubscriptionAsTenantSystemResponses, SubscriptionAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<SubscriptionAsTenantSystemResponses, SubscriptionAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/subscriptions/{id}', ...options });
+
+/**
+ * Get a reservation
+ *
+ * Returns one reservation with its status, amount, what was captured and when it expires. An unknown id answers `404`.
+ *
+ * Callers: tenant-system. Requires `billing:wallet:read`.
+ */
+export const reservationAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<ReservationAsTenantSystemData, ThrowOnError>): RequestResult<ReservationAsTenantSystemResponses, ReservationAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<ReservationAsTenantSystemResponses, ReservationAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/reservations/{id}', ...options });
+
+/**
+ * List refunds
+ *
+ * Pages through the tenant's refunds, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
+ *
+ * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-system. Requires `billing:payment:read`.
+ */
+export const refundsAsTenantSystem = <ThrowOnError extends boolean = false>(options?: Options<RefundsAsTenantSystemData, ThrowOnError>): RequestResult<RefundsAsTenantSystemResponses, RefundsAsTenantSystemErrors, ThrowOnError> => (options?.client ?? client).get<RefundsAsTenantSystemResponses, RefundsAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/refunds', ...options });
+
+/**
+ * Get a refund
+ *
+ * Returns one refund with its status and failure reason. An unknown id answers `404`.
+ *
+ * Callers: tenant-system. Requires `billing:payment:read`.
+ */
+export const getRefundAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<GetRefundAsTenantSystemData, ThrowOnError>): RequestResult<GetRefundAsTenantSystemResponses, GetRefundAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<GetRefundAsTenantSystemResponses, GetRefundAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/refunds/{id}', ...options });
+
+/**
+ * Get a usage rating
+ *
+ * Returns one rating with its lines, the period it covers and the charge it produced. An unknown id answers `404`.
+ *
+ * Callers: tenant-system. Requires `billing:pricing:read`.
+ */
+export const getRatingAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<GetRatingAsTenantSystemData, ThrowOnError>): RequestResult<GetRatingAsTenantSystemResponses, GetRatingAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<GetRatingAsTenantSystemResponses, GetRatingAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/pricing/usage-charges/{id}', ...options });
+
+/**
+ * List pricing plans
+ *
+ * Pages through the plans a tenant system may offer, with the list-query contract's filtering, sorting and paging.
+ *
+ * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-system. Requires `billing:pricing:read`.
+ */
+export const listPlansAsTenantSystem = <ThrowOnError extends boolean = false>(options?: Options<ListPlansAsTenantSystemData, ThrowOnError>): RequestResult<ListPlansAsTenantSystemResponses, ListPlansAsTenantSystemErrors, ThrowOnError> => (options?.client ?? client).get<ListPlansAsTenantSystemResponses, ListPlansAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/pricing-plans', ...options });
+
+/**
+ * Get a pricing plan
+ *
+ * Returns one plan with its current version. An unknown id answers `404`.
+ *
+ * Callers: tenant-system. Requires `billing:pricing:read`.
+ */
+export const getPlanAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<GetPlanAsTenantSystemData, ThrowOnError>): RequestResult<GetPlanAsTenantSystemResponses, GetPlanAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<GetPlanAsTenantSystemResponses, GetPlanAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/pricing-plans/{id}', ...options });
+
+/**
+ * List payments
+ *
+ * Pages through the tenant's payments, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
+ *
+ * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-system. Requires `billing:payment:read`.
+ */
+export const paymentsAsTenantSystem = <ThrowOnError extends boolean = false>(options?: Options<PaymentsAsTenantSystemData, ThrowOnError>): RequestResult<PaymentsAsTenantSystemResponses, PaymentsAsTenantSystemErrors, ThrowOnError> => (options?.client ?? client).get<PaymentsAsTenantSystemResponses, PaymentsAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/payments', ...options });
+
+/**
+ * Get a payment
+ *
+ * Returns one payment with its status and the amount refunded so far. An unknown id answers `404`.
+ *
+ * Callers: tenant-system. Requires `billing:payment:read`.
+ */
+export const paymentAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<PaymentAsTenantSystemData, ThrowOnError>): RequestResult<PaymentAsTenantSystemResponses, PaymentAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<PaymentAsTenantSystemResponses, PaymentAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/payments/{id}', ...options });
+
+/**
+ * Get an invoice
+ *
+ * Returns one invoice with its lines. An invoice becomes paid only from a verified payment, or because the wallet already paid the charge it documents; no request marks one paid. An unknown id answers `404`.
+ *
+ * Callers: tenant-system. Requires `billing:invoice:read`.
+ */
+export const invoiceAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<InvoiceAsTenantSystemData, ThrowOnError>): RequestResult<InvoiceAsTenantSystemResponses, InvoiceAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<InvoiceAsTenantSystemResponses, InvoiceAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/invoices/{id}', ...options });
+
+/**
+ * Find a customer by external user id
+ *
+ * Returns the customer mapped to `externalUserId`, which is how a Tenant System finds a customer by its own user reference. A Tenant User also passes `tenantSystemId`. An unmapped user answers `404`.
+ *
+ * Callers: tenant-system. Requires `billing:customer:read`.
+ */
+export const byExternalUserAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<ByExternalUserAsTenantSystemData, ThrowOnError>): RequestResult<ByExternalUserAsTenantSystemResponses, ByExternalUserAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<ByExternalUserAsTenantSystemResponses, ByExternalUserAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/customers/by-external-user/{externalUserId}', ...options });
+
+/**
+ * Get a coupon
+ *
+ * Returns one coupon with its terms and how much has been redeemed. An unknown id answers `404`.
+ *
+ * Callers: tenant-system. Requires `billing:coupon:read`.
+ */
+export const couponAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<CouponAsTenantSystemData, ThrowOnError>): RequestResult<CouponAsTenantSystemResponses, CouponAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<CouponAsTenantSystemResponses, CouponAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/coupons/{id}', ...options });
+
+/**
+ * Get a coupon redemption
+ *
+ * Returns one redemption with its coupon, code and wallet. An unknown id answers `404`.
+ *
+ * Callers: tenant-system. Requires `billing:coupon:read`.
+ */
+export const redemptionAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<RedemptionAsTenantSystemData, ThrowOnError>): RequestResult<RedemptionAsTenantSystemResponses, RedemptionAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<RedemptionAsTenantSystemResponses, RedemptionAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/coupon-redemptions/{id}', ...options });
+
+/**
+ * Get a charge
+ *
+ * Returns one charge with the discounts applied to it. An unknown id answers `404`.
+ *
+ * Callers: tenant-system. Requires `billing:wallet:read`.
+ */
+export const getChargeAsTenantSystem = <ThrowOnError extends boolean = false>(options: Options<GetChargeAsTenantSystemData, ThrowOnError>): RequestResult<GetChargeAsTenantSystemResponses, GetChargeAsTenantSystemErrors, ThrowOnError> => (options.client ?? client).get<GetChargeAsTenantSystemResponses, GetChargeAsTenantSystemErrors, ThrowOnError>({ url: '/system/v1/charges/{id}', ...options });
 
 /**
  * List the customer's wallets
@@ -750,6 +1656,8 @@ export const jwks = <ThrowOnError extends boolean = false>(options?: Options<Jwk
  * Pages through the wallets of the portal session's customer, with the list-query contract's filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's data is reachable.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: customer-session.
  */
 export const wallets1 = <ThrowOnError extends boolean = false>(options?: Options<Wallets1Data, ThrowOnError>): RequestResult<Wallets1Responses, Wallets1Errors, ThrowOnError> => (options?.client ?? client).get<Wallets1Responses, Wallets1Errors, ThrowOnError>({ url: '/portal/api/wallets', ...options });
 
@@ -757,6 +1665,8 @@ export const wallets1 = <ThrowOnError extends boolean = false>(options?: Options
  * Get one of the customer's wallets
  *
  * Returns a wallet of the portal session's customer with its balance, held amount and available amount. A wallet of another customer answers `404`.
+ *
+ * Callers: customer-session.
  */
 export const wallet = <ThrowOnError extends boolean = false>(options: Options<WalletData, ThrowOnError>): RequestResult<WalletResponses, WalletErrors, ThrowOnError> => (options.client ?? client).get<WalletResponses, WalletErrors, ThrowOnError>({ url: '/portal/api/wallets/{id}', ...options });
 
@@ -766,6 +1676,8 @@ export const wallet = <ThrowOnError extends boolean = false>(options: Options<Wa
  * Pages through the append-only ledger of one of the customer's wallets, with the list-query contract's filtering, sorting and paging.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: customer-session.
  */
 export const ledger = <ThrowOnError extends boolean = false>(options: Options<LedgerData, ThrowOnError>): RequestResult<LedgerResponses, LedgerErrors, ThrowOnError> => (options.client ?? client).get<LedgerResponses, LedgerErrors, ThrowOnError>({ url: '/portal/api/wallets/{id}/ledger', ...options });
 
@@ -773,6 +1685,8 @@ export const ledger = <ThrowOnError extends boolean = false>(options: Options<Le
  * Get the customer's usage totals
  *
  * Returns the quantity and number of events per metric over `[from, to)`, optionally for one `metric`. The customer is fixed by the portal session, so no other customer's data is reachable.
+ *
+ * Callers: customer-session.
  */
 export const totals = <ThrowOnError extends boolean = false>(options: Options<TotalsData, ThrowOnError>): RequestResult<TotalsResponses, TotalsErrors, ThrowOnError> => (options.client ?? client).get<TotalsResponses, TotalsErrors, ThrowOnError>({ url: '/portal/api/usage/totals', ...options });
 
@@ -782,6 +1696,8 @@ export const totals = <ThrowOnError extends boolean = false>(options: Options<To
  * Pages through the usage reported for the portal session's customer, with the list-query contract's filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's data is reachable.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: customer-session.
  */
 export const history1 = <ThrowOnError extends boolean = false>(options?: Options<History1Data, ThrowOnError>): RequestResult<History1Responses, History1Errors, ThrowOnError> => (options?.client ?? client).get<History1Responses, History1Errors, ThrowOnError>({ url: '/portal/api/usage/history', ...options });
 
@@ -791,6 +1707,8 @@ export const history1 = <ThrowOnError extends boolean = false>(options?: Options
  * Pages through the subscriptions of the portal session's customer, with the list-query contract's filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's data is reachable.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: customer-session.
  */
 export const subscriptions1 = <ThrowOnError extends boolean = false>(options?: Options<Subscriptions1Data, ThrowOnError>): RequestResult<Subscriptions1Responses, Subscriptions1Errors, ThrowOnError> => (options?.client ?? client).get<Subscriptions1Responses, Subscriptions1Errors, ThrowOnError>({ url: '/portal/api/subscriptions', ...options });
 
@@ -798,6 +1716,8 @@ export const subscriptions1 = <ThrowOnError extends boolean = false>(options?: O
  * Get one of the customer's subscriptions
  *
  * Returns a subscription of the portal session's customer with its history. A subscription of another customer answers `404`.
+ *
+ * Callers: customer-session.
  */
 export const subscription = <ThrowOnError extends boolean = false>(options: Options<SubscriptionData, ThrowOnError>): RequestResult<SubscriptionResponses, SubscriptionErrors, ThrowOnError> => (options.client ?? client).get<SubscriptionResponses, SubscriptionErrors, ThrowOnError>({ url: '/portal/api/subscriptions/{id}', ...options });
 
@@ -805,6 +1725,8 @@ export const subscription = <ThrowOnError extends boolean = false>(options: Opti
  * Get the portal session
  *
  * Returns what the portal may show, the permissions the session carries, and when the visit expires.
+ *
+ * Callers: customer-session.
  */
 export const session = <ThrowOnError extends boolean = false>(options?: Options<SessionData, ThrowOnError>): RequestResult<SessionResponses, SessionErrors, ThrowOnError> => (options?.client ?? client).get<SessionResponses, SessionErrors, ThrowOnError>({ url: '/portal/api/session', ...options });
 
@@ -814,6 +1736,8 @@ export const session = <ThrowOnError extends boolean = false>(options?: Options<
  * Pages through the refunds of the portal session's customer's payments, with the list-query contract's filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's data is reachable.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: customer-session.
  */
 export const refunds = <ThrowOnError extends boolean = false>(options?: Options<RefundsData, ThrowOnError>): RequestResult<RefundsResponses, RefundsErrors, ThrowOnError> => (options?.client ?? client).get<RefundsResponses, RefundsErrors, ThrowOnError>({ url: '/portal/api/refunds', ...options });
 
@@ -823,6 +1747,8 @@ export const refunds = <ThrowOnError extends boolean = false>(options?: Options<
  * Pages through the payments of the portal session's customer, with the list-query contract's filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's data is reachable.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: customer-session.
  */
 export const payments = <ThrowOnError extends boolean = false>(options?: Options<PaymentsData, ThrowOnError>): RequestResult<PaymentsResponses, PaymentsErrors, ThrowOnError> => (options?.client ?? client).get<PaymentsResponses, PaymentsErrors, ThrowOnError>({ url: '/portal/api/payments', ...options });
 
@@ -830,6 +1756,8 @@ export const payments = <ThrowOnError extends boolean = false>(options?: Options
  * Get one of the customer's payments
  *
  * Returns a payment of the portal session's customer with its status. A payment of another customer answers `404`.
+ *
+ * Callers: customer-session.
  */
 export const payment = <ThrowOnError extends boolean = false>(options: Options<PaymentData, ThrowOnError>): RequestResult<PaymentResponses, PaymentErrors, ThrowOnError> => (options.client ?? client).get<PaymentResponses, PaymentErrors, ThrowOnError>({ url: '/portal/api/payments/{id}', ...options });
 
@@ -839,6 +1767,8 @@ export const payment = <ThrowOnError extends boolean = false>(options: Options<P
  * Pages through the invoices of the portal session's customer, with the list-query contract's filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's data is reachable.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: customer-session.
  */
 export const invoices1 = <ThrowOnError extends boolean = false>(options?: Options<Invoices1Data, ThrowOnError>): RequestResult<Invoices1Responses, Invoices1Errors, ThrowOnError> => (options?.client ?? client).get<Invoices1Responses, Invoices1Errors, ThrowOnError>({ url: '/portal/api/invoices', ...options });
 
@@ -846,6 +1776,8 @@ export const invoices1 = <ThrowOnError extends boolean = false>(options?: Option
  * Get one of the customer's invoices
  *
  * Returns an invoice of the portal session's customer with its lines. An invoice of another customer answers `404`.
+ *
+ * Callers: customer-session.
  */
 export const invoice = <ThrowOnError extends boolean = false>(options: Options<InvoiceData, ThrowOnError>): RequestResult<InvoiceResponses, InvoiceErrors, ThrowOnError> => (options.client ?? client).get<InvoiceResponses, InvoiceErrors, ThrowOnError>({ url: '/portal/api/invoices/{id}', ...options });
 
@@ -853,6 +1785,8 @@ export const invoice = <ThrowOnError extends boolean = false>(options: Options<I
  * Get the portal customer
  *
  * Returns the customer the portal session was issued for, and nothing else. The customer is fixed by the portal session, so no other customer's data is reachable.
+ *
+ * Callers: customer-session.
  */
 export const customer = <ThrowOnError extends boolean = false>(options?: Options<CustomerData, ThrowOnError>): RequestResult<CustomerResponses, CustomerErrors, ThrowOnError> => (options?.client ?? client).get<CustomerResponses, CustomerErrors, ThrowOnError>({ url: '/portal/api/customer', ...options });
 
@@ -862,6 +1796,8 @@ export const customer = <ThrowOnError extends boolean = false>(options?: Options
  * Pages through the charges made against the portal session's customer's wallets, with the list-query contract's filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's data is reachable.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: customer-session.
  */
 export const charges1 = <ThrowOnError extends boolean = false>(options?: Options<Charges1Data, ThrowOnError>): RequestResult<Charges1Responses, Charges1Errors, ThrowOnError> => (options?.client ?? client).get<Charges1Responses, Charges1Errors, ThrowOnError>({ url: '/portal/api/charges', ...options });
 
@@ -871,6 +1807,8 @@ export const charges1 = <ThrowOnError extends boolean = false>(options?: Options
  * Lists the attempts Billing made to report an event to an endpoint, with the list-query contract's filtering, sorting and paging. A delivery that exhausted its attempts is `DEAD` and stays visible here so it can be resent.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:webhook:read`.
  */
 export const listDeliveries = <ThrowOnError extends boolean = false>(options?: Options<ListDeliveriesData, ThrowOnError>): RequestResult<ListDeliveriesResponses, ListDeliveriesErrors, ThrowOnError> => (options?.client ?? client).get<ListDeliveriesResponses, ListDeliveriesErrors, ThrowOnError>({ url: '/api/v1/webhook-deliveries', ...options });
 
@@ -878,6 +1816,8 @@ export const listDeliveries = <ThrowOnError extends boolean = false>(options?: O
  * Get a webhook delivery
  *
  * Returns one delivery with its state and every attempt: the status code, error, response excerpt and latency. An unknown id answers `404`.
+ *
+ * Callers: tenant-user. Requires `billing:webhook:read`.
  */
 export const getDelivery = <ThrowOnError extends boolean = false>(options: Options<GetDeliveryData, ThrowOnError>): RequestResult<GetDeliveryResponses, GetDeliveryErrors, ThrowOnError> => (options.client ?? client).get<GetDeliveryResponses, GetDeliveryErrors, ThrowOnError>({ url: '/api/v1/webhook-deliveries/{id}', ...options });
 
@@ -885,6 +1825,8 @@ export const getDelivery = <ThrowOnError extends boolean = false>(options: Optio
  * Get a wallet
  *
  * Returns one wallet with its balance, the amount held by reservations and the amount available to spend. An unknown id answers `404`.
+ *
+ * Callers: tenant-user. Requires `billing:wallet:read`.
  */
 export const wallet1 = <ThrowOnError extends boolean = false>(options: Options<Wallet1Data, ThrowOnError>): RequestResult<Wallet1Responses, Wallet1Errors, ThrowOnError> => (options.client ?? client).get<Wallet1Responses, Wallet1Errors, ThrowOnError>({ url: '/api/v1/wallets/{id}', ...options });
 
@@ -894,6 +1836,8 @@ export const wallet1 = <ThrowOnError extends boolean = false>(options: Options<W
  * Pages through the append-only ledger of the wallet named by the path, with the list-query contract's filtering, sorting and paging.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:wallet:read`.
  */
 export const ledger1 = <ThrowOnError extends boolean = false>(options: Options<Ledger1Data, ThrowOnError>): RequestResult<Ledger1Responses, Ledger1Errors, ThrowOnError> => (options.client ?? client).get<Ledger1Responses, Ledger1Errors, ThrowOnError>({ url: '/api/v1/wallets/{id}/ledger', ...options });
 
@@ -901,6 +1845,8 @@ export const ledger1 = <ThrowOnError extends boolean = false>(options: Options<L
  * Get usage aggregates
  *
  * Returns the quantity and the number of events per metric for a customer over `[from, to)`, optionally for the `metric` values given. Rating and invoices read the same totals.
+ *
+ * Callers: tenant-user. Requires `billing:usage:read`.
  */
 export const aggregates = <ThrowOnError extends boolean = false>(options: Options<AggregatesData, ThrowOnError>): RequestResult<AggregatesResponses, AggregatesErrors, ThrowOnError> => (options.client ?? client).get<AggregatesResponses, AggregatesErrors, ThrowOnError>({ url: '/api/v1/usage-aggregates', ...options });
 
@@ -908,6 +1854,8 @@ export const aggregates = <ThrowOnError extends boolean = false>(options: Option
  * Get a subscription
  *
  * Returns one subscription with its history of periods. An unknown id answers `404`.
+ *
+ * Callers: tenant-user. Requires `billing:subscription:read`.
  */
 export const subscription1 = <ThrowOnError extends boolean = false>(options: Options<Subscription1Data, ThrowOnError>): RequestResult<Subscription1Responses, Subscription1Errors, ThrowOnError> => (options.client ?? client).get<Subscription1Responses, Subscription1Errors, ThrowOnError>({ url: '/api/v1/subscriptions/{id}', ...options });
 
@@ -917,6 +1865,8 @@ export const subscription1 = <ThrowOnError extends boolean = false>(options: Opt
  * Pages through the problems that need a person to look, such as a payment that disagrees with Stripe, with the list-query contract's filtering, sorting and paging.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:stripe:read`.
  */
 export const incidents = <ThrowOnError extends boolean = false>(options?: Options<IncidentsData, ThrowOnError>): RequestResult<IncidentsResponses, IncidentsErrors, ThrowOnError> => (options?.client ?? client).get<IncidentsResponses, IncidentsErrors, ThrowOnError>({ url: '/api/v1/stripe/incidents', ...options });
 
@@ -926,6 +1876,8 @@ export const incidents = <ThrowOnError extends boolean = false>(options?: Option
  * Pages through the Stripe webhook events received for the tenant, newest first by default, with the list-query contract's filtering, sorting and paging.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:stripe:read`.
  */
 export const events = <ThrowOnError extends boolean = false>(options?: Options<EventsData, ThrowOnError>): RequestResult<EventsResponses, EventsErrors, ThrowOnError> => (options?.client ?? client).get<EventsResponses, EventsErrors, ThrowOnError>({ url: '/api/v1/stripe/events', ...options });
 
@@ -933,6 +1885,8 @@ export const events = <ThrowOnError extends boolean = false>(options?: Options<E
  * Get a Stripe event
  *
  * Returns one received Stripe event with how its processing went. An unknown id answers `404`.
+ *
+ * Callers: tenant-user. Requires `billing:stripe:read`.
  */
 export const event = <ThrowOnError extends boolean = false>(options: Options<EventData, ThrowOnError>): RequestResult<EventResponses, EventErrors, ThrowOnError> => (options.client ?? client).get<EventResponses, EventErrors, ThrowOnError>({ url: '/api/v1/stripe/events/{id}', ...options });
 
@@ -940,6 +1894,8 @@ export const event = <ThrowOnError extends boolean = false>(options: Options<Eve
  * Disconnect Stripe
  *
  * Removes the tenant's Stripe configuration. Answers `204`.
+ *
+ * Callers: tenant-user. Requires `billing:stripe:manage`.
  */
 export const disconnect = <ThrowOnError extends boolean = false>(options?: Options<DisconnectData, ThrowOnError>): RequestResult<DisconnectResponses, DisconnectErrors, ThrowOnError> => (options?.client ?? client).delete<DisconnectResponses, DisconnectErrors, ThrowOnError>({ url: '/api/v1/stripe/configuration', ...options });
 
@@ -947,6 +1903,8 @@ export const disconnect = <ThrowOnError extends boolean = false>(options?: Optio
  * Get the Stripe configuration
  *
  * Returns the tenant's Stripe connection: mode, account, environment, status, whether card payments are active and the webhook URL. No secret is returned.
+ *
+ * Callers: tenant-user. Requires `billing:stripe:read`.
  */
 export const getConfiguration = <ThrowOnError extends boolean = false>(options?: Options<GetConfigurationData, ThrowOnError>): RequestResult<GetConfigurationResponses, GetConfigurationErrors, ThrowOnError> => (options?.client ?? client).get<GetConfigurationResponses, GetConfigurationErrors, ThrowOnError>({ url: '/api/v1/stripe/configuration', ...options });
 
@@ -954,6 +1912,8 @@ export const getConfiguration = <ThrowOnError extends boolean = false>(options?:
  * Get a reservation
  *
  * Returns one reservation with its status, amount, what was captured and when it expires. An unknown id answers `404`.
+ *
+ * Callers: tenant-user. Requires `billing:wallet:read`.
  */
 export const reservation = <ThrowOnError extends boolean = false>(options: Options<ReservationData, ThrowOnError>): RequestResult<ReservationResponses, ReservationErrors, ThrowOnError> => (options.client ?? client).get<ReservationResponses, ReservationErrors, ThrowOnError>({ url: '/api/v1/reservations/{id}', ...options });
 
@@ -963,6 +1923,8 @@ export const reservation = <ThrowOnError extends boolean = false>(options: Optio
  * Pages through the tenant's refunds, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:payment:read`.
  */
 export const refunds1 = <ThrowOnError extends boolean = false>(options?: Options<Refunds1Data, ThrowOnError>): RequestResult<Refunds1Responses, Refunds1Errors, ThrowOnError> => (options?.client ?? client).get<Refunds1Responses, Refunds1Errors, ThrowOnError>({ url: '/api/v1/refunds', ...options });
 
@@ -970,6 +1932,8 @@ export const refunds1 = <ThrowOnError extends boolean = false>(options?: Options
  * Get a refund
  *
  * Returns one refund with its status and failure reason. An unknown id answers `404`.
+ *
+ * Callers: tenant-user. Requires `billing:payment:read`.
  */
 export const getRefund = <ThrowOnError extends boolean = false>(options: Options<GetRefundData, ThrowOnError>): RequestResult<GetRefundResponses, GetRefundErrors, ThrowOnError> => (options.client ?? client).get<GetRefundResponses, GetRefundErrors, ThrowOnError>({ url: '/api/v1/refunds/{id}', ...options });
 
@@ -977,6 +1941,8 @@ export const getRefund = <ThrowOnError extends boolean = false>(options: Options
  * Get a usage rating
  *
  * Returns one rating with its lines, the period it covers and the charge it produced. An unknown id answers `404`.
+ *
+ * Callers: tenant-user. Requires `billing:pricing:read`.
  */
 export const getRating = <ThrowOnError extends boolean = false>(options: Options<GetRatingData, ThrowOnError>): RequestResult<GetRatingResponses, GetRatingErrors, ThrowOnError> => (options.client ?? client).get<GetRatingResponses, GetRatingErrors, ThrowOnError>({ url: '/api/v1/pricing/usage-charges/{id}', ...options });
 
@@ -984,6 +1950,8 @@ export const getRating = <ThrowOnError extends boolean = false>(options: Options
  * Get a pricing plan
  *
  * Returns one plan with its current version. An unknown id answers `404`.
+ *
+ * Callers: tenant-user. Requires `billing:pricing:read`.
  */
 export const getPlan = <ThrowOnError extends boolean = false>(options: Options<GetPlanData, ThrowOnError>): RequestResult<GetPlanResponses, GetPlanErrors, ThrowOnError> => (options.client ?? client).get<GetPlanResponses, GetPlanErrors, ThrowOnError>({ url: '/api/v1/pricing-plans/{id}', ...options });
 
@@ -993,6 +1961,8 @@ export const getPlan = <ThrowOnError extends boolean = false>(options: Options<G
  * Pages through the tenant's payments, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
  *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+ *
+ * Callers: tenant-user. Requires `billing:payment:read`.
  */
 export const payments1 = <ThrowOnError extends boolean = false>(options?: Options<Payments1Data, ThrowOnError>): RequestResult<Payments1Responses, Payments1Errors, ThrowOnError> => (options?.client ?? client).get<Payments1Responses, Payments1Errors, ThrowOnError>({ url: '/api/v1/payments', ...options });
 
@@ -1000,6 +1970,8 @@ export const payments1 = <ThrowOnError extends boolean = false>(options?: Option
  * Get a payment
  *
  * Returns one payment with its status and the amount refunded so far. An unknown id answers `404`.
+ *
+ * Callers: tenant-user. Requires `billing:payment:read`.
  */
 export const payment1 = <ThrowOnError extends boolean = false>(options: Options<Payment1Data, ThrowOnError>): RequestResult<Payment1Responses, Payment1Errors, ThrowOnError> => (options.client ?? client).get<Payment1Responses, Payment1Errors, ThrowOnError>({ url: '/api/v1/payments/{id}', ...options });
 
@@ -1007,6 +1979,8 @@ export const payment1 = <ThrowOnError extends boolean = false>(options: Options<
  * Get an invoice
  *
  * Returns one invoice with its lines. An invoice becomes paid only from a verified payment, or because the wallet already paid the charge it documents; no request marks one paid. An unknown id answers `404`.
+ *
+ * Callers: tenant-user. Requires `billing:invoice:read`.
  */
 export const invoice1 = <ThrowOnError extends boolean = false>(options: Options<Invoice1Data, ThrowOnError>): RequestResult<Invoice1Responses, Invoice1Errors, ThrowOnError> => (options.client ?? client).get<Invoice1Responses, Invoice1Errors, ThrowOnError>({ url: '/api/v1/invoices/{id}', ...options });
 
@@ -1014,6 +1988,8 @@ export const invoice1 = <ThrowOnError extends boolean = false>(options: Options<
  * Find a customer by external user id
  *
  * Returns the customer mapped to `externalUserId`, which is how a Tenant System finds a customer by its own user reference. A Tenant User also passes `tenantSystemId`. An unmapped user answers `404`.
+ *
+ * Callers: tenant-user. Requires `billing:customer:read`.
  */
 export const byExternalUser = <ThrowOnError extends boolean = false>(options: Options<ByExternalUserData, ThrowOnError>): RequestResult<ByExternalUserResponses, ByExternalUserErrors, ThrowOnError> => (options.client ?? client).get<ByExternalUserResponses, ByExternalUserErrors, ThrowOnError>({ url: '/api/v1/customers/by-external-user/{externalUserId}', ...options });
 
@@ -1021,6 +1997,8 @@ export const byExternalUser = <ThrowOnError extends boolean = false>(options: Op
  * Get a coupon
  *
  * Returns one coupon with its terms and how much has been redeemed. An unknown id answers `404`.
+ *
+ * Callers: tenant-user. Requires `billing:coupon:read`.
  */
 export const coupon = <ThrowOnError extends boolean = false>(options: Options<CouponData, ThrowOnError>): RequestResult<CouponResponses, CouponErrors, ThrowOnError> => (options.client ?? client).get<CouponResponses, CouponErrors, ThrowOnError>({ url: '/api/v1/coupons/{id}', ...options });
 
@@ -1028,6 +2006,8 @@ export const coupon = <ThrowOnError extends boolean = false>(options: Options<Co
  * Get a coupon redemption
  *
  * Returns one redemption with its coupon, code and wallet. An unknown id answers `404`.
+ *
+ * Callers: tenant-user. Requires `billing:coupon:read`.
  */
 export const redemption = <ThrowOnError extends boolean = false>(options: Options<RedemptionData, ThrowOnError>): RequestResult<RedemptionResponses, RedemptionErrors, ThrowOnError> => (options.client ?? client).get<RedemptionResponses, RedemptionErrors, ThrowOnError>({ url: '/api/v1/coupon-redemptions/{id}', ...options });
 
@@ -1035,5 +2015,7 @@ export const redemption = <ThrowOnError extends boolean = false>(options: Option
  * Get a charge
  *
  * Returns one charge with the discounts applied to it. An unknown id answers `404`.
+ *
+ * Callers: tenant-user. Requires `billing:wallet:read`.
  */
 export const getCharge = <ThrowOnError extends boolean = false>(options: Options<GetChargeData, ThrowOnError>): RequestResult<GetChargeResponses, GetChargeErrors, ThrowOnError> => (options.client ?? client).get<GetChargeResponses, GetChargeErrors, ThrowOnError>({ url: '/api/v1/charges/{id}', ...options });
